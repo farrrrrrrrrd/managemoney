@@ -1,6 +1,11 @@
 /**
- * RIED Financial Dashboard & SaaS App Controller
- * Full Multi-View SPA: Dashboard, Transaksi, Pengeluaran (Budgets), Laporan, Pengaturan.
+ * RIED Financial SaaS App Controller
+ * Features:
+ * - Dual Mode: World-Class Hero Landing Showcase ↔ Live App Studio
+ * - Web Audio API tactile sound effects
+ * - 3D card perspective tilt physics
+ * - Interactive Lifestyle Expense Simulator
+ * - 5 Views SPA: Dashboard, Transaksi, Pengeluaran (Budgets), Laporan, Pengaturan
  * Zero AI Slop - 100% Complete Implementation.
  */
 
@@ -15,6 +20,8 @@ import {
 } from './api.js';
 
 import { renderSplineChart, renderCategoryDonut } from './charts.js';
+import { sounds } from './audio.js';
+import { initCardTilt } from './tilt.js';
 
 export function formatRupiah(number) {
   return new Intl.NumberFormat('id-ID', {
@@ -26,7 +33,8 @@ export function formatRupiah(number) {
 
 class RiedApp {
   constructor() {
-    this.currentView = 'dashboard';
+    this.currentMode = 'showcase'; // 'showcase' or 'studio'
+    this.currentView = 'dashboard'; // within studio
     this.summary = null;
     this.transactions = [];
     this.categories = [];
@@ -55,7 +63,33 @@ class RiedApp {
 
   cacheDom() {
     this.dom = {
-      // Views & Navigation
+      // Modes
+      sectionShowcase: document.getElementById('section-hero-showcase'),
+      sectionStudio: document.getElementById('section-app-studio'),
+      navModeLanding: document.getElementById('nav-mode-landing'),
+      navModeStudio: document.getElementById('nav-mode-studio'),
+      btnOpenAppTop: document.getElementById('btn-open-app-top'),
+      heroCtaEnter: document.getElementById('hero-cta-enter'),
+      heroCtaSimulate: document.getElementById('hero-cta-simulate'),
+      sidebarBackShowcase: document.getElementById('sidebar-back-showcase'),
+      brandLogoBtn: document.getElementById('brand-logo-btn'),
+
+      // Sound Engine
+      soundToggle: document.getElementById('sound-toggle'),
+      soundIcon: document.getElementById('sound-icon'),
+      soundStatusText: document.getElementById('sound-status-text'),
+
+      // Simulator
+      simCoffeeSlider: document.getElementById('sim-coffee-slider'),
+      simCoffeeVal: document.getElementById('sim-coffee-val'),
+      simHangoutSlider: document.getElementById('sim-hangout-slider'),
+      simHangoutVal: document.getElementById('sim-hangout-val'),
+      simAnnualSavings: document.getElementById('sim-annual-savings'),
+      simRewardText: document.getElementById('sim-reward-text'),
+      simApplyBtn: document.getElementById('sim-apply-btn'),
+      simulatorContainer: document.getElementById('simulator-container'),
+
+      // Studio Views & Navigation
       views: {
         dashboard: document.getElementById('view-dashboard'),
         transaksi: document.getElementById('view-transaksi'),
@@ -69,11 +103,6 @@ class RiedApp {
       viewSubtitle: document.getElementById('view-subtitle'),
       headerDate: document.getElementById('header-date'),
       btnGotoBudgets: document.getElementById('btn-goto-budgets'),
-
-      // Hero Banner
-      heroBanner: document.getElementById('hero-banner'),
-      heroQuickTx: document.getElementById('hero-quick-tx'),
-      heroDismiss: document.getElementById('hero-dismiss'),
 
       // Theme
       themeToggle: document.getElementById('theme-toggle'),
@@ -150,21 +179,28 @@ class RiedApp {
     const savedTheme = localStorage.getItem('ried-theme') || localStorage.getItem('fino-theme');
     this.setTheme(savedTheme === 'dark');
 
-    // 2. Set current date header
+    // 2. Sound state setup
+    this.updateSoundButtonUI();
+
+    // 3. Set current date header
     const now = new Date();
     const monthYear = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
     if (this.dom.headerDate) this.dom.headerDate.textContent = monthYear;
 
-    // 3. Bind all event listeners
+    // 4. Bind event listeners
     this.bindEvents();
     this.renderCalendarStrip();
+    this.updateSimulator();
 
-    // 4. Load backend data
+    // 5. Initialize 3D perspective tilt
+    initCardTilt('[data-tilt]');
+
+    // 6. Load backend data
     await this.refreshAllData();
 
-    // 5. Handle window resize for charts
+    // 7. Handle window resize for charts
     window.addEventListener('resize', () => {
-      if (this.summary && this.currentView === 'dashboard') {
+      if (this.summary && this.currentMode === 'studio' && this.currentView === 'dashboard') {
         renderSplineChart(this.dom.chartSpline, this.summary.daily_expenses, this.isDarkMode);
         renderCategoryDonut(this.dom.chartDonut, this.summary.category_breakdown, this.isDarkMode);
       }
@@ -172,9 +208,83 @@ class RiedApp {
   }
 
   bindEvents() {
-    // SPA View Switcher (Desktop & Mobile)
+    // Mode Switchers
+    if (this.dom.navModeLanding) {
+      this.dom.navModeLanding.addEventListener('click', () => {
+        sounds.playPop();
+        this.switchMode('showcase');
+      });
+    }
+    if (this.dom.navModeStudio) {
+      this.dom.navModeStudio.addEventListener('click', () => {
+        sounds.playPop();
+        this.switchMode('studio');
+      });
+    }
+    if (this.dom.btnOpenAppTop) {
+      this.dom.btnOpenAppTop.addEventListener('click', () => {
+        sounds.playChime();
+        this.switchMode('studio');
+      });
+    }
+    if (this.dom.heroCtaEnter) {
+      this.dom.heroCtaEnter.addEventListener('click', () => {
+        sounds.playChime();
+        this.switchMode('studio');
+      });
+    }
+    if (this.dom.sidebarBackShowcase) {
+      this.dom.sidebarBackShowcase.addEventListener('click', () => {
+        sounds.playPop();
+        this.switchMode('showcase');
+      });
+    }
+    if (this.dom.brandLogoBtn) {
+      this.dom.brandLogoBtn.addEventListener('click', () => {
+        sounds.playPop();
+        this.switchMode('showcase');
+      });
+    }
+    if (this.dom.heroCtaSimulate) {
+      this.dom.heroCtaSimulate.addEventListener('click', () => {
+        sounds.playPop();
+        if (this.dom.simulatorContainer) {
+          this.dom.simulatorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    }
+
+    // Audio Haptic Sound Toggle
+    if (this.dom.soundToggle) {
+      this.dom.soundToggle.addEventListener('click', () => {
+        sounds.toggleMute();
+        this.updateSoundButtonUI();
+      });
+    }
+
+    // Lifestyle Expense Simulator Sliders
+    if (this.dom.simCoffeeSlider) {
+      this.dom.simCoffeeSlider.addEventListener('input', () => {
+        this.updateSimulator();
+      });
+    }
+    if (this.dom.simHangoutSlider) {
+      this.dom.simHangoutSlider.addEventListener('input', () => {
+        this.updateSimulator();
+      });
+    }
+    if (this.dom.simApplyBtn) {
+      this.dom.simApplyBtn.addEventListener('click', () => {
+        sounds.playChime();
+        this.switchMode('studio');
+        this.switchView('pengeluaran');
+      });
+    }
+
+    // Studio SPA View Switcher
     this.dom.navButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
+        sounds.playPop();
         const view = btn.getAttribute('data-view');
         this.switchView(view);
       });
@@ -182,6 +292,7 @@ class RiedApp {
 
     this.dom.mobileNavButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
+        sounds.playPop();
         const view = btn.getAttribute('data-view');
         this.switchView(view);
       });
@@ -189,39 +300,45 @@ class RiedApp {
 
     if (this.dom.btnGotoBudgets) {
       this.dom.btnGotoBudgets.addEventListener('click', () => {
+        sounds.playPop();
         this.switchView('pengeluaran');
       });
     }
 
-    // Hero Banner controls
-    if (this.dom.heroDismiss) {
-      this.dom.heroDismiss.addEventListener('click', () => {
-        this.dom.heroBanner.style.display = 'none';
-      });
-    }
-    if (this.dom.heroQuickTx) {
-      this.dom.heroQuickTx.addEventListener('click', () => this.openTxModal(false));
-    }
-
     // Theme toggles
     if (this.dom.themeToggle) {
-      this.dom.themeToggle.addEventListener('click', () => this.setTheme(!this.isDarkMode));
+      this.dom.themeToggle.addEventListener('click', () => {
+        sounds.playToggle();
+        this.setTheme(!this.isDarkMode);
+      });
     }
     if (this.dom.settingsThemeBtn) {
-      this.dom.settingsThemeBtn.addEventListener('click', () => this.setTheme(!this.isDarkMode));
+      this.dom.settingsThemeBtn.addEventListener('click', () => {
+        sounds.playToggle();
+        this.setTheme(!this.isDarkMode);
+      });
     }
 
     // Add Transaction button
     if (this.dom.btnAddTx) {
-      this.dom.btnAddTx.addEventListener('click', () => this.openTxModal(false));
+      this.dom.btnAddTx.addEventListener('click', () => {
+        sounds.playPop();
+        this.openTxModal(false);
+      });
     }
 
     // Transaction Modal Close
     if (this.dom.modalCancel) {
-      this.dom.modalCancel.addEventListener('click', () => this.closeTxModal());
+      this.dom.modalCancel.addEventListener('click', () => {
+        sounds.playPop();
+        this.closeTxModal();
+      });
     }
     if (this.dom.btnCancelTx) {
-      this.dom.btnCancelTx.addEventListener('click', () => this.closeTxModal());
+      this.dom.btnCancelTx.addEventListener('click', () => {
+        sounds.playPop();
+        this.closeTxModal();
+      });
     }
     if (this.dom.modalForm) {
       this.dom.modalForm.addEventListener('submit', (e) => this.handleTxFormSubmit(e));
@@ -229,10 +346,16 @@ class RiedApp {
 
     // Budget Modal Close
     if (this.dom.budgetModalClose) {
-      this.dom.budgetModalClose.addEventListener('click', () => this.closeBudgetModal());
+      this.dom.budgetModalClose.addEventListener('click', () => {
+        sounds.playPop();
+        this.closeBudgetModal();
+      });
     }
     if (this.dom.budgetModalCancel) {
-      this.dom.budgetModalCancel.addEventListener('click', () => this.closeBudgetModal());
+      this.dom.budgetModalCancel.addEventListener('click', () => {
+        sounds.playPop();
+        this.closeBudgetModal();
+      });
     }
     if (this.dom.budgetModalForm) {
       this.dom.budgetModalForm.addEventListener('submit', (e) => this.handleBudgetFormSubmit(e));
@@ -240,6 +363,7 @@ class RiedApp {
 
     // Dashboard Transaction Type Filters
     const setDashFilter = (type, btn) => {
+      sounds.playPop();
       this.dashFilterType = type;
       [this.dom.dashFilterAll, this.dom.dashFilterExpense, this.dom.dashFilterIncome].forEach((b) => {
         if (b) {
@@ -271,6 +395,7 @@ class RiedApp {
 
     // Transaksi View Type Filters
     const setTxViewType = (type, btn) => {
+      sounds.playPop();
       this.txFilterType = type;
       [this.dom.txviewFilterAll, this.dom.txviewFilterExpense, this.dom.txviewFilterIncome].forEach((b) => {
         if (b) {
@@ -292,14 +417,15 @@ class RiedApp {
     // Category Filter Chips in Transaksi View
     this.dom.catChipButtons.forEach((chip) => {
       chip.addEventListener('click', () => {
+        sounds.playPop();
         const cat = chip.getAttribute('data-cat') || null;
         this.txFilterCategory = cat;
 
         this.dom.catChipButtons.forEach((c) => {
           c.classList.remove('bg-emerald-500', 'text-white', 'font-bold');
-          c.classList.add('fino-card', 'text-slate-600', 'dark:text-slate-300', 'font-medium');
+          c.classList.add('ried-card', 'text-slate-600', 'dark:text-slate-300', 'font-medium');
         });
-        chip.classList.remove('fino-card', 'text-slate-600', 'dark:text-slate-300', 'font-medium');
+        chip.classList.remove('ried-card', 'text-slate-600', 'dark:text-slate-300', 'font-medium');
         chip.classList.add('bg-emerald-500', 'text-white', 'font-bold');
 
         this.loadTransaksiViewData();
@@ -308,7 +434,87 @@ class RiedApp {
   }
 
   // ==========================================
-  // SPA View Routing & Transitions
+  // Mode Switcher: Showcase vs App Studio
+  // ==========================================
+  switchMode(mode) {
+    this.currentMode = mode;
+
+    if (mode === 'showcase') {
+      if (this.dom.sectionShowcase) this.dom.sectionShowcase.classList.remove('hidden');
+      if (this.dom.sectionStudio) this.dom.sectionStudio.classList.add('hidden');
+
+      if (this.dom.navModeLanding) {
+        this.dom.navModeLanding.classList.add('bg-white', 'dark:bg-slate-700', 'text-slate-900', 'dark:text-white', 'shadow-sm');
+        this.dom.navModeLanding.classList.remove('text-slate-500', 'dark:text-slate-400');
+      }
+      if (this.dom.navModeStudio) {
+        this.dom.navModeStudio.classList.remove('bg-white', 'dark:bg-slate-700', 'text-slate-900', 'dark:text-white', 'shadow-sm');
+        this.dom.navModeStudio.classList.add('text-slate-500', 'dark:text-slate-400');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      if (this.dom.sectionShowcase) this.dom.sectionShowcase.classList.add('hidden');
+      if (this.dom.sectionStudio) this.dom.sectionStudio.classList.remove('hidden');
+
+      if (this.dom.navModeStudio) {
+        this.dom.navModeStudio.classList.add('bg-white', 'dark:bg-slate-700', 'text-slate-900', 'dark:text-white', 'shadow-sm');
+        this.dom.navModeStudio.classList.remove('text-slate-500', 'dark:text-slate-400');
+      }
+      if (this.dom.navModeLanding) {
+        this.dom.navModeLanding.classList.remove('bg-white', 'dark:bg-slate-700', 'text-slate-900', 'dark:text-white', 'shadow-sm');
+        this.dom.navModeLanding.classList.add('text-slate-500', 'dark:text-slate-400');
+      }
+
+      this.switchView(this.currentView);
+    }
+
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  // ==========================================
+  // Sound UI
+  // ==========================================
+  updateSoundButtonUI() {
+    const isMuted = sounds.isMuted();
+    if (this.dom.soundIcon) {
+      this.dom.soundIcon.setAttribute('data-lucide', isMuted ? 'volume-x' : 'volume-2');
+    }
+    if (this.dom.soundStatusText) {
+      this.dom.soundStatusText.textContent = isMuted ? 'Muted' : 'Audio ON';
+    }
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  // ==========================================
+  // Interactive Lifestyle Expense Simulator
+  // ==========================================
+  updateSimulator() {
+    const coffeeDaily = parseInt(this.dom.simCoffeeSlider?.value || 35000);
+    const hangoutWeekly = parseInt(this.dom.simHangoutSlider?.value || 200000);
+
+    if (this.dom.simCoffeeVal) this.dom.simCoffeeVal.textContent = `${formatRupiah(coffeeDaily)} / hari`;
+    if (this.dom.simHangoutVal) this.dom.simHangoutVal.textContent = `${formatRupiah(hangoutWeekly)} / minggu`;
+
+    // 1 year savings calculation
+    const annualSavings = (coffeeDaily * 365) + (hangoutWeekly * 52);
+
+    if (this.dom.simAnnualSavings) {
+      this.dom.simAnnualSavings.textContent = formatRupiah(annualSavings);
+    }
+
+    if (this.dom.simRewardText) {
+      if (annualSavings >= 30000000) {
+        this.dom.simRewardText.textContent = '🌟 Fantastis! Cukup untuk modal bisnis rintisan atau dana darurat 6+ bulan!';
+      } else if (annualSavings >= 15000000) {
+        this.dom.simRewardText.textContent = '🎉 Cukup untuk liburan ke Jepang atau 1 unit MacBook M3 Pro baru!';
+      } else {
+        this.dom.simRewardText.textContent = '🌱 Cukup untuk gadget baru atau investasi emas batangan bernilai tinggi!';
+      }
+    }
+  }
+
+  // ==========================================
+  // SPA View Routing & Transitions (Studio)
   // ==========================================
   switchView(viewName) {
     if (!this.dom.views[viewName]) return;
@@ -410,11 +616,11 @@ class RiedApp {
       html.classList.remove('dark');
       localStorage.setItem('ried-theme', 'light');
       if (this.dom.themeIcon) this.dom.themeIcon.setAttribute('data-lucide', 'moon');
-      if (this.dom.themeBadge) this.dom.themeBadge.textContent = 'Matcha Cream';
+      if (this.dom.themeBadge) this.dom.themeBadge.textContent = 'Matcha';
     }
     if (window.lucide) window.lucide.createIcons();
 
-    if (this.summary && this.currentView === 'dashboard') {
+    if (this.summary && this.currentMode === 'studio' && this.currentView === 'dashboard') {
       renderSplineChart(this.dom.chartSpline, this.summary.daily_expenses, this.isDarkMode);
       renderCategoryDonut(this.dom.chartDonut, this.summary.category_breakdown, this.isDarkMode);
     }
@@ -440,7 +646,7 @@ class RiedApp {
     days.forEach((d) => {
       const isToday = d.toDateString() === today.toDateString();
       const pill = document.createElement('button');
-      pill.className = `flex flex-col items-center justify-center w-12 py-2.5 rounded-2xl text-xs transition-all font-medium fino-card ${
+      pill.className = `flex flex-col items-center justify-center w-12 py-2.5 rounded-2xl text-xs transition-all font-medium ried-card ${
         isToday ? 'day-pill-active font-bold' : 'text-slate-600 dark:text-slate-400 hover:border-emerald-400'
       }`;
       pill.innerHTML = `
@@ -448,6 +654,7 @@ class RiedApp {
         <span class="text-sm font-bold mt-0.5">${d.getDate()}</span>
       `;
       pill.addEventListener('click', () => {
+        sounds.playPop();
         document.querySelectorAll('#date-strip button').forEach((b) => b.classList.remove('day-pill-active'));
         pill.classList.add('day-pill-active');
       });
@@ -468,15 +675,17 @@ class RiedApp {
       this.renderDashboardCategories(this.summary.category_breakdown);
       this.renderDashboardTransactions();
 
-      if (this.currentView === 'dashboard') {
-        renderSplineChart(this.dom.chartSpline, this.summary.daily_expenses, this.isDarkMode);
-        renderCategoryDonut(this.dom.chartDonut, this.summary.category_breakdown, this.isDarkMode);
-      } else if (this.currentView === 'transaksi') {
-        this.loadTransaksiViewData();
-      } else if (this.currentView === 'pengeluaran') {
-        this.renderPengeluaranView();
-      } else if (this.currentView === 'laporan') {
-        this.renderLaporanView();
+      if (this.currentMode === 'studio') {
+        if (this.currentView === 'dashboard') {
+          renderSplineChart(this.dom.chartSpline, this.summary.daily_expenses, this.isDarkMode);
+          renderCategoryDonut(this.dom.chartDonut, this.summary.category_breakdown, this.isDarkMode);
+        } else if (this.currentView === 'transaksi') {
+          this.loadTransaksiViewData();
+        } else if (this.currentView === 'pengeluaran') {
+          this.renderPengeluaranView();
+        } else if (this.currentView === 'laporan') {
+          this.renderLaporanView();
+        }
       }
 
       if (window.lucide) window.lucide.createIcons();
@@ -518,7 +727,7 @@ class RiedApp {
 
     categories.forEach((cat) => {
       const card = document.createElement('div');
-      card.className = 'p-3.5 rounded-2xl fino-card space-y-2';
+      card.className = 'p-3.5 rounded-2xl ried-card space-y-2';
       card.innerHTML = `
         <div class="flex items-center justify-between text-xs">
           <div class="flex items-center space-x-2">
@@ -546,6 +755,7 @@ class RiedApp {
 
       card.querySelector('.btn-quick-edit-budget').addEventListener('click', (e) => {
         e.stopPropagation();
+        sounds.playPop();
         this.openBudgetModal(cat.category, cat.budget);
       });
 
@@ -573,7 +783,6 @@ class RiedApp {
       return;
     }
 
-    // Render top 12 transactions on dashboard
     list.slice(0, 12).forEach((tx) => {
       const row = this.createTransactionCard(tx);
       this.dom.txContainer.appendChild(row);
@@ -589,7 +798,6 @@ class RiedApp {
     try {
       const list = await fetchTransactionsList(this.txFilterType, this.txFilterCategory, this.txSearchQuery);
       
-      // Update KPI highlights in Transaksi View
       const totalCount = list.length;
       const totalExp = list.filter((t) => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
       const totalInc = list.filter((t) => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
@@ -636,7 +844,7 @@ class RiedApp {
     };
 
     const row = document.createElement('div');
-    row.className = 'p-3 rounded-2xl fino-card flex items-center justify-between hover:scale-[1.005] transition-all';
+    row.className = 'p-3 rounded-2xl ried-card flex items-center justify-between hover:scale-[1.005] transition-all';
     row.innerHTML = `
       <div class="flex items-center space-x-3">
         <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-sm flex-shrink-0" style="background-color: ${catMeta.color}">
@@ -666,12 +874,15 @@ class RiedApp {
     `;
 
     row.querySelector('.btn-edit').addEventListener('click', () => {
+      sounds.playPop();
       this.openTxModal(true, tx);
     });
 
     row.querySelector('.btn-delete').addEventListener('click', async () => {
+      sounds.playPop();
       if (confirm(`Yakin ingin menghapus transaksi "${tx.title}"?`)) {
         await deleteExistingTransaction(tx.id);
+        sounds.playPop();
         await this.refreshAllData();
       }
     });
@@ -706,7 +917,7 @@ class RiedApp {
       }
 
       const card = document.createElement('div');
-      card.className = 'fino-card p-5 rounded-3xl space-y-4 flex flex-col justify-between';
+      card.className = 'ried-card p-5 rounded-3xl space-y-4 flex flex-col justify-between';
       card.innerHTML = `
         <div class="space-y-3">
           <div class="flex items-center justify-between">
@@ -752,6 +963,7 @@ class RiedApp {
       `;
 
       card.querySelector('.btn-edit-budget-limit').addEventListener('click', () => {
+        sounds.playPop();
         this.openBudgetModal(cat.category, cat.budget);
       });
 
@@ -767,7 +979,6 @@ class RiedApp {
   renderLaporanView() {
     if (!this.summary) return;
 
-    // 1. Savings Rate Calculation
     const inc = this.summary.total_income;
     const exp = this.summary.total_expense;
     if (this.dom.reportSavingsRate) {
@@ -779,14 +990,12 @@ class RiedApp {
       }
     }
 
-    // 2. Daily Average
     if (this.dom.reportAvgDaily) {
       const days = this.summary.target_days_current || 30;
       const avg = Math.round(exp / days);
       this.dom.reportAvgDaily.textContent = formatRupiah(avg);
     }
 
-    // 3. Category Breakdown Table
     if (!this.dom.reportTableBody) return;
     this.dom.reportTableBody.innerHTML = '';
 
@@ -865,6 +1074,7 @@ class RiedApp {
       } else {
         await createNewTransaction(payload);
       }
+      sounds.playChime();
       this.closeTxModal();
       await this.refreshAllData();
     } catch (err) {
@@ -909,6 +1119,7 @@ class RiedApp {
 
     try {
       await updateCategoryBudgetLimit(this.editingBudgetCategory, newBudget);
+      sounds.playChime();
       this.closeBudgetModal();
       await this.refreshAllData();
     } catch (err) {
@@ -917,7 +1128,17 @@ class RiedApp {
   }
 }
 
-// Instantiate on DOM ready
-window.addEventListener('DOMContentLoaded', () => {
-  new RiedApp();
-});
+// Robust bootstrap on DOM ready or immediate if already loaded
+function bootstrapRiedApp() {
+  const app = new RiedApp();
+  window.riedApp = app;
+  window.riedAudio = sounds;
+  return app;
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrapRiedApp);
+} else {
+  bootstrapRiedApp();
+}
+

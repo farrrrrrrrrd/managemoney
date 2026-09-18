@@ -49,641 +49,845 @@
   <!-- Stylesheet -->
   <link rel="stylesheet" href="./css/style.css">
 </head>
-<body class="bg-[#f3f7f0] dark:bg-[#0d1610] text-slate-800 dark:text-slate-100 min-h-screen flex selection:bg-emerald-500 selection:text-white transition-colors duration-300">
+<body class="bg-[#f4f7f2] dark:bg-[#0c150f] text-slate-800 dark:text-slate-100 min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white transition-colors duration-300 font-sans">
 
-  <!-- Left Sidebar Navigation -->
-  <aside class="w-64 border-r border-emerald-100 dark:border-emerald-950/60 bg-white/80 dark:bg-[#121d15]/80 backdrop-blur-xl p-5 flex flex-col justify-between hidden md:flex sticky top-0 h-screen z-20">
+  <!-- ========================================================================= -->
+  <!-- TOP GLOBAL NAVIGATION BAR -->
+  <!-- ========================================================================= -->
+  <header class="w-full border-b border-emerald-100 dark:border-emerald-950/60 bg-white/75 dark:bg-[#111c14]/80 backdrop-blur-xl px-6 py-3.5 sticky top-0 z-50 flex items-center justify-between">
     
-    <div class="space-y-6">
-      <!-- Logo Ried -->
-      <div class="flex items-center space-x-3 px-2">
-        <div class="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
-          <i data-lucide="wallet" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <span class="text-xl font-black tracking-tight text-emerald-900 dark:text-white">RIED<span class="text-emerald-500">.</span></span>
-          <span class="text-[10px] block font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Financial SaaS v2.1</span>
-        </div>
+    <!-- Brand Logo -->
+    <div class="flex items-center space-x-3 cursor-pointer" id="brand-logo-btn">
+      <div class="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
+        <i data-lucide="wallet" class="w-5 h-5"></i>
       </div>
-
-      <!-- Nav Links -->
-      <nav id="sidebar-nav" class="space-y-1.5 text-xs font-semibold">
-        <button data-view="dashboard" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl nav-link-active transition-all">
-          <i data-lucide="layout-grid" class="w-4 h-4"></i>
-          <span>Dashboard</span>
-        </button>
-        <button data-view="transaksi" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-          <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
-          <span>Transaksi</span>
-        </button>
-        <button data-view="pengeluaran" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-          <i data-lucide="pie-chart" class="w-4 h-4"></i>
-          <span>Pengeluaran</span>
-        </button>
-        <button data-view="laporan" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-          <i data-lucide="file-text" class="w-4 h-4"></i>
-          <span>Laporan</span>
-        </button>
-        <button data-view="pengaturan" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-          <i data-lucide="settings" class="w-4 h-4"></i>
-          <span>Pengaturan</span>
-        </button>
-      </nav>
+      <div>
+        <span class="text-xl font-black tracking-tight text-emerald-950 dark:text-white">RIED<span class="text-emerald-500">.</span></span>
+        <span class="text-[10px] block font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Personal Financial Studio</span>
+      </div>
     </div>
 
-    <!-- Bottom User & Theme Toggle -->
-    <div class="space-y-3 pt-4 border-t border-emerald-100 dark:border-emerald-950/60">
+    <!-- Center Mode Switcher Tabs -->
+    <div class="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800/70 p-1 rounded-2xl text-xs font-bold border border-emerald-100 dark:border-emerald-900/40">
+      <button id="nav-mode-landing" class="px-4 py-2 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm flex items-center gap-1.5 transition-all">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-500"></i>
+        <span>Showcase Landing</span>
+      </button>
+      <button id="nav-mode-studio" class="px-4 py-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white flex items-center gap-1.5 transition-all">
+        <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+        <span>Live App Studio</span>
+      </button>
+    </div>
+
+    <!-- Right Controls: Sound, Theme, & CTA -->
+    <div class="flex items-center space-x-2.5">
       
-      <!-- Theme Switcher Pill -->
-      <button id="theme-toggle" class="w-full flex items-center justify-between p-2.5 rounded-2xl fino-card text-xs font-semibold text-slate-700 dark:text-slate-200">
-        <span class="flex items-center gap-2">
-          <i id="theme-icon" data-lucide="moon" class="w-4 h-4 text-emerald-500"></i>
-          <span>Ganti Tema</span>
-        </span>
-        <span id="theme-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold">Matcha</span>
+      <!-- Audio Haptic Sound Toggle -->
+      <button id="sound-toggle" class="p-2.5 rounded-2xl ried-card text-slate-600 dark:text-slate-300 hover:text-emerald-500 transition-all flex items-center gap-1.5 text-xs font-semibold" title="Aktifkan/Matikan Efek Suara">
+        <i id="sound-icon" data-lucide="volume-2" class="w-4 h-4 text-emerald-500"></i>
+        <span class="hidden md:inline text-[11px]" id="sound-status-text">Audio ON</span>
       </button>
 
-      <!-- User Card -->
-      <div class="flex items-center space-x-3 p-2 rounded-2xl fino-card">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-          R
-        </div>
-        <div class="overflow-hidden">
-          <span class="text-xs font-bold text-slate-800 dark:text-white block truncate">Ried Executive</span>
-          <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Smart Personal Finance</span>
-        </div>
-      </div>
+      <!-- Theme Switcher Pill -->
+      <button id="theme-toggle" class="p-2.5 rounded-2xl ried-card text-slate-600 dark:text-slate-300 hover:text-emerald-500 transition-all flex items-center gap-1.5 text-xs font-semibold" title="Ganti Tema">
+        <i id="theme-icon" data-lucide="moon" class="w-4 h-4 text-emerald-500"></i>
+        <span class="hidden md:inline text-[11px]" id="theme-badge">Matcha</span>
+      </button>
+
+      <!-- Primary Action CTA -->
+      <button id="btn-open-app-top" class="px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 active:scale-95 transition-all flex items-center gap-2">
+        <span>Buka Live App</span>
+        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+      </button>
 
     </div>
 
-  </aside>
+  </header>
 
-  <!-- Main Content Area -->
-  <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+  <!-- ========================================================================= -->
+  <!-- MODE 1: WORLD-CLASS HERO LANDING SHOWCASE -->
+  <!-- ========================================================================= -->
+  <section id="section-hero-showcase" class="w-full flex-1 hero-glow-mesh relative overflow-hidden py-12 px-6">
     
-    <!-- Top Header Bar -->
-    <header class="p-6 pb-2 flex flex-wrap items-center justify-between gap-4 border-b border-emerald-100/50 dark:border-emerald-950/40 bg-white/40 dark:bg-[#121d15]/40 backdrop-blur-md sticky top-0 z-10">
-      <div>
-        <div class="flex items-center space-x-2">
-          <h1 id="view-title" class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Selamat pagi, Ried 👋</h1>
-          <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">LIVE</span>
-        </div>
-        <p id="view-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Kelola dan pantau keuangan personal Anda dengan presisi & gaya.</p>
-      </div>
+    <div class="max-w-6xl mx-auto space-y-16">
 
-      <div class="flex items-center space-x-3">
-        <!-- Date Badge -->
-        <div class="flex items-center space-x-2 px-3.5 py-2 rounded-2xl fino-card text-xs font-semibold text-slate-700 dark:text-slate-300">
-          <i data-lucide="calendar" class="w-3.5 h-3.5 text-emerald-500"></i>
-          <span id="header-date">Agustus 2026</span>
+      <!-- Hero Header & Value Proposition -->
+      <div class="text-center max-w-3xl mx-auto space-y-6 relative">
+        
+        <!-- Floating Sticker 1: Top Left -->
+        <div class="hidden lg:flex items-center space-x-2 absolute -left-24 top-0 sticker-floating px-3.5 py-1.5 rounded-full bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold border border-emerald-200 dark:border-emerald-800/80 shadow-lg" style="--rot: -8deg">
+          <span class="text-base">🥑</span>
+          <span>0% Pusing Atur Uang</span>
         </div>
 
-        <!-- Add Transaction Button -->
-        <button id="btn-add-tx" class="flex items-center space-x-2 px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 transition-all active:scale-95">
-          <i data-lucide="plus" class="w-4 h-4"></i>
-          <span>Tambah Transaksi</span>
-        </button>
+        <!-- Floating Sticker 2: Top Right -->
+        <div class="hidden lg:flex items-center space-x-2 absolute -right-24 top-4 sticker-floating px-3.5 py-1.5 rounded-full bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-bold border border-emerald-200 dark:border-emerald-800/80 shadow-lg" style="--rot: 7deg">
+          <span class="text-base">✨</span>
+          <span>Bebas Format Kaku</span>
+        </div>
+
+        <!-- Floating Sticker 3: Bottom Right -->
+        <div class="hidden lg:flex items-center space-x-2 absolute -right-16 bottom-0 sticker-floating px-3.5 py-1.5 rounded-full bg-emerald-500 text-white text-xs font-bold shadow-lg" style="--rot: -5deg">
+          <span class="text-base">⚡</span>
+          <span>0ms Latency SQLite</span>
+        </div>
+
+        <!-- Hero Badge Pill -->
+        <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-emerald-100/80 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>FINANCIAL FREEDOM HUB // RE-IMAGINED FOR 2026</span>
+        </div>
+
+        <!-- Hero Display Title -->
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.12]">
+          Uang kamu, tapi jauh lebih <br class="hidden sm:inline">
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 underline decoration-emerald-300 decoration-wavy decoration-2">rapi & estetik.</span> 🌱
+        </h1>
+
+        <!-- Hero Subtitle -->
+        <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
+          RIED menggabungkan disiplin anggaran bento organik, kontrol pengeluaran interaktif, dan efek sentuhan (*tactile feedback*) yang memuaskan. Didesain untuk manusia cerdas, bukan akuntan korporat yang kaku.
+        </p>
+
+        <!-- CTA Action Buttons -->
+        <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
+          <button id="hero-cta-enter" class="px-7 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+            <span>Masuk ke Dashboard Sekarang</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+          
+          <button id="hero-cta-simulate" class="px-6 py-3.5 rounded-2xl ried-card text-slate-800 dark:text-white font-bold text-sm hover:border-emerald-400 active:scale-95 transition-all flex items-center gap-2">
+            <i data-lucide="calculator" class="w-4 h-4 text-emerald-500"></i>
+            <span>Coba Simulator Gaya Hidup</span>
+          </button>
+        </div>
+
       </div>
-    </header>
 
-    <!-- Mobile View Bar (visible on small screens) -->
-    <div class="md:hidden flex items-center justify-around bg-white dark:bg-[#121d15] p-2 border-b border-emerald-100 dark:border-emerald-950">
-      <button data-view="dashboard" class="mobile-nav-btn text-xs font-bold text-emerald-500 p-2">Dashboard</button>
-      <button data-view="transaksi" class="mobile-nav-btn text-xs font-medium text-slate-500 p-2">Transaksi</button>
-      <button data-view="pengeluaran" class="mobile-nav-btn text-xs font-medium text-slate-500 p-2">Pengeluaran</button>
-      <button data-view="laporan" class="mobile-nav-btn text-xs font-medium text-slate-500 p-2">Laporan</button>
-      <button data-view="pengaturan" class="mobile-nav-btn text-xs font-medium text-slate-500 p-2">Pengaturan</button>
-    </div>
-
-    <!-- Playful & Stylish Hero Landing Banner -->
-    <div id="hero-banner" class="mx-6 mt-4 p-5 rounded-3xl fino-card relative overflow-hidden bg-gradient-to-r from-emerald-50 via-teal-50/40 to-white dark:from-emerald-950/40 dark:via-[#15241b] dark:to-[#121d15] border border-emerald-200/60 dark:border-emerald-800/40">
-      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
-        <div class="space-y-1.5 max-w-2xl">
-          <div class="flex items-center space-x-2">
-            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
-              ✨ Financial Freedom Hub
-            </span>
-            <span class="text-xs font-semibold text-emerald-700 dark:text-emerald-300">Disiplin Menabung Lebih Menyenangkan</span>
+      <!-- Hero Bento Playground (3D Virtual Card + Interactive Lifestyle Simulator) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        <!-- 1. 3D Virtual Card Showcase (5 cols) -->
+        <div class="lg:col-span-5 ried-card p-7 rounded-3xl flex flex-col justify-between space-y-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="credit-card" class="w-4 h-4 text-emerald-500"></i>
+              <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">3D Tactile Card</span>
+            </div>
+            <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold">Gerakkan Mouse</span>
           </div>
-          <h2 class="text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">
-            Ucapkan selamat tinggal pada catatan finansial yang kaku & membosankan 🌱
-          </h2>
-          <p class="text-xs text-slate-600 dark:text-slate-300">
-            RIED mendesain pelacakan pengeluaran dengan nuansa bento organik, visualisasi tren harian cerdas, dan kontrol batas budget real-time.
+
+          <!-- The Realistic 3D Tilt Card -->
+          <div class="virtual-card p-6 h-56 text-white flex flex-col justify-between cursor-pointer" data-tilt data-tilt-max="16">
+            <div class="tilt-shine"></div>
+            
+            <div class="flex items-start justify-between relative z-10">
+              <div>
+                <span class="text-[10px] uppercase font-bold tracking-widest text-emerald-100 block">RIED EMERALD RESERVE</span>
+                <span class="text-xl font-black tracking-wider font-mono">Rp 9.638.500</span>
+              </div>
+              <div class="w-9 h-7 rounded-lg bg-amber-400/80 border border-amber-300 shadow-sm flex items-center justify-center">
+                <div class="w-6 h-4 border border-amber-600/40 rounded-sm"></div>
+              </div>
+            </div>
+
+            <div class="space-y-2 relative z-10">
+              <div class="text-xs font-mono tracking-widest text-emerald-100">
+                4829 •••• •••• 9214
+              </div>
+              <div class="flex items-center justify-between text-[10px] text-emerald-100 font-semibold">
+                <span>RIED EXECUTIVE</span>
+                <span>EXP 09/30</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed text-center">
+            Arahkan kursor Anda ke kartu di atas untuk merasakan pantulan cahaya specular dan kemiringan perspektif 3D secara dinamis.
           </p>
         </div>
-        <div class="flex items-center space-x-2 self-end md:self-center">
-          <button id="hero-quick-tx" class="px-4 py-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-1.5">
-            <i data-lucide="zap" class="w-3.5 h-3.5"></i>
-            <span>Catat Pengeluaran</span>
-          </button>
-          <button id="hero-dismiss" class="p-2 rounded-2xl bg-white/60 dark:bg-slate-800/60 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all text-xs" title="Tutup Banner">
-            <i data-lucide="x" class="w-4 h-4"></i>
-          </button>
+
+        <!-- 2. Interactive Lifestyle Expense Simulator (7 cols) -->
+        <div id="simulator-container" class="lg:col-span-7 ried-card p-7 rounded-3xl flex flex-col justify-between space-y-6">
+          
+          <div class="flex items-center justify-between border-b border-emerald-100 dark:border-emerald-950/60 pb-3">
+            <div>
+              <span class="text-xs font-extrabold text-slate-900 dark:text-white block">Simulator Gaya Hidup & Tabungan Impian</span>
+              <span class="text-[11px] text-slate-400">Geser untuk melihat dampak penghematan kecil terhadap masa depan Anda.</span>
+            </div>
+            <span class="px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 font-black text-xs font-mono">
+              REAL-TIME
+            </span>
+          </div>
+
+          <div class="space-y-5">
+            <!-- Slider 1: Kopi & Jajan Harian -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-700 dark:text-slate-200">Jajan Kopi & Camilan per Hari:</span>
+                <span id="sim-coffee-val" class="font-mono font-black text-emerald-600 dark:text-emerald-400">Rp 35.000 / hari</span>
+              </div>
+              <input id="sim-coffee-slider" type="range" min="0" max="100000" step="5000" value="35000" class="w-full">
+            </div>
+
+            <!-- Slider 2: Nongkrong Mingguan -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-700 dark:text-slate-200">Nongkrong & Hiburan per Minggu:</span>
+                <span id="sim-hangout-val" class="font-mono font-black text-emerald-600 dark:text-emerald-400">Rp 200.000 / minggu</span>
+              </div>
+              <input id="sim-hangout-slider" type="range" min="0" max="800000" step="25000" value="200000" class="w-full">
+            </div>
+          </div>
+
+          <!-- Output Bento Impact Highlight -->
+          <div class="p-5 rounded-2xl bg-gradient-to-tr from-emerald-50 to-teal-50/50 dark:from-emerald-950/50 dark:to-[#142318] border border-emerald-200 dark:border-emerald-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <span class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider block">Potensi Tabungan 1 Tahun:</span>
+              <span id="sim-annual-savings" class="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">Rp 23.175.000</span>
+              <span id="sim-reward-text" class="text-xs text-slate-600 dark:text-slate-300 mt-1 block">🎉 Cukup untuk liburan impian atau 1 laptop kerja baru!</span>
+            </div>
+            <button id="sim-apply-btn" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition-all whitespace-nowrap self-stretch sm:self-auto">
+              Terapkan ke Budget
+            </button>
+          </div>
+
         </div>
+
       </div>
+
+      <!-- 3 Bento Feature Highlights -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        
+        <div class="ried-card p-6 rounded-3xl space-y-3 hover:scale-[1.02] transition-all">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold">
+            <i data-lucide="zap" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">Alokasi Otomatis 0-Lag</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Data disimpan instan ke SQLite lokal tanpa delay jaringan eksternal. Performa sub-millisecond setiap kali mencatat pengeluaran.
+          </p>
+        </div>
+
+        <div class="ried-card p-6 rounded-3xl space-y-3 hover:scale-[1.02] transition-all">
+          <div class="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950/60 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
+            <i data-lucide="pie-chart" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">Visualisasi Bento Organik</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Grafik gelombang spline area dan donut distribution interaktif yang menyesuaikan tema Matcha Cream & Forest Dark secara otomatis.
+          </p>
+        </div>
+
+        <div class="ried-card p-6 rounded-3xl space-y-3 hover:scale-[1.02] transition-all">
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold">
+            <i data-lucide="shield-check" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">Privasi Finansial 100%</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Catatan finansial Anda tersimpan di komputer pribadi Anda. Ekspor mudah kapan saja ke file CSV dalam satu klik.
+          </p>
+        </div>
+
+      </div>
+
     </div>
 
-    <!-- MAIN CONTAINER WITH SPA VIEWS -->
-    <main class="p-6 pt-4 space-y-6 max-w-7xl">
+  </section>
 
-      <!-- ========================================================================= -->
-      <!-- VIEW 1: DASHBOARD -->
-      <!-- ========================================================================= -->
-      <div id="view-dashboard" class="spa-view space-y-6 animate-fade-in">
-        
-        <!-- Bento Row 1: Calendar Strip, Target Days & Total Balance Hero -->
-        <section class="grid grid-cols-1 md:grid-cols-12 gap-5">
+  <!-- ========================================================================= -->
+  <!-- MODE 2: FULL LIVE APP STUDIO (SPA) -->
+  <!-- ========================================================================= -->
+  <div id="section-app-studio" class="w-full flex-1 flex min-h-0 hidden">
+    
+    <!-- Left Sidebar Navigation -->
+    <aside class="w-64 border-r border-emerald-100 dark:border-emerald-950/60 bg-white/80 dark:bg-[#121d15]/80 backdrop-blur-xl p-5 flex flex-col justify-between hidden md:flex sticky top-[65px] h-[calc(100vh-65px)] z-20">
+      
+      <div class="space-y-6">
+        <!-- Return to Showcase Link -->
+        <button id="sidebar-back-showcase" class="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-xs font-bold transition-all">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Showcase Landing</span>
+        </button>
+
+        <!-- Nav Links -->
+        <nav id="sidebar-nav" class="space-y-1.5 text-xs font-semibold">
+          <button data-view="dashboard" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl nav-link-active transition-all">
+            <i data-lucide="layout-grid" class="w-4 h-4"></i>
+            <span>Dashboard</span>
+          </button>
+          <button data-view="transaksi" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+            <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+            <span>Transaksi</span>
+          </button>
+          <button data-view="pengeluaran" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+            <i data-lucide="pie-chart" class="w-4 h-4"></i>
+            <span>Pengeluaran</span>
+          </button>
+          <button data-view="laporan" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+            <i data-lucide="file-text" class="w-4 h-4"></i>
+            <span>Laporan</span>
+          </button>
+          <button data-view="pengaturan" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+            <span>Pengaturan</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Bottom User Card -->
+      <div class="space-y-3 pt-4 border-t border-emerald-100 dark:border-emerald-950/60">
+        <div class="flex items-center space-x-3 p-2 rounded-2xl ried-card">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+            R
+          </div>
+          <div class="overflow-hidden">
+            <span class="text-xs font-bold text-slate-800 dark:text-white block truncate">Ried Executive</span>
+            <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Personal Finance Pro</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Main Content Area of App Studio -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      
+      <!-- Studio Top View Header Bar -->
+      <div class="p-6 pb-2 flex flex-wrap items-center justify-between gap-4 border-b border-emerald-100/50 dark:border-emerald-950/40 bg-white/40 dark:bg-[#121d15]/40 backdrop-blur-md sticky top-0 z-10">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 id="view-title" class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Selamat pagi, Ried 👋</h1>
+            <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">LIVE</span>
+          </div>
+          <p id="view-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Kelola dan pantau keuangan personal Anda dengan presisi & gaya.</p>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <!-- Date Badge -->
+          <div class="flex items-center space-x-2 px-3.5 py-2 rounded-2xl ried-card text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-emerald-500"></i>
+            <span id="header-date">Agustus 2026</span>
+          </div>
+
+          <!-- Add Transaction Button -->
+          <button id="btn-add-tx" class="flex items-center space-x-2 px-4 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 transition-all active:scale-95">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Tambah Transaksi</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile View Bar (visible on small screens) -->
+      <div class="md:hidden flex items-center justify-around bg-white dark:bg-[#121d15] p-2 border-b border-emerald-100 dark:border-emerald-950">
+        <button data-view="dashboard" class="mobile-nav-btn text-xs font-bold text-emerald-500 p-2">Dashboard</button>
+        <button data-view="transaksi" class="mobile-nav-btn text-xs font-medium text-slate-500 p-2">Transaksi</button>
+        <button data-view="pengeluaran" class="mobile-nav-btn text-xs font-medium text-slate-500 p-2">Pengeluaran</button>
+        <button data-view="laporan" class="mobile-nav-btn text-xs font-medium text-slate-500 p-2">Laporan</button>
+        <button data-view="pengaturan" class="mobile-nav-btn text-xs font-medium text-slate-500 p-2">Pengaturan</button>
+      </div>
+
+      <!-- MAIN CONTAINER WITH SPA VIEWS -->
+      <main class="p-6 pt-4 space-y-6 max-w-7xl">
+
+        <!-- ========================================================================= -->
+        <!-- VIEW 1: DASHBOARD -->
+        <!-- ========================================================================= -->
+        <div id="view-dashboard" class="spa-view space-y-6 animate-fade-in">
           
-          <!-- 1. Calendar Day Strip (5 cols) -->
-          <div class="md:col-span-5 fino-card p-5 rounded-3xl space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <i data-lucide="calendar-days" class="w-4 h-4 text-emerald-500"></i>
-                <span class="text-xs font-bold text-slate-900 dark:text-white">Jadwal Harian</span>
-              </div>
-              <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">Bulan Ini</span>
-            </div>
-            <!-- Horizontal Day Pills -->
-            <div id="date-strip" class="flex items-center justify-between gap-1.5 pt-1 overflow-x-auto pb-1">
-              <!-- Populated via app.js -->
-            </div>
-          </div>
-
-          <!-- 2. Target Menabung / Goal (3 cols) -->
-          <div class="md:col-span-3 fino-card p-5 rounded-3xl space-y-2 flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-slate-900 dark:text-white">Target Menabung</span>
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-            </div>
-            <div class="flex items-center justify-between py-1">
-              <div>
-                <span id="stat-target-days" class="text-xl font-extrabold text-slate-900 dark:text-white block font-mono">13 / 31</span>
-                <span class="text-[10px] text-slate-400">Hari Disiplin Anggaran</span>
-              </div>
-              <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-xs font-mono">
-                42%
-              </div>
-            </div>
-            <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div class="h-full bg-emerald-500 rounded-full" style="width: 42%"></div>
-            </div>
-          </div>
-
-          <!-- 3. Total Balance Hero (4 cols) -->
-          <div class="md:col-span-4 fino-hero-card p-6 rounded-3xl flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold uppercase tracking-wider text-emerald-100">Total Saldo Bersih</span>
-              <span class="px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-bold backdrop-blur-sm">Status Sehat</span>
-            </div>
-            <div class="my-2">
-              <span id="stat-total-balance" class="text-2xl lg:text-3xl font-black tracking-tight text-white block">Rp 0</span>
-              <span class="text-xs text-emerald-100 mt-1 block">Tersedia di Kas & Rekening Utama</span>
-            </div>
-            <div class="flex items-center justify-between text-[11px] text-emerald-100 border-t border-white/20 pt-2.5">
-              <span>Update Otomatis</span>
-              <span class="font-bold flex items-center gap-1">
-                <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
-                Sinkronisasi SQLite
-              </span>
-            </div>
-          </div>
-
-        </section>
-
-        <!-- Bento Row 2: Secondary KPI Cards -->
-        <section class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          
-          <!-- Total Pengeluaran -->
-          <div class="fino-card p-5 rounded-3xl flex items-center justify-between">
-            <div class="space-y-1">
-              <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Pengeluaran Bulan Ini</span>
-              <span id="stat-total-expense" class="text-xl font-extrabold text-slate-900 dark:text-white block">Rp 0</span>
-              <span class="text-[10px] text-rose-500 font-semibold flex items-center gap-1">
-                <i data-lucide="trending-down" class="w-3 h-3"></i>
-                <span id="stat-expense-ratio">68% Dari Total Anggaran</span>
-              </span>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-500">
-              <i data-lucide="arrow-up-right" class="w-6 h-6"></i>
-            </div>
-          </div>
-
-          <!-- Total Transaksi -->
-          <div class="fino-card p-5 rounded-3xl flex items-center justify-between">
-            <div class="space-y-1">
-              <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Total Transaksi</span>
-              <span id="stat-tx-count" class="text-xl font-extrabold text-slate-900 dark:text-white block">0 Transaksi</span>
-              <span class="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
-                <i data-lucide="activity" class="w-3 h-3"></i>
-                Rata-rata 3.6 Transaksi/Hari
-              </span>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-500">
-              <i data-lucide="receipt" class="w-6 h-6"></i>
-            </div>
-          </div>
-
-          <!-- Total Pemasukan -->
-          <div class="fino-card p-5 rounded-3xl flex items-center justify-between">
-            <div class="space-y-1">
-              <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Total Pemasukan</span>
-              <span id="stat-total-income" class="text-xl font-extrabold text-slate-900 dark:text-white block">Rp 0</span>
-              <span class="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
-                <i data-lucide="trending-up" class="w-3 h-3"></i>
-                Gaji & Pendapatan Sampingan
-              </span>
-            </div>
-            <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-500">
-              <i data-lucide="arrow-down-left" class="w-6 h-6"></i>
-            </div>
-          </div>
-
-        </section>
-
-        <!-- Bento Row 3: Spline Wave Area Chart & Category Donut -->
-        <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          
-          <!-- Daily Expenses Spline Chart (8 cols) -->
-          <div class="lg:col-span-8 fino-card p-6 rounded-3xl space-y-4">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <span class="text-xs font-bold text-slate-900 dark:text-white block">Pengeluaran Harian</span>
-                <span class="text-[11px] text-slate-400">Tren pengeluaran 10 hari terakhir</span>
-              </div>
-              <div class="flex items-center space-x-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl text-xs">
-                <button class="px-3 py-1 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-bold shadow-sm">Per Hari</button>
-                <button class="px-3 py-1 rounded-xl text-slate-500 dark:text-slate-400 font-medium hover:text-slate-800">Per Transaksi</button>
-              </div>
-            </div>
-            <div class="w-full h-64 relative">
-              <canvas id="chart-spline" class="w-full h-full"></canvas>
-            </div>
-          </div>
-
-          <!-- Category Breakdown Donut Chart (4 cols) -->
-          <div class="lg:col-span-4 fino-card p-6 rounded-3xl space-y-4 flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-slate-900 dark:text-white">Kategori Pengeluaran</span>
-              <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full">Distribusi</span>
-            </div>
+          <!-- Bento Row 1: Calendar Strip, Target Days & Total Balance Hero -->
+          <section class="grid grid-cols-1 md:grid-cols-12 gap-5">
             
-            <div class="flex items-center justify-center py-2">
-              <canvas id="chart-donut" width="180" height="180" class="max-w-[180px] max-h-[180px]"></canvas>
-            </div>
-
-            <!-- Quick Category Insight Pill -->
-            <div class="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 flex items-start space-x-2">
-              <i data-lucide="sparkles" class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0"></i>
-              <div>
-                <span class="font-bold block">Quick Insight:</span>
-                <span id="insight-text">Pengeluaran terbesar teralokasi pada Rumah & Makanan.</span>
+            <!-- 1. Calendar Day Strip (5 cols) -->
+            <div class="md:col-span-5 ried-card p-5 rounded-3xl space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <i data-lucide="calendar-days" class="w-4 h-4 text-emerald-500"></i>
+                  <span class="text-xs font-bold text-slate-900 dark:text-white">Jadwal Harian</span>
+                </div>
+                <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">Bulan Ini</span>
               </div>
-            </div>
-          </div>
-
-        </section>
-
-        <!-- Bento Row 4: Category Budget Progress & Transactions List -->
-        <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          
-          <!-- Category Budgets (5 cols) -->
-          <div class="lg:col-span-5 fino-card p-6 rounded-3xl space-y-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <span class="text-xs font-bold text-slate-900 dark:text-white block">Budget Kategori</span>
-                <span class="text-[10px] text-slate-400">Alokasi & Progres Bulanan</span>
-              </div>
-              <button id="btn-goto-budgets" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
-                <span>Kelola Budget</span>
-                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-              </button>
-            </div>
-            <div id="category-list" class="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-              <!-- Populated via app.js -->
-            </div>
-          </div>
-
-          <!-- Transactions Ledger List (7 cols) -->
-          <div class="lg:col-span-7 fino-card p-6 rounded-3xl space-y-4">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <span class="text-xs font-bold text-slate-900 dark:text-white block">Daftar Transaksi Terkini</span>
-                <span class="text-[11px] text-slate-400">Riwayat transaksi keuangan terbaru</span>
-              </div>
-              <!-- Type Filters -->
-              <div class="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl text-xs font-semibold">
-                <button id="filter-all" class="px-3 py-1 rounded-xl bg-emerald-500 text-white shadow-sm">Semua</button>
-                <button id="filter-expense" class="px-3 py-1 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white">Pengeluaran</button>
-                <button id="filter-income" class="px-3 py-1 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white">Pemasukan</button>
-              </div>
-            </div>
-
-            <div id="tx-container" class="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
-              <!-- Populated via app.js -->
-            </div>
-          </div>
-
-        </section>
-
-      </div>
-
-      <!-- ========================================================================= -->
-      <!-- VIEW 2: TRANSAKSI (FULL LEDGER & SEARCH) -->
-      <!-- ========================================================================= -->
-      <div id="view-transaksi" class="spa-view space-y-6 hidden">
-        
-        <!-- Transaksi Top KPI Bento -->
-        <section class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <div class="fino-card p-4 rounded-3xl">
-            <span class="text-[11px] text-slate-400 font-bold block">Total Catatan</span>
-            <span id="txview-count" class="text-xl font-extrabold text-slate-900 dark:text-white mt-1 block">54</span>
-            <span class="text-[10px] text-emerald-500 font-semibold">Tersimpan di SQLite</span>
-          </div>
-          <div class="fino-card p-4 rounded-3xl">
-            <span class="text-[11px] text-slate-400 font-bold block">Pengeluaran</span>
-            <span id="txview-expense" class="text-xl font-extrabold text-rose-500 mt-1 block">Rp 0</span>
-            <span class="text-[10px] text-rose-400 font-semibold">Debit</span>
-          </div>
-          <div class="fino-card p-4 rounded-3xl">
-            <span class="text-[11px] text-slate-400 font-bold block">Pemasukan</span>
-            <span id="txview-income" class="text-xl font-extrabold text-emerald-500 mt-1 block">Rp 0</span>
-            <span class="text-[10px] text-emerald-400 font-semibold">Kredit</span>
-          </div>
-          <div class="fino-card p-4 rounded-3xl">
-            <span class="text-[11px] text-slate-400 font-bold block">Net Cashflow</span>
-            <span id="txview-net" class="text-xl font-extrabold text-blue-500 mt-1 block">Rp 0</span>
-            <span class="text-[10px] text-blue-400 font-semibold">Surplus Bulanan</span>
-          </div>
-        </section>
-
-        <!-- Search & Category Filters Bar -->
-        <div class="fino-card p-5 rounded-3xl space-y-4">
-          <div class="flex flex-col md:flex-row items-center justify-between gap-3">
-            
-            <!-- Live Search Bar -->
-            <div class="relative w-full md:w-96">
-              <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
-              <input id="tx-search-input" type="text" placeholder="Cari transaksi (judul, catatan, kategori)..." class="w-full pl-10 pr-4 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-colors">
-            </div>
-
-            <!-- Type Filter Switcher -->
-            <div class="flex items-center space-x-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl text-xs font-semibold self-stretch md:self-auto justify-center">
-              <button id="txview-filter-all" class="px-3 py-1.5 rounded-xl bg-emerald-500 text-white shadow-sm">Semua Tipe</button>
-              <button id="txview-filter-expense" class="px-3 py-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white">Pengeluaran</button>
-              <button id="txview-filter-income" class="px-3 py-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white">Pemasukan</button>
-            </div>
-
-          </div>
-
-          <!-- Category Chips Horizontal Bar -->
-          <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-            <span class="text-[11px] font-bold text-slate-400 mr-1 flex-shrink-0">Kategori:</span>
-            <button data-cat="" class="cat-chip-btn px-3 py-1 rounded-xl bg-emerald-500 text-white font-bold whitespace-nowrap shadow-sm">Semua</button>
-            <button data-cat="Makanan" class="cat-chip-btn px-3 py-1 rounded-xl fino-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Makanan</button>
-            <button data-cat="Tagihan" class="cat-chip-btn px-3 py-1 rounded-xl fino-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Tagihan</button>
-            <button data-cat="Transportasi" class="cat-chip-btn px-3 py-1 rounded-xl fino-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Transportasi</button>
-            <button data-cat="Belanja" class="cat-chip-btn px-3 py-1 rounded-xl fino-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Belanja</button>
-            <button data-cat="Rumah" class="cat-chip-btn px-3 py-1 rounded-xl fino-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Rumah</button>
-            <button data-cat="Pendidikan" class="cat-chip-btn px-3 py-1 rounded-xl fino-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Pendidikan</button>
-            <button data-cat="Hiburan" class="cat-chip-btn px-3 py-1 rounded-xl fino-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Hiburan</button>
-            <button data-cat="Gaji" class="cat-chip-btn px-3 py-1 rounded-xl fino-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Gaji</button>
-            <button data-cat="Freelance" class="cat-chip-btn px-3 py-1 rounded-xl fino-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Freelance</button>
-          </div>
-        </div>
-
-        <!-- Full Ledger Container -->
-        <div class="fino-card p-6 rounded-3xl space-y-4">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-900 dark:text-white">Buku Kas & Riwayat Transaksi</span>
-            <span id="txview-status" class="text-[11px] text-slate-400">Menampilkan 54 transaksi</span>
-          </div>
-
-          <div id="txview-full-list" class="space-y-2.5">
-            <!-- Rendered via app.js -->
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ========================================================================= -->
-      <!-- VIEW 3: PENGELUARAN (BUDGET & LIMITS) -->
-      <!-- ========================================================================= -->
-      <div id="view-pengeluaran" class="spa-view space-y-6 hidden">
-        
-        <!-- Budget Health Overview Banner -->
-        <div class="fino-hero-card p-6 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div class="space-y-1">
-            <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">Manajemen Anggaran Terpadu</span>
-            <h2 class="text-2xl font-black text-white">Disiplin Pengeluaran Bulanan</h2>
-            <p class="text-xs text-emerald-100 max-w-xl">
-              Tentukan batas alokasi setiap pos pengeluaran. Anda akan diperingatkan saat pengeluaran mendekati 90% dari batas yang ditentukan.
-            </p>
-          </div>
-          <div class="p-4 rounded-2xl bg-white/20 backdrop-blur-md flex items-center space-x-4">
-            <div>
-              <span class="text-[10px] text-emerald-100 uppercase block">Total Alokasi Budget</span>
-              <span id="budget-total-allocation" class="text-lg font-black text-white">Rp 9.800.000</span>
-            </div>
-            <div class="w-px h-8 bg-white/30"></div>
-            <div>
-              <span class="text-[10px] text-emerald-100 uppercase block">Total Realisasi</span>
-              <span id="budget-total-spent" class="text-lg font-black text-white">Rp 6.702.000</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Category Budget Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="budget-grid-container">
-          <!-- Populated via app.js with editable budget limits -->
-        </div>
-
-      </div>
-
-      <!-- ========================================================================= -->
-      <!-- VIEW 4: LAPORAN (FINANCIAL REPORT & CSV EXPORT) -->
-      <!-- ========================================================================= -->
-      <div id="view-laporan" class="spa-view space-y-6 hidden">
-        
-        <!-- Top Action Bar with 1-Click CSV Export -->
-        <div class="fino-card p-5 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Laporan Keuangan & Analitik</h2>
-            <p class="text-xs text-slate-400">Ringkasan arus kas, alokasi kategori, dan ekspor data pembukuan.</p>
-          </div>
-          <a href="/api/export/csv" download="ried_transaksi.csv" class="flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 active:scale-95 transition-all">
-            <i data-lucide="download" class="w-4 h-4"></i>
-            <span>Download Laporan CSV</span>
-          </a>
-        </div>
-
-        <!-- Analytical KPI Highlights -->
-        <section class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div class="fino-card p-5 rounded-3xl space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-slate-400">Savings Rate</span>
-              <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">Optimal</span>
-            </div>
-            <span id="report-savings-rate" class="text-2xl font-black text-emerald-500 block">59.6%</span>
-            <span class="text-[11px] text-slate-500 dark:text-slate-400">Dari total penghasilan dialokasikan ke tabungan & kas.</span>
-          </div>
-
-          <div class="fino-card p-5 rounded-3xl space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-slate-400">Rata-rata Harian</span>
-              <i data-lucide="calculator" class="w-4 h-4 text-emerald-500"></i>
-            </div>
-            <span id="report-avg-daily" class="text-2xl font-black text-slate-900 dark:text-white block">Rp 223.400</span>
-            <span class="text-[11px] text-slate-500 dark:text-slate-400">Estimasi burn rate harian bulan ini.</span>
-          </div>
-
-          <div class="fino-card p-5 rounded-3xl space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-slate-400">Skor Kesehatan Finansial</span>
-              <span class="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-[10px] font-bold">Grade A</span>
-            </div>
-            <span class="text-2xl font-black text-blue-500 block">88 / 100</span>
-            <span class="text-[11px] text-slate-500 dark:text-slate-400">Rasio hutang 0%, cash buffer aman 6+ bulan.</span>
-          </div>
-        </section>
-
-        <!-- Category Cashflow Table -->
-        <div class="fino-card p-6 rounded-3xl space-y-4">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-900 dark:text-white">Rincian Arus Kas Per Kategori</span>
-            <span class="text-[11px] text-slate-400">Periode Berjalan</span>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left">
-              <thead>
-                <tr class="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-bold">
-                  <th class="pb-3 pl-2">Kategori</th>
-                  <th class="pb-3 text-right">Alokasi Budget</th>
-                  <th class="pb-3 text-right">Realisasi</th>
-                  <th class="pb-3 text-right">Sisa Anggaran</th>
-                  <th class="pb-3 text-right pr-2">Rasio Terpakai</th>
-                </tr>
-              </thead>
-              <tbody id="report-table-body" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
+              <div id="date-strip" class="flex items-center justify-between gap-1.5 pt-1 overflow-x-auto pb-1">
                 <!-- Populated via app.js -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ========================================================================= -->
-      <!-- VIEW 5: PENGATURAN (SETTINGS & SYSTEM INFO) -->
-      <!-- ========================================================================= -->
-      <div id="view-pengaturan" class="spa-view space-y-6 hidden">
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          <!-- Pengaturan Akun & Tampilan -->
-          <div class="fino-card p-6 rounded-3xl space-y-4">
-            <div class="flex items-center space-x-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <i data-lucide="sliders" class="w-4 h-4 text-emerald-500"></i>
-              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Preferensi Tampilan & Wilayah</h3>
-            </div>
-
-            <div class="space-y-3 text-xs">
-              <div class="flex items-center justify-between py-1">
-                <div>
-                  <span class="font-bold text-slate-800 dark:text-white block">Mata Uang Utama</span>
-                  <span class="text-[11px] text-slate-400">Format nilai nominal standar</span>
-                </div>
-                <span class="font-mono px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200">IDR (Rp)</span>
-              </div>
-
-              <div class="flex items-center justify-between py-1">
-                <div>
-                  <span class="font-bold text-slate-800 dark:text-white block">Format Tanggal</span>
-                  <span class="text-[11px] text-slate-400">Tampilan kalender & transaksi</span>
-                </div>
-                <span class="font-mono px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200">YYYY-MM-DD</span>
-              </div>
-
-              <div class="flex items-center justify-between py-1">
-                <div>
-                  <span class="font-bold text-slate-800 dark:text-white block">Tema Saat Ini</span>
-                  <span class="text-[11px] text-slate-400">Matcha Cream vs Forest Dark</span>
-                </div>
-                <button id="settings-theme-btn" class="px-3 py-1 rounded-xl bg-emerald-500 text-white font-bold shadow-sm">
-                  Ganti Tema
-                </button>
               </div>
             </div>
-          </div>
 
-          <!-- Data & Sistem -->
-          <div class="fino-card p-6 rounded-3xl space-y-4">
-            <div class="flex items-center space-x-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <i data-lucide="database" class="w-4 h-4 text-emerald-500"></i>
-              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Penyimpanan & Keamanan Data</h3>
+            <!-- 2. Target Menabung / Goal (3 cols) -->
+            <div class="md:col-span-3 ried-card p-5 rounded-3xl space-y-2 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-900 dark:text-white">Target Menabung</span>
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              </div>
+              <div class="flex items-center justify-between py-1">
+                <div>
+                  <span id="stat-target-days" class="text-xl font-extrabold text-slate-900 dark:text-white block font-mono">13 / 31</span>
+                  <span class="text-[10px] text-slate-400">Hari Disiplin Anggaran</span>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-xs font-mono">
+                  42%
+                </div>
+              </div>
+              <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div class="h-full bg-emerald-500 rounded-full" style="width: 42%"></div>
+              </div>
             </div>
 
-            <div class="space-y-3 text-xs">
-              <div class="flex items-center justify-between py-1">
-                <div>
-                  <span class="font-bold text-slate-800 dark:text-white block">Database Engine</span>
-                  <span class="text-[11px] text-slate-400">Penyimpanan lokal tanpa dependensi cloud luar</span>
-                </div>
-                <span class="font-mono px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold">SQLite 3</span>
+            <!-- 3. Total Balance Hero (4 cols) -->
+            <div class="md:col-span-4 ried-hero-card p-6 rounded-3xl flex flex-col justify-between" data-tilt data-tilt-max="10">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-emerald-100">Total Saldo Bersih</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-bold backdrop-blur-sm">Status Sehat</span>
               </div>
-
-              <div class="flex items-center justify-between py-1">
-                <div>
-                  <span class="font-bold text-slate-800 dark:text-white block">Cadangan Data Lengkap</span>
-                  <span class="text-[11px] text-slate-400">Unduh seluruh riwayat pembukuan</span>
-                </div>
-                <a href="/api/export/csv" download="ried_transaksi.csv" class="px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-bold hover:bg-emerald-500 hover:text-white transition-colors">
-                  Ekspor CSV
-                </a>
+              <div class="my-2">
+                <span id="stat-total-balance" class="text-2xl lg:text-3xl font-black tracking-tight text-white block">Rp 0</span>
+                <span class="text-xs text-emerald-100 mt-1 block">Tersedia di Kas & Rekening Utama</span>
               </div>
-
-              <div class="flex items-center justify-between py-1">
-                <div>
-                  <span class="font-bold text-slate-800 dark:text-white block">Status Layanan API</span>
-                  <span class="text-[11px] text-slate-400">FastAPI backend engine</span>
-                </div>
-                <span class="flex items-center gap-1.5 text-emerald-500 font-bold font-mono">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  ONLINE (8050)
+              <div class="flex items-center justify-between text-[11px] text-emerald-100 border-t border-white/20 pt-2.5">
+                <span>Update Otomatis</span>
+                <span class="font-bold flex items-center gap-1">
+                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                  Sinkronisasi SQLite
                 </span>
               </div>
             </div>
+
+          </section>
+
+          <!-- Bento Row 2: Secondary KPI Cards -->
+          <section class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            
+            <!-- Total Pengeluaran -->
+            <div class="ried-card p-5 rounded-3xl flex items-center justify-between">
+              <div class="space-y-1">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Pengeluaran Bulan Ini</span>
+                <span id="stat-total-expense" class="text-xl font-extrabold text-slate-900 dark:text-white block">Rp 0</span>
+                <span class="text-[10px] text-rose-500 font-semibold flex items-center gap-1">
+                  <i data-lucide="trending-down" class="w-3 h-3"></i>
+                  <span id="stat-expense-ratio">83% Dari Total Anggaran</span>
+                </span>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-500">
+                <i data-lucide="arrow-up-right" class="w-6 h-6"></i>
+              </div>
+            </div>
+
+            <!-- Total Transaksi -->
+            <div class="ried-card p-5 rounded-3xl flex items-center justify-between">
+              <div class="space-y-1">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Total Transaksi</span>
+                <span id="stat-tx-count" class="text-xl font-extrabold text-slate-900 dark:text-white block">0 Transaksi</span>
+                <span class="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
+                  <i data-lucide="activity" class="w-3 h-3"></i>
+                  Rata-rata 3.6 Transaksi/Hari
+                </span>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-500">
+                <i data-lucide="receipt" class="w-6 h-6"></i>
+              </div>
+            </div>
+
+            <!-- Total Pemasukan -->
+            <div class="ried-card p-5 rounded-3xl flex items-center justify-between">
+              <div class="space-y-1">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Total Pemasukan</span>
+                <span id="stat-total-income" class="text-xl font-extrabold text-slate-900 dark:text-white block">Rp 0</span>
+                <span class="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
+                  <i data-lucide="trending-up" class="w-3 h-3"></i>
+                  Gaji & Pendapatan Sampingan
+                </span>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-500">
+                <i data-lucide="arrow-down-left" class="w-6 h-6"></i>
+              </div>
+            </div>
+
+          </section>
+
+          <!-- Bento Row 3: Spline Wave Area Chart & Category Donut -->
+          <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            
+            <!-- Daily Expenses Spline Chart (8 cols) -->
+            <div class="lg:col-span-8 ried-card p-6 rounded-3xl space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <span class="text-xs font-bold text-slate-900 dark:text-white block">Pengeluaran Harian</span>
+                  <span class="text-[11px] text-slate-400">Tren pengeluaran 10 hari terakhir</span>
+                </div>
+                <div class="flex items-center space-x-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl text-xs">
+                  <button class="px-3 py-1 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white font-bold shadow-sm">Per Hari</button>
+                  <button class="px-3 py-1 rounded-xl text-slate-500 dark:text-slate-400 font-medium hover:text-slate-800">Per Transaksi</button>
+                </div>
+              </div>
+              <div class="w-full h-64 relative">
+                <canvas id="chart-spline" class="w-full h-full"></canvas>
+              </div>
+            </div>
+
+            <!-- Category Breakdown Donut Chart (4 cols) -->
+            <div class="lg:col-span-4 ried-card p-6 rounded-3xl space-y-4 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-900 dark:text-white">Kategori Pengeluaran</span>
+                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full">Distribusi</span>
+              </div>
+              
+              <div class="flex items-center justify-center py-2">
+                <canvas id="chart-donut" width="180" height="180" class="max-w-[180px] max-h-[180px]"></canvas>
+              </div>
+
+              <!-- Quick Category Insight Pill -->
+              <div class="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300 flex items-start space-x-2">
+                <i data-lucide="sparkles" class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0"></i>
+                <div>
+                  <span class="font-bold block">Quick Insight:</span>
+                  <span id="insight-text">Pengeluaran terbesar teralokasi pada Rumah & Makanan.</span>
+                </div>
+              </div>
+            </div>
+
+          </section>
+
+          <!-- Bento Row 4: Category Budget Progress & Transactions List -->
+          <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            
+            <!-- Category Budgets (5 cols) -->
+            <div class="lg:col-span-5 ried-card p-6 rounded-3xl space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-xs font-bold text-slate-900 dark:text-white block">Budget Kategori</span>
+                  <span class="text-[10px] text-slate-400">Alokasi & Progres Bulanan</span>
+                </div>
+                <button id="btn-goto-budgets" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+                  <span>Kelola Budget</span>
+                  <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+              <div id="category-list" class="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                <!-- Populated via app.js -->
+              </div>
+            </div>
+
+            <!-- Transactions Ledger List (7 cols) -->
+            <div class="lg:col-span-7 ried-card p-6 rounded-3xl space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <span class="text-xs font-bold text-slate-900 dark:text-white block">Daftar Transaksi Terkini</span>
+                  <span class="text-[11px] text-slate-400">Riwayat transaksi keuangan terbaru</span>
+                </div>
+                <!-- Type Filters -->
+                <div class="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl text-xs font-semibold">
+                  <button id="filter-all" class="px-3 py-1 rounded-xl bg-emerald-500 text-white shadow-sm">Semua</button>
+                  <button id="filter-expense" class="px-3 py-1 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white">Pengeluaran</button>
+                  <button id="filter-income" class="px-3 py-1 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white">Pemasukan</button>
+                </div>
+              </div>
+
+              <div id="tx-container" class="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+                <!-- Populated via app.js -->
+              </div>
+            </div>
+
+          </section>
+
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- VIEW 2: TRANSAKSI (FULL LEDGER & SEARCH) -->
+        <!-- ========================================================================= -->
+        <div id="view-transaksi" class="spa-view space-y-6 hidden">
+          
+          <!-- Transaksi Top KPI Bento -->
+          <section class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div class="ried-card p-4 rounded-3xl">
+              <span class="text-[11px] text-slate-400 font-bold block">Total Catatan</span>
+              <span id="txview-count" class="text-xl font-extrabold text-slate-900 dark:text-white mt-1 block">20</span>
+              <span class="text-[10px] text-emerald-500 font-semibold">Tersimpan di SQLite</span>
+            </div>
+            <div class="ried-card p-4 rounded-3xl">
+              <span class="text-[11px] text-slate-400 font-bold block">Pengeluaran</span>
+              <span id="txview-expense" class="text-xl font-extrabold text-rose-500 mt-1 block">Rp 0</span>
+              <span class="text-[10px] text-rose-400 font-semibold">Debit</span>
+            </div>
+            <div class="ried-card p-4 rounded-3xl">
+              <span class="text-[11px] text-slate-400 font-bold block">Pemasukan</span>
+              <span id="txview-income" class="text-xl font-extrabold text-emerald-500 mt-1 block">Rp 0</span>
+              <span class="text-[10px] text-emerald-400 font-semibold">Kredit</span>
+            </div>
+            <div class="ried-card p-4 rounded-3xl">
+              <span class="text-[11px] text-slate-400 font-bold block">Net Cashflow</span>
+              <span id="txview-net" class="text-xl font-extrabold text-blue-500 mt-1 block">Rp 0</span>
+              <span class="text-[10px] text-blue-400 font-semibold">Surplus Bulanan</span>
+            </div>
+          </section>
+
+          <!-- Search & Category Filters Bar -->
+          <div class="ried-card p-5 rounded-3xl space-y-4">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-3">
+              
+              <!-- Live Search Bar -->
+              <div class="relative w-full md:w-96">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+                <input id="tx-search-input" type="text" placeholder="Cari transaksi (judul, catatan, kategori)..." class="w-full pl-10 pr-4 py-2 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-colors">
+              </div>
+
+              <!-- Type Filter Switcher -->
+              <div class="flex items-center space-x-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl text-xs font-semibold self-stretch md:self-auto justify-center">
+                <button id="txview-filter-all" class="px-3 py-1.5 rounded-xl bg-emerald-500 text-white shadow-sm">Semua Tipe</button>
+                <button id="txview-filter-expense" class="px-3 py-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white">Pengeluaran</button>
+                <button id="txview-filter-income" class="px-3 py-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white">Pemasukan</button>
+              </div>
+
+            </div>
+
+            <!-- Category Chips Horizontal Bar -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+              <span class="text-[11px] font-bold text-slate-400 mr-1 flex-shrink-0">Kategori:</span>
+              <button data-cat="" class="cat-chip-btn px-3 py-1 rounded-xl bg-emerald-500 text-white font-bold whitespace-nowrap shadow-sm">Semua</button>
+              <button data-cat="Makanan" class="cat-chip-btn px-3 py-1 rounded-xl ried-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Makanan</button>
+              <button data-cat="Tagihan" class="cat-chip-btn px-3 py-1 rounded-xl ried-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Tagihan</button>
+              <button data-cat="Transportasi" class="cat-chip-btn px-3 py-1 rounded-xl ried-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Transportasi</button>
+              <button data-cat="Belanja" class="cat-chip-btn px-3 py-1 rounded-xl ried-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Belanja</button>
+              <button data-cat="Rumah" class="cat-chip-btn px-3 py-1 rounded-xl ried-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Rumah</button>
+              <button data-cat="Pendidikan" class="cat-chip-btn px-3 py-1 rounded-xl ried-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Pendidikan</button>
+              <button data-cat="Hiburan" class="cat-chip-btn px-3 py-1 rounded-xl ried-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Hiburan</button>
+              <button data-cat="Gaji" class="cat-chip-btn px-3 py-1 rounded-xl ried-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Gaji</button>
+              <button data-cat="Freelance" class="cat-chip-btn px-3 py-1 rounded-xl ried-card text-slate-600 dark:text-slate-300 font-medium hover:border-emerald-400 whitespace-nowrap">Freelance</button>
+            </div>
+          </div>
+
+          <!-- Full Ledger Container -->
+          <div class="ried-card p-6 rounded-3xl space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-900 dark:text-white">Buku Kas & Riwayat Transaksi</span>
+              <span id="txview-status" class="text-[11px] text-slate-400">Menampilkan 20 transaksi</span>
+            </div>
+
+            <div id="txview-full-list" class="space-y-2.5">
+              <!-- Rendered via app.js -->
+            </div>
           </div>
 
         </div>
 
-        <!-- About RIED Platform -->
-        <div class="fino-card p-6 rounded-3xl space-y-3">
-          <div class="flex items-center space-x-2">
-            <i data-lucide="shield-check" class="w-5 h-5 text-emerald-500"></i>
-            <span class="text-sm font-bold text-slate-900 dark:text-white">Tentang RIED Platform v2.1</span>
+        <!-- ========================================================================= -->
+        <!-- VIEW 3: PENGELUARAN (BUDGET & LIMITS) -->
+        <!-- ========================================================================= -->
+        <div id="view-pengeluaran" class="spa-view space-y-6 hidden">
+          
+          <!-- Budget Health Overview Banner -->
+          <div class="ried-hero-card p-6 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">Manajemen Anggaran Terpadu</span>
+              <h2 class="text-2xl font-black text-white">Disiplin Pengeluaran Bulanan</h2>
+              <p class="text-xs text-emerald-100 max-w-xl">
+                Tentukan batas alokasi setiap pos pengeluaran. Anda akan diperingatkan saat pengeluaran mendekati 90% dari batas yang ditentukan.
+              </p>
+            </div>
+            <div class="p-4 rounded-2xl bg-white/20 backdrop-blur-md flex items-center space-x-4">
+              <div>
+                <span class="text-[10px] text-emerald-100 uppercase block">Total Alokasi Budget</span>
+                <span id="budget-total-allocation" class="text-lg font-black text-white">Rp 8.100.000</span>
+              </div>
+              <div class="w-px h-8 bg-white/30"></div>
+              <div>
+                <span class="text-[10px] text-emerald-100 uppercase block">Total Realisasi</span>
+                <span id="budget-total-spent" class="text-lg font-black text-white">Rp 6.958.000</span>
+              </div>
+            </div>
           </div>
-          <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            RIED dirancang dengan arsitektur Zero AI Slop: antarmuka bento organik bergaya modern, performa responsif sub-millisecond, validasi skema Pydantic v2 yang ketat, dan visualisasi canvas dinamis tanpa dependensi library eksternal yang berat.
-          </p>
-          <div class="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
-            <span class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono font-medium">FastAPI Python</span>
-            <span class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono font-medium">SQLite DB</span>
-            <span class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono font-medium">Tailwind CSS</span>
-            <span class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono font-medium">Vanilla ES Modules</span>
-            <span class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono font-medium">HTML5 Canvas Spline</span>
+
+          <!-- Category Budget Cards Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="budget-grid-container">
+            <!-- Populated via app.js with editable budget limits -->
           </div>
+
         </div>
 
-      </div>
+        <!-- ========================================================================= -->
+        <!-- VIEW 4: LAPORAN (FINANCIAL REPORT & CSV EXPORT) -->
+        <!-- ========================================================================= -->
+        <div id="view-laporan" class="spa-view space-y-6 hidden">
+          
+          <!-- Top Action Bar with 1-Click CSV Export -->
+          <div class="ried-card p-5 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-bold text-slate-900 dark:text-white">Laporan Keuangan & Analitik</h2>
+              <p class="text-xs text-slate-400">Ringkasan arus kas, alokasi kategori, dan ekspor data pembukuan.</p>
+            </div>
+            <a href="/api/export/csv" download="ried_transaksi.csv" class="flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 active:scale-95 transition-all">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span>Download Laporan CSV</span>
+            </a>
+          </div>
 
-    </main>
+          <!-- Analytical KPI Highlights -->
+          <section class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div class="ried-card p-5 rounded-3xl space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400">Savings Rate</span>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">Optimal</span>
+              </div>
+              <span id="report-savings-rate" class="text-2xl font-black text-emerald-500 block">58.1%</span>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">Dari total penghasilan dialokasikan ke tabungan & kas.</span>
+            </div>
+
+            <div class="ried-card p-5 rounded-3xl space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400">Rata-rata Harian</span>
+                <i data-lucide="calculator" class="w-4 h-4 text-emerald-500"></i>
+              </div>
+              <span id="report-avg-daily" class="text-2xl font-black text-slate-900 dark:text-white block">Rp 231.900</span>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">Estimasi burn rate harian bulan ini.</span>
+            </div>
+
+            <div class="ried-card p-5 rounded-3xl space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400">Skor Kesehatan Finansial</span>
+                <span class="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-[10px] font-bold">Grade A</span>
+              </div>
+              <span class="text-2xl font-black text-blue-500 block">88 / 100</span>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">Rasio hutang 0%, cash buffer aman 6+ bulan.</span>
+            </div>
+          </section>
+
+          <!-- Category Cashflow Table -->
+          <div class="ried-card p-6 rounded-3xl space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-900 dark:text-white">Rincian Arus Kas Per Kategori</span>
+              <span class="text-[11px] text-slate-400">Periode Berjalan</span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-left">
+                <thead>
+                  <tr class="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-bold">
+                    <th class="pb-3 pl-2">Kategori</th>
+                    <th class="pb-3 text-right">Alokasi Budget</th>
+                    <th class="pb-3 text-right">Realisasi</th>
+                    <th class="pb-3 text-right">Sisa Anggaran</th>
+                    <th class="pb-3 text-right pr-2">Rasio Terpakai</th>
+                  </tr>
+                </thead>
+                <tbody id="report-table-body" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
+                  <!-- Populated via app.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- VIEW 5: PENGATURAN (SETTINGS & SYSTEM INFO) -->
+        <!-- ========================================================================= -->
+        <div id="view-pengaturan" class="spa-view space-y-6 hidden">
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Pengaturan Akun & Tampilan -->
+            <div class="ried-card p-6 rounded-3xl space-y-4">
+              <div class="flex items-center space-x-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <i data-lucide="sliders" class="w-4 h-4 text-emerald-500"></i>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Preferensi Tampilan & Wilayah</h3>
+              </div>
+
+              <div class="space-y-3 text-xs">
+                <div class="flex items-center justify-between py-1">
+                  <div>
+                    <span class="font-bold text-slate-800 dark:text-white block">Mata Uang Utama</span>
+                    <span class="text-[11px] text-slate-400">Format nilai nominal standar</span>
+                  </div>
+                  <span class="font-mono px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200">IDR (Rp)</span>
+                </div>
+
+                <div class="flex items-center justify-between py-1">
+                  <div>
+                    <span class="font-bold text-slate-800 dark:text-white block">Format Tanggal</span>
+                    <span class="text-[11px] text-slate-400">Tampilan kalender & transaksi</span>
+                  </div>
+                  <span class="font-mono px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-200">YYYY-MM-DD</span>
+                </div>
+
+                <div class="flex items-center justify-between py-1">
+                  <div>
+                    <span class="font-bold text-slate-800 dark:text-white block">Tema Saat Ini</span>
+                    <span class="text-[11px] text-slate-400">Matcha Cream vs Forest Dark</span>
+                  </div>
+                  <button id="settings-theme-btn" class="px-3 py-1 rounded-xl bg-emerald-500 text-white font-bold shadow-sm">
+                    Ganti Tema
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Data & Sistem -->
+            <div class="ried-card p-6 rounded-3xl space-y-4">
+              <div class="flex items-center space-x-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <i data-lucide="database" class="w-4 h-4 text-emerald-500"></i>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">Penyimpanan & Keamanan Data</h3>
+              </div>
+
+              <div class="space-y-3 text-xs">
+                <div class="flex items-center justify-between py-1">
+                  <div>
+                    <span class="font-bold text-slate-800 dark:text-white block">Database Engine</span>
+                    <span class="text-[11px] text-slate-400">Penyimpanan lokal tanpa dependensi cloud luar</span>
+                  </div>
+                  <span class="font-mono px-3 py-1 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold">SQLite 3 (ried_finance.db)</span>
+                </div>
+
+                <div class="flex items-center justify-between py-1">
+                  <div>
+                    <span class="font-bold text-slate-800 dark:text-white block">Cadangan Data Lengkap</span>
+                    <span class="text-[11px] text-slate-400">Unduh seluruh riwayat pembukuan</span>
+                  </div>
+                  <a href="/api/export/csv" download="ried_transaksi.csv" class="px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-bold hover:bg-emerald-500 hover:text-white transition-colors">
+                    Ekspor CSV
+                  </a>
+                </div>
+
+                <div class="flex items-center justify-between py-1">
+                  <div>
+                    <span class="font-bold text-slate-800 dark:text-white block">Status Layanan API</span>
+                    <span class="text-[11px] text-slate-400">FastAPI backend engine</span>
+                  </div>
+                  <span class="flex items-center gap-1.5 text-emerald-500 font-bold font-mono">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    ONLINE (8050)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- About RIED Platform -->
+          <div class="ried-card p-6 rounded-3xl space-y-3">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="shield-check" class="w-5 h-5 text-emerald-500"></i>
+              <span class="text-sm font-bold text-slate-900 dark:text-white">Tentang RIED Platform v2.1</span>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              RIED dirancang dengan arsitektur Zero AI Slop: antarmuka bento organik bergaya modern, performa responsif sub-millisecond, validasi skema Pydantic v2 yang ketat, Web Audio API synthesis engine, dan visualisasi canvas dinamis tanpa dependensi library eksternal yang berat.
+            </p>
+            <div class="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
+              <span class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono font-medium">FastAPI Python</span>
+              <span class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono font-medium">SQLite DB</span>
+              <span class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono font-medium">Web Audio API</span>
+              <span class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono font-medium">Vanilla ES Modules</span>
+              <span class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono font-medium">HTML5 Canvas Spline</span>
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+    </div>
+
   </div>
 
   <!-- Pop-Up Modal: Tambah & Edit Transaksi -->
   <div id="tx-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center p-4">
-    <div class="fino-card max-w-md w-full p-6 rounded-3xl space-y-4 shadow-2xl animate-fade-in">
+    <div class="ried-card max-w-md w-full p-6 rounded-3xl space-y-4 shadow-2xl animate-fade-in">
       
       <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
         <h3 id="modal-title" class="text-base font-bold text-slate-900 dark:text-white">Tambah Transaksi Baru</h3>
@@ -751,7 +955,7 @@
 
   <!-- Pop-Up Modal: Edit Budget Kategori -->
   <div id="budget-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md hidden items-center justify-center p-4">
-    <div class="fino-card max-w-sm w-full p-6 rounded-3xl space-y-4 shadow-2xl animate-fade-in">
+    <div class="ried-card max-w-sm w-full p-6 rounded-3xl space-y-4 shadow-2xl animate-fade-in">
       
       <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
         <div>
