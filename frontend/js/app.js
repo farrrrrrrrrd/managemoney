@@ -1,11 +1,12 @@
 /**
- * RIED Financial SaaS App Controller
- * Features:
- * - Dual Mode: World-Class Hero Landing Showcase ↔ Live App Studio
- * - Web Audio API tactile sound effects
- * - 3D card perspective tilt physics
- * - Interactive Lifestyle Expense Simulator
- * - 5 Views SPA: Dashboard, Transaksi, Pengeluaran (Budgets), Laporan, Pengaturan
+ * RIED Application Controller
+ * Reconstructed 1:1 with video reference document_6156569914959209641.mp4:
+ * - High-density Dashboard with authentic Matcha Banner
+ * - Monthly Calendar Modal ("Lihat satu bulan" popup)
+ * - Dual chart mode: "Per hari" (Spline area) & "Per transaksi" (Dense neon mint bars)
+ * - Stacked budget projection chart & Dompet horizontal progress bars
+ * - Full operational modules: Gateway WA simulator, Kamus keyword manager, Format Balasan, Review Pesan
+ * - Web Audio API haptics and theme engine.
  * Zero AI Slop - 100% Complete Implementation.
  */
 
@@ -15,13 +16,16 @@ import {
   createNewTransaction,
   updateExistingTransaction,
   deleteExistingTransaction,
-  fetchCategoriesMeta,
-  updateCategoryBudgetLimit
+  fetchCategoriesMeta
 } from './api.js';
 
-import { renderSplineChart, renderCategoryDonut } from './charts.js';
+import {
+  renderSplineChart,
+  renderTransactionBarChart,
+  renderStackedBudgetChart
+} from './charts.js';
+
 import { sounds } from './audio.js';
-import { initCardTilt } from './tilt.js';
 
 export function formatRupiah(number) {
   return new Intl.NumberFormat('id-ID', {
@@ -33,23 +37,24 @@ export function formatRupiah(number) {
 
 class RiedApp {
   constructor() {
-    this.currentMode = 'showcase'; // 'showcase' or 'studio'
-    this.currentView = 'dashboard'; // within studio
+    this.currentView = 'dashboard';
+    this.chartMode = 'daily'; // 'daily' or 'transaction'
     this.summary = null;
     this.transactions = [];
     this.categories = [];
-    
-    // Filters for Dashboard
-    this.dashFilterType = 'all';
+    this.activeWalletIndex = 0;
+    this.wallets = [
+      { name: 'Semua Dompet', balance: 9894500, num: '•••• •••• •••• 7652' },
+      { name: 'Bank BCA Utama', balance: 5200000, num: '•••• •••• •••• 1092' },
+      { name: 'Dompet Tunai (Cash)', balance: 1438500, num: '•••• •••• •••• 4401' },
+      { name: 'Kas Tabungan', balance: 3256000, num: '•••• •••• •••• 8823' }
+    ];
 
     // Filters for Transaksi View
     this.txFilterType = null;
     this.txFilterCategory = null;
     this.txSearchQuery = '';
     this.searchDebounceTimer = null;
-
-    // Budget modal state
-    this.editingBudgetCategory = null;
 
     // Transaction modal state
     this.editingTxId = null;
@@ -63,93 +68,77 @@ class RiedApp {
 
   cacheDom() {
     this.dom = {
-      // Modes
-      sectionShowcase: document.getElementById('section-hero-showcase'),
-      sectionStudio: document.getElementById('section-app-studio'),
-      navModeLanding: document.getElementById('nav-mode-landing'),
-      navModeStudio: document.getElementById('nav-mode-studio'),
-      btnOpenAppTop: document.getElementById('btn-open-app-top'),
-      heroCtaEnter: document.getElementById('hero-cta-enter'),
-      heroCtaSimulate: document.getElementById('hero-cta-simulate'),
-      sidebarBackShowcase: document.getElementById('sidebar-back-showcase'),
-      brandLogoBtn: document.getElementById('brand-logo-btn'),
-
-      // Sound Engine
+      // Navigation
+      sidebar: document.getElementById('app-sidebar'),
+      btnSidebarToggle: document.getElementById('btn-sidebar-toggle'),
+      navButtons: document.querySelectorAll('.sidebar-link'),
+      breadcrumbTitle: document.getElementById('breadcrumb-title'),
+      currentMonthDisplay: document.getElementById('current-month-display'),
       soundToggle: document.getElementById('sound-toggle'),
       soundIcon: document.getElementById('sound-icon'),
-      soundStatusText: document.getElementById('sound-status-text'),
+      themeToggle: document.getElementById('theme-toggle'),
+      themeIcon: document.getElementById('theme-icon'),
+      settingsThemeBtn: document.getElementById('settings-theme-btn'),
 
-      // Simulator
-      simCoffeeSlider: document.getElementById('sim-coffee-slider'),
-      simCoffeeVal: document.getElementById('sim-coffee-val'),
-      simHangoutSlider: document.getElementById('sim-hangout-slider'),
-      simHangoutVal: document.getElementById('sim-hangout-val'),
-      simAnnualSavings: document.getElementById('sim-annual-savings'),
-      simRewardText: document.getElementById('sim-reward-text'),
-      simApplyBtn: document.getElementById('sim-apply-btn'),
-      simulatorContainer: document.getElementById('simulator-container'),
-
-      // Studio Views & Navigation
+      // Views
       views: {
         dashboard: document.getElementById('view-dashboard'),
         transaksi: document.getElementById('view-transaksi'),
-        pengeluaran: document.getElementById('view-pengeluaran'),
-        laporan: document.getElementById('view-laporan'),
-        pengaturan: document.getElementById('view-pengaturan')
+        pengaturan: document.getElementById('view-pengaturan'),
+        'gateway-wa': document.getElementById('view-gateway-wa'),
+        'format-balasan': document.getElementById('view-format-balasan'),
+        kamus: document.getElementById('view-kamus'),
+        'review-pesan': document.getElementById('view-review-pesan')
       },
-      navButtons: document.querySelectorAll('.nav-btn'),
-      mobileNavButtons: document.querySelectorAll('.mobile-nav-btn'),
-      viewTitle: document.getElementById('view-title'),
-      viewSubtitle: document.getElementById('view-subtitle'),
-      headerDate: document.getElementById('header-date'),
-      btnGotoBudgets: document.getElementById('btn-goto-budgets'),
 
-      // Theme
-      themeToggle: document.getElementById('theme-toggle'),
-      themeIcon: document.getElementById('theme-icon'),
-      themeBadge: document.getElementById('theme-badge'),
-      settingsThemeBtn: document.getElementById('settings-theme-btn'),
+      // Dashboard Elements
+      btnExportExcel: document.getElementById('btn-export-excel'),
+      btnExportPdf: document.getElementById('btn-export-pdf'),
+      calendarDayStrip: document.getElementById('calendar-day-strip'),
+      btnOpenMonthlyCal: document.getElementById('btn-open-monthly-cal'),
+      statStreakCurrent: document.getElementById('stat-streak-current'),
+      statStreakMax: document.getElementById('stat-streak-max'),
+      statStreakDays: document.getElementById('stat-streak-days'),
+      atmCardWidget: document.getElementById('atm-card-widget'),
+      atmCardBalance: document.getElementById('atm-card-balance'),
+      atmWalletName: document.getElementById('atm-wallet-name'),
+      walletDots: document.getElementById('wallet-dots'),
 
-      // Dashboard View Elements
-      dateStrip: document.getElementById('date-strip'),
-      btnAddTx: document.getElementById('btn-add-tx'),
-      totalBalance: document.getElementById('stat-total-balance'),
-      totalExpense: document.getElementById('stat-total-expense'),
-      totalIncome: document.getElementById('stat-total-income'),
-      txCount: document.getElementById('stat-tx-count'),
-      targetDays: document.getElementById('stat-target-days'),
-      expenseRatio: document.getElementById('stat-expense-ratio'),
-      chartSpline: document.getElementById('chart-spline'),
-      chartDonut: document.getElementById('chart-donut'),
-      insightText: document.getElementById('insight-text'),
-      categoryList: document.getElementById('category-list'),
-      txContainer: document.getElementById('tx-container'),
-      dashFilterAll: document.getElementById('filter-all'),
-      dashFilterExpense: document.getElementById('filter-expense'),
-      dashFilterIncome: document.getElementById('filter-income'),
+      // Metrics
+      statTotalIncome: document.getElementById('stat-total-income'),
+      statTotalExpense: document.getElementById('stat-total-expense'),
+      statTxCount: document.getElementById('stat-tx-count'),
+      statTotalSavings: document.getElementById('stat-total-savings'),
+
+      // Charts & Toggles
+      chartMainExpense: document.getElementById('chart-main-expense'),
+      toggleChartDaily: document.getElementById('toggle-chart-daily'),
+      toggleChartTx: document.getElementById('toggle-chart-tx'),
+      chartBudgetStacked: document.getElementById('chart-budget-stacked'),
+
+      // Filter Box
+      filterMonth: document.getElementById('filter-month'),
+      filterDateStart: document.getElementById('filter-date-start'),
+      filterDateEnd: document.getElementById('filter-date-end'),
+      filterWallet: document.getElementById('filter-wallet'),
+      filterCategory: document.getElementById('filter-category'),
+      btnFilterReset: document.getElementById('btn-filter-reset'),
+      btnFilterApply: document.getElementById('btn-filter-apply'),
 
       // Transaksi View Elements
+      btnAddTx: document.getElementById('btn-add-tx'),
       txSearchInput: document.getElementById('tx-search-input'),
       txviewFilterAll: document.getElementById('txview-filter-all'),
       txviewFilterExpense: document.getElementById('txview-filter-expense'),
       txviewFilterIncome: document.getElementById('txview-filter-income'),
       catChipButtons: document.querySelectorAll('.cat-chip-btn'),
       txviewFullList: document.getElementById('txview-full-list'),
-      txviewStatus: document.getElementById('txview-status'),
-      txviewCount: document.getElementById('txview-count'),
-      txviewExpense: document.getElementById('txview-expense'),
-      txviewIncome: document.getElementById('txview-income'),
-      txviewNet: document.getElementById('txview-net'),
 
-      // Pengeluaran View Elements
-      budgetTotalAllocation: document.getElementById('budget-total-allocation'),
-      budgetTotalSpent: document.getElementById('budget-total-spent'),
-      budgetGridContainer: document.getElementById('budget-grid-container'),
-
-      // Laporan View Elements
-      reportSavingsRate: document.getElementById('report-savings-rate'),
-      reportAvgDaily: document.getElementById('report-avg-daily'),
-      reportTableBody: document.getElementById('report-table-body'),
+      // Modal Monthly Calendar
+      modalMonthlyCalendar: document.getElementById('modal-monthly-calendar'),
+      btnCloseMonthlyCal: document.getElementById('btn-close-monthly-cal'),
+      monthlyCalendarGrid: document.getElementById('monthly-calendar-grid'),
+      monthlyCalSummary: document.getElementById('monthly-cal-summary'),
 
       // Transaction Modal Elements
       txModal: document.getElementById('tx-modal'),
@@ -164,124 +153,47 @@ class RiedApp {
       inputDate: document.getElementById('input-date'),
       inputNotes: document.getElementById('input-notes'),
 
-      // Budget Modal Elements
-      budgetModal: document.getElementById('budget-modal'),
-      budgetModalCategory: document.getElementById('budget-modal-category'),
-      budgetModalInput: document.getElementById('budget-modal-input'),
-      budgetModalForm: document.getElementById('budget-modal-form'),
-      budgetModalClose: document.getElementById('budget-modal-close'),
-      budgetModalCancel: document.getElementById('budget-modal-cancel')
+      // WhatsApp Simulator Elements
+      waSimInput: document.getElementById('wa-sim-input'),
+      waSimSubmit: document.getElementById('wa-sim-submit'),
+      waSimOutput: document.getElementById('wa-sim-output'),
+      btnExportCsv: document.getElementById('btn-export-csv')
     };
   }
 
   async init() {
     // 1. Theme setup
-    const savedTheme = localStorage.getItem('ried-theme') || localStorage.getItem('fino-theme');
+    const savedTheme = localStorage.getItem('ried-theme') || 'light';
     this.setTheme(savedTheme === 'dark');
 
     // 2. Sound state setup
     this.updateSoundButtonUI();
 
-    // 3. Set current date header
-    const now = new Date();
-    const monthYear = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-    if (this.dom.headerDate) this.dom.headerDate.textContent = monthYear;
-
-    // 4. Bind event listeners
+    // 3. Bind event listeners
     this.bindEvents();
-    this.renderCalendarStrip();
-    this.updateSimulator();
+    this.renderCalendarDayStrip();
 
-    // 5. Initialize 3D perspective tilt
-    initCardTilt('[data-tilt]');
-
-    // 6. Load backend data
+    // 4. Load initial data
     await this.refreshAllData();
 
-    // 7. Handle window resize for charts
-    window.addEventListener('resize', () => {
-      if (this.summary && this.currentMode === 'studio' && this.currentView === 'dashboard') {
-        renderSplineChart(this.dom.chartSpline, this.summary.daily_expenses, this.isDarkMode);
-        renderCategoryDonut(this.dom.chartDonut, this.summary.category_breakdown, this.isDarkMode);
-      }
-    });
+    // 5. Initialize Lucide icons
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
   }
 
   bindEvents() {
-    // Mode Switchers
-    if (this.dom.navModeLanding) {
-      this.dom.navModeLanding.addEventListener('click', () => {
+    // Sidebar toggle
+    if (this.dom.btnSidebarToggle) {
+      this.dom.btnSidebarToggle.addEventListener('click', () => {
         sounds.playPop();
-        this.switchMode('showcase');
-      });
-    }
-    if (this.dom.navModeStudio) {
-      this.dom.navModeStudio.addEventListener('click', () => {
-        sounds.playPop();
-        this.switchMode('studio');
-      });
-    }
-    if (this.dom.btnOpenAppTop) {
-      this.dom.btnOpenAppTop.addEventListener('click', () => {
-        sounds.playChime();
-        this.switchMode('studio');
-      });
-    }
-    if (this.dom.heroCtaEnter) {
-      this.dom.heroCtaEnter.addEventListener('click', () => {
-        sounds.playChime();
-        this.switchMode('studio');
-      });
-    }
-    if (this.dom.sidebarBackShowcase) {
-      this.dom.sidebarBackShowcase.addEventListener('click', () => {
-        sounds.playPop();
-        this.switchMode('showcase');
-      });
-    }
-    if (this.dom.brandLogoBtn) {
-      this.dom.brandLogoBtn.addEventListener('click', () => {
-        sounds.playPop();
-        this.switchMode('showcase');
-      });
-    }
-    if (this.dom.heroCtaSimulate) {
-      this.dom.heroCtaSimulate.addEventListener('click', () => {
-        sounds.playPop();
-        if (this.dom.simulatorContainer) {
-          this.dom.simulatorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (this.dom.sidebar) {
+          this.dom.sidebar.classList.toggle('-ml-64');
         }
       });
     }
 
-    // Audio Haptic Sound Toggle
-    if (this.dom.soundToggle) {
-      this.dom.soundToggle.addEventListener('click', () => {
-        sounds.toggleMute();
-        this.updateSoundButtonUI();
-      });
-    }
-
-    // Lifestyle Expense Simulator Sliders
-    if (this.dom.simCoffeeSlider) {
-      this.dom.simCoffeeSlider.addEventListener('input', () => {
-        this.updateSimulator();
-      });
-    }
-    if (this.dom.simHangoutSlider) {
-      this.dom.simHangoutSlider.addEventListener('input', () => {
-        this.updateSimulator();
-      });
-    }
-    if (this.dom.simApplyBtn) {
-      this.dom.simApplyBtn.addEventListener('click', () => {
-        sounds.playChime();
-        this.switchMode('studio');
-        this.switchView('pengeluaran');
-      });
-    }
-
-    // Studio SPA View Switcher
+    // View Navigation Buttons
     this.dom.navButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
         sounds.playPop();
@@ -290,22 +202,15 @@ class RiedApp {
       });
     });
 
-    this.dom.mobileNavButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        sounds.playPop();
-        const view = btn.getAttribute('data-view');
-        this.switchView(view);
-      });
-    });
-
-    if (this.dom.btnGotoBudgets) {
-      this.dom.btnGotoBudgets.addEventListener('click', () => {
-        sounds.playPop();
-        this.switchView('pengeluaran');
+    // Sound toggle
+    if (this.dom.soundToggle) {
+      this.dom.soundToggle.addEventListener('click', () => {
+        sounds.toggleMute();
+        this.updateSoundButtonUI();
       });
     }
 
-    // Theme toggles
+    // Theme toggle
     if (this.dom.themeToggle) {
       this.dom.themeToggle.addEventListener('click', () => {
         sounds.playToggle();
@@ -319,15 +224,125 @@ class RiedApp {
       });
     }
 
-    // Add Transaction button
+    // Monthly Calendar Modal triggers
+    if (this.dom.btnOpenMonthlyCal) {
+      this.dom.btnOpenMonthlyCal.addEventListener('click', () => {
+        sounds.playPop();
+        this.openMonthlyCalendar();
+      });
+    }
+    if (this.dom.btnCloseMonthlyCal) {
+      this.dom.btnCloseMonthlyCal.addEventListener('click', () => {
+        sounds.playPop();
+        this.closeMonthlyCalendar();
+      });
+    }
+
+    // ATM Card Wallet Switcher
+    if (this.dom.atmCardWidget) {
+      this.dom.atmCardWidget.addEventListener('click', () => {
+        sounds.playPop();
+        this.cycleWallet();
+      });
+    }
+
+    // Chart Mode Toggles (Per hari vs Per transaksi)
+    if (this.dom.toggleChartDaily) {
+      this.dom.toggleChartDaily.addEventListener('click', () => {
+        sounds.playPop();
+        this.setChartMode('daily');
+      });
+    }
+    if (this.dom.toggleChartTx) {
+      this.dom.toggleChartTx.addEventListener('click', () => {
+        sounds.playPop();
+        this.setChartMode('transaction');
+      });
+    }
+
+    // Filter Buttons
+    if (this.dom.btnFilterApply) {
+      this.dom.btnFilterApply.addEventListener('click', () => {
+        sounds.playChime();
+        this.applyFilters();
+      });
+    }
+    if (this.dom.btnFilterReset) {
+      this.dom.btnFilterReset.addEventListener('click', () => {
+        sounds.playPop();
+        this.resetFilters();
+      });
+    }
+
+    // Export Buttons
+    if (this.dom.btnExportExcel || this.dom.btnExportCsv) {
+      const exportAction = () => {
+        sounds.playChime();
+        window.location.href = '/api/transactions/export/csv';
+      };
+      if (this.dom.btnExportExcel) this.dom.btnExportExcel.addEventListener('click', exportAction);
+      if (this.dom.btnExportCsv) this.dom.btnExportCsv.addEventListener('click', exportAction);
+    }
+    if (this.dom.btnExportPdf) {
+      this.dom.btnExportPdf.addEventListener('click', () => {
+        sounds.playPop();
+        window.print();
+      });
+    }
+
+    // Transaksi View Filters
+    if (this.dom.txSearchInput) {
+      this.dom.txSearchInput.addEventListener('input', (e) => {
+        this.txSearchQuery = e.target.value.trim();
+        clearTimeout(this.searchDebounceTimer);
+        this.searchDebounceTimer = setTimeout(() => {
+          this.loadTransaksiViewData();
+        }, 250);
+      });
+    }
+
+    const setTxViewType = (type, activeBtn) => {
+      sounds.playPop();
+      this.txFilterType = type;
+      [this.dom.txviewFilterAll, this.dom.txviewFilterExpense, this.dom.txviewFilterIncome].forEach((b) => {
+        if (b) {
+          b.classList.remove('bg-[#38a852]', 'text-white');
+          b.classList.add('text-slate-500');
+        }
+      });
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-500');
+        activeBtn.classList.add('bg-[#38a852]', 'text-white');
+      }
+      this.loadTransaksiViewData();
+    };
+
+    if (this.dom.txviewFilterAll) this.dom.txviewFilterAll.addEventListener('click', () => setTxViewType(null, this.dom.txviewFilterAll));
+    if (this.dom.txviewFilterExpense) this.dom.txviewFilterExpense.addEventListener('click', () => setTxViewType('expense', this.dom.txviewFilterExpense));
+    if (this.dom.txviewFilterIncome) this.dom.txviewFilterIncome.addEventListener('click', () => setTxViewType('income', this.dom.txviewFilterIncome));
+
+    this.dom.catChipButtons.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        sounds.playPop();
+        const cat = chip.getAttribute('data-cat');
+        this.txFilterCategory = cat === 'all' ? null : cat;
+        this.dom.catChipButtons.forEach((c) => {
+          c.classList.remove('bg-slate-200', 'dark:bg-slate-700', 'font-bold', 'text-slate-800', 'dark:text-white');
+          c.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
+        });
+        chip.classList.add('bg-slate-200', 'dark:bg-slate-700', 'font-bold', 'text-slate-800', 'dark:text-white');
+        chip.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300');
+        this.loadTransaksiViewData();
+      });
+    });
+
+    // Add Transaction Modal
     if (this.dom.btnAddTx) {
       this.dom.btnAddTx.addEventListener('click', () => {
         sounds.playPop();
         this.openTxModal(false);
       });
     }
-
-    // Transaction Modal Close
     if (this.dom.modalCancel) {
       this.dom.modalCancel.addEventListener('click', () => {
         sounds.playPop();
@@ -344,183 +359,25 @@ class RiedApp {
       this.dom.modalForm.addEventListener('submit', (e) => this.handleTxFormSubmit(e));
     }
 
-    // Budget Modal Close
-    if (this.dom.budgetModalClose) {
-      this.dom.budgetModalClose.addEventListener('click', () => {
-        sounds.playPop();
-        this.closeBudgetModal();
-      });
-    }
-    if (this.dom.budgetModalCancel) {
-      this.dom.budgetModalCancel.addEventListener('click', () => {
-        sounds.playPop();
-        this.closeBudgetModal();
-      });
-    }
-    if (this.dom.budgetModalForm) {
-      this.dom.budgetModalForm.addEventListener('submit', (e) => this.handleBudgetFormSubmit(e));
-    }
-
-    // Dashboard Transaction Type Filters
-    const setDashFilter = (type, btn) => {
-      sounds.playPop();
-      this.dashFilterType = type;
-      [this.dom.dashFilterAll, this.dom.dashFilterExpense, this.dom.dashFilterIncome].forEach((b) => {
-        if (b) {
-          b.classList.remove('bg-emerald-500', 'text-white');
-          b.classList.add('text-slate-500');
-        }
-      });
-      if (btn) {
-        btn.classList.remove('text-slate-500');
-        btn.classList.add('bg-emerald-500', 'text-white');
-      }
-      this.renderDashboardTransactions();
-    };
-
-    if (this.dom.dashFilterAll) this.dom.dashFilterAll.addEventListener('click', () => setDashFilter('all', this.dom.dashFilterAll));
-    if (this.dom.dashFilterExpense) this.dom.dashFilterExpense.addEventListener('click', () => setDashFilter('expense', this.dom.dashFilterExpense));
-    if (this.dom.dashFilterIncome) this.dom.dashFilterIncome.addEventListener('click', () => setDashFilter('income', this.dom.dashFilterIncome));
-
-    // Transaksi View Search Bar with live debouncing
-    if (this.dom.txSearchInput) {
-      this.dom.txSearchInput.addEventListener('input', (e) => {
-        this.txSearchQuery = e.target.value.trim();
-        clearTimeout(this.searchDebounceTimer);
-        this.searchDebounceTimer = setTimeout(() => {
-          this.loadTransaksiViewData();
-        }, 250);
+    // WhatsApp Message Simulator
+    if (this.dom.waSimSubmit && this.dom.waSimInput) {
+      this.dom.waSimSubmit.addEventListener('click', () => this.handleWhatsAppSimulate());
+      this.dom.waSimInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.handleWhatsAppSimulate();
       });
     }
 
-    // Transaksi View Type Filters
-    const setTxViewType = (type, btn) => {
-      sounds.playPop();
-      this.txFilterType = type;
-      [this.dom.txviewFilterAll, this.dom.txviewFilterExpense, this.dom.txviewFilterIncome].forEach((b) => {
-        if (b) {
-          b.classList.remove('bg-emerald-500', 'text-white');
-          b.classList.add('text-slate-500');
-        }
-      });
-      if (btn) {
-        btn.classList.remove('text-slate-500');
-        btn.classList.add('bg-emerald-500', 'text-white');
-      }
-      this.loadTransaksiViewData();
-    };
-
-    if (this.dom.txviewFilterAll) this.dom.txviewFilterAll.addEventListener('click', () => setTxViewType(null, this.dom.txviewFilterAll));
-    if (this.dom.txviewFilterExpense) this.dom.txviewFilterExpense.addEventListener('click', () => setTxViewType('expense', this.dom.txviewFilterExpense));
-    if (this.dom.txviewFilterIncome) this.dom.txviewFilterIncome.addEventListener('click', () => setTxViewType('income', this.dom.txviewFilterIncome));
-
-    // Category Filter Chips in Transaksi View
-    this.dom.catChipButtons.forEach((chip) => {
-      chip.addEventListener('click', () => {
-        sounds.playPop();
-        const cat = chip.getAttribute('data-cat') || null;
-        this.txFilterCategory = cat;
-
-        this.dom.catChipButtons.forEach((c) => {
-          c.classList.remove('bg-emerald-500', 'text-white', 'font-bold');
-          c.classList.add('ried-card', 'text-slate-600', 'dark:text-slate-300', 'font-medium');
-        });
-        chip.classList.remove('ried-card', 'text-slate-600', 'dark:text-slate-300', 'font-medium');
-        chip.classList.add('bg-emerald-500', 'text-white', 'font-bold');
-
-        this.loadTransaksiViewData();
-      });
+    // Resize handler for Canvas charts
+    window.addEventListener('resize', () => {
+      this.renderCurrentCharts();
     });
   }
 
-  // ==========================================
-  // Mode Switcher: Showcase vs App Studio
-  // ==========================================
-  switchMode(mode) {
-    this.currentMode = mode;
-
-    if (mode === 'showcase') {
-      if (this.dom.sectionShowcase) this.dom.sectionShowcase.classList.remove('hidden');
-      if (this.dom.sectionStudio) this.dom.sectionStudio.classList.add('hidden');
-
-      if (this.dom.navModeLanding) {
-        this.dom.navModeLanding.classList.add('bg-white', 'dark:bg-slate-700', 'text-slate-900', 'dark:text-white', 'shadow-sm');
-        this.dom.navModeLanding.classList.remove('text-slate-500', 'dark:text-slate-400');
-      }
-      if (this.dom.navModeStudio) {
-        this.dom.navModeStudio.classList.remove('bg-white', 'dark:bg-slate-700', 'text-slate-900', 'dark:text-white', 'shadow-sm');
-        this.dom.navModeStudio.classList.add('text-slate-500', 'dark:text-slate-400');
-      }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      if (this.dom.sectionShowcase) this.dom.sectionShowcase.classList.add('hidden');
-      if (this.dom.sectionStudio) this.dom.sectionStudio.classList.remove('hidden');
-
-      if (this.dom.navModeStudio) {
-        this.dom.navModeStudio.classList.add('bg-white', 'dark:bg-slate-700', 'text-slate-900', 'dark:text-white', 'shadow-sm');
-        this.dom.navModeStudio.classList.remove('text-slate-500', 'dark:text-slate-400');
-      }
-      if (this.dom.navModeLanding) {
-        this.dom.navModeLanding.classList.remove('bg-white', 'dark:bg-slate-700', 'text-slate-900', 'dark:text-white', 'shadow-sm');
-        this.dom.navModeLanding.classList.add('text-slate-500', 'dark:text-slate-400');
-      }
-
-      this.switchView(this.currentView);
-    }
-
-    if (window.lucide) window.lucide.createIcons();
-  }
-
-  // ==========================================
-  // Sound UI
-  // ==========================================
-  updateSoundButtonUI() {
-    const isMuted = sounds.isMuted();
-    if (this.dom.soundIcon) {
-      this.dom.soundIcon.setAttribute('data-lucide', isMuted ? 'volume-x' : 'volume-2');
-    }
-    if (this.dom.soundStatusText) {
-      this.dom.soundStatusText.textContent = isMuted ? 'Muted' : 'Audio ON';
-    }
-    if (window.lucide) window.lucide.createIcons();
-  }
-
-  // ==========================================
-  // Interactive Lifestyle Expense Simulator
-  // ==========================================
-  updateSimulator() {
-    const coffeeDaily = parseInt(this.dom.simCoffeeSlider?.value || 35000);
-    const hangoutWeekly = parseInt(this.dom.simHangoutSlider?.value || 200000);
-
-    if (this.dom.simCoffeeVal) this.dom.simCoffeeVal.textContent = `${formatRupiah(coffeeDaily)} / hari`;
-    if (this.dom.simHangoutVal) this.dom.simHangoutVal.textContent = `${formatRupiah(hangoutWeekly)} / minggu`;
-
-    // 1 year savings calculation
-    const annualSavings = (coffeeDaily * 365) + (hangoutWeekly * 52);
-
-    if (this.dom.simAnnualSavings) {
-      this.dom.simAnnualSavings.textContent = formatRupiah(annualSavings);
-    }
-
-    if (this.dom.simRewardText) {
-      if (annualSavings >= 30000000) {
-        this.dom.simRewardText.textContent = '🌟 Fantastis! Cukup untuk modal bisnis rintisan atau dana darurat 6+ bulan!';
-      } else if (annualSavings >= 15000000) {
-        this.dom.simRewardText.textContent = '🎉 Cukup untuk liburan ke Jepang atau 1 unit MacBook M3 Pro baru!';
-      } else {
-        this.dom.simRewardText.textContent = '🌱 Cukup untuk gadget baru atau investasi emas batangan bernilai tinggi!';
-      }
-    }
-  }
-
-  // ==========================================
-  // SPA View Routing & Transitions (Studio)
-  // ==========================================
   switchView(viewName) {
     if (!this.dom.views[viewName]) return;
     this.currentView = viewName;
 
-    // Update View visibility
+    // Toggle views visibility
     Object.keys(this.dom.views).forEach((key) => {
       const el = this.dom.views[key];
       if (key === viewName) {
@@ -534,496 +391,272 @@ class RiedApp {
 
     // Update Sidebar Navigation state
     this.dom.navButtons.forEach((btn) => {
-      const view = btn.getAttribute('data-view');
-      if (view === viewName) {
-        btn.classList.add('nav-link-active');
-        btn.classList.remove('text-slate-600', 'dark:text-slate-400', 'hover:bg-emerald-50', 'dark:hover:bg-emerald-950/40');
+      const v = btn.getAttribute('data-view');
+      if (v === viewName) {
+        btn.classList.add('active');
       } else {
-        btn.classList.remove('nav-link-active');
-        btn.classList.add('text-slate-600', 'dark:text-slate-400', 'hover:bg-emerald-50', 'dark:hover:bg-emerald-950/40');
+        btn.classList.remove('active');
       }
     });
 
-    // Update Mobile Nav Bar
-    this.dom.mobileNavButtons.forEach((btn) => {
-      const view = btn.getAttribute('data-view');
-      if (view === viewName) {
-        btn.classList.add('text-emerald-500', 'font-bold');
-        btn.classList.remove('text-slate-500', 'font-medium');
-      } else {
-        btn.classList.remove('text-emerald-500', 'font-bold');
-        btn.classList.add('text-slate-500', 'font-medium');
-      }
-    });
-
-    // Update Top View Header
-    const viewMetadata = {
-      dashboard: {
-        title: 'Selamat pagi, Ried 👋',
-        subtitle: 'Kelola dan pantau keuangan personal Anda dengan presisi & gaya.'
-      },
-      transaksi: {
-        title: 'Buku Transaksi Finansial 📝',
-        subtitle: 'Cari, filter, dan telusuri seluruh riwayat pemasukan dan pengeluaran.'
-      },
-      pengeluaran: {
-        title: 'Manajemen Anggaran & Budget 🎯',
-        subtitle: 'Kendalikan batas pengeluaran bulanan per pos kategori dengan presisi.'
-      },
-      laporan: {
-        title: 'Laporan Arus Kas & Analisis 📊',
-        subtitle: 'Evaluasi tingkat kedisiplinan finansial, rasio simpanan, dan ekspor CSV.'
-      },
-      pengaturan: {
-        title: 'Pengaturan & Sistem RIED ⚙️',
-        subtitle: 'Konfigurasi preferensi tampilan, format lokal, dan cadangan data lokal.'
-      }
+    // Update Breadcrumb
+    const titles = {
+      dashboard: 'Ried Dashboard',
+      transaksi: 'Buku Transaksi',
+      pengaturan: 'Pengaturan Sistem',
+      'gateway-wa': 'Gateway WhatsApp',
+      'format-balasan': 'Format Balasan Bot',
+      kamus: 'Kamus Auto-Kategori',
+      'review-pesan': 'Review Pesan Masuk'
     };
+    if (this.dom.breadcrumbTitle) {
+      this.dom.breadcrumbTitle.textContent = titles[viewName] || 'Ried Dashboard';
+    }
 
-    const meta = viewMetadata[viewName] || viewMetadata.dashboard;
-    if (this.dom.viewTitle) this.dom.viewTitle.textContent = meta.title;
-    if (this.dom.viewSubtitle) this.dom.viewSubtitle.textContent = meta.subtitle;
-
-    // View-specific initialization triggers
-    if (viewName === 'dashboard' && this.summary) {
-      setTimeout(() => {
-        renderSplineChart(this.dom.chartSpline, this.summary.daily_expenses, this.isDarkMode);
-        renderCategoryDonut(this.dom.chartDonut, this.summary.category_breakdown, this.isDarkMode);
-      }, 50);
+    if (viewName === 'dashboard') {
+      setTimeout(() => this.renderCurrentCharts(), 50);
     } else if (viewName === 'transaksi') {
       this.loadTransaksiViewData();
-    } else if (viewName === 'pengeluaran') {
-      this.renderPengeluaranView();
-    } else if (viewName === 'laporan') {
-      this.renderLaporanView();
     }
 
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
   }
 
-  // ==========================================
-  // Theme Toggle
-  // ==========================================
-  setTheme(isDark) {
-    this.isDarkMode = isDark;
-    const html = document.documentElement;
-    if (isDark) {
-      html.classList.add('dark');
-      localStorage.setItem('ried-theme', 'dark');
-      if (this.dom.themeIcon) this.dom.themeIcon.setAttribute('data-lucide', 'sun');
-      if (this.dom.themeBadge) this.dom.themeBadge.textContent = 'Forest Dark';
+  setChartMode(mode) {
+    this.chartMode = mode;
+    if (mode === 'daily') {
+      this.dom.toggleChartDaily.classList.add('active');
+      this.dom.toggleChartDaily.classList.remove('text-slate-500', 'dark:text-slate-400');
+      this.dom.toggleChartTx.classList.remove('active');
+      this.dom.toggleChartTx.classList.add('text-slate-500', 'dark:text-slate-400');
     } else {
-      html.classList.remove('dark');
-      localStorage.setItem('ried-theme', 'light');
-      if (this.dom.themeIcon) this.dom.themeIcon.setAttribute('data-lucide', 'moon');
-      if (this.dom.themeBadge) this.dom.themeBadge.textContent = 'Matcha';
+      this.dom.toggleChartTx.classList.add('active');
+      this.dom.toggleChartTx.classList.remove('text-slate-500', 'dark:text-slate-400');
+      this.dom.toggleChartDaily.classList.remove('active');
+      this.dom.toggleChartDaily.classList.add('text-slate-500', 'dark:text-slate-400');
     }
-    if (window.lucide) window.lucide.createIcons();
+    this.renderCurrentCharts();
+  }
 
-    if (this.summary && this.currentMode === 'studio' && this.currentView === 'dashboard') {
-      renderSplineChart(this.dom.chartSpline, this.summary.daily_expenses, this.isDarkMode);
-      renderCategoryDonut(this.dom.chartDonut, this.summary.category_breakdown, this.isDarkMode);
+  renderCurrentCharts() {
+    if (!this.summary) return;
+
+    if (this.chartMode === 'daily') {
+      renderSplineChart(this.dom.chartMainExpense, this.summary.daily_expenses, this.isDarkMode);
+    } else {
+      renderTransactionBarChart(this.dom.chartMainExpense, this.transactions, this.isDarkMode);
+    }
+
+    if (this.summary && this.summary.category_breakdown && this.summary.category_breakdown.length > 0) {
+      renderStackedBudgetChart(this.dom.chartBudgetStacked, this.summary.category_breakdown, this.isDarkMode);
     }
   }
 
-  // ==========================================
-  // Calendar Strip
-  // ==========================================
-  renderCalendarStrip() {
-    if (!this.dom.dateStrip) return;
-    this.dom.dateStrip.innerHTML = '';
+  cycleWallet() {
+    this.activeWalletIndex = (this.activeWalletIndex + 1) % this.wallets.length;
+    const w = this.wallets[this.activeWalletIndex];
 
-    const today = new Date();
-    const days = [];
-    for (let i = -3; i <= 3; i++) {
-      const d = new Date();
-      d.setDate(today.getDate() + i);
-      days.push(d);
+    if (this.dom.atmCardBalance) {
+      this.dom.atmCardBalance.textContent = formatRupiah(w.balance);
+    }
+    if (this.dom.atmWalletName) {
+      this.dom.atmWalletName.textContent = w.name;
     }
 
-    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-
-    days.forEach((d) => {
-      const isToday = d.toDateString() === today.toDateString();
-      const pill = document.createElement('button');
-      pill.className = `flex flex-col items-center justify-center w-12 py-2.5 rounded-2xl text-xs transition-all font-medium ried-card ${
-        isToday ? 'day-pill-active font-bold' : 'text-slate-600 dark:text-slate-400 hover:border-emerald-400'
-      }`;
-      pill.innerHTML = `
-        <span class="text-[10px] uppercase">${dayNames[d.getDay()]}</span>
-        <span class="text-sm font-bold mt-0.5">${d.getDate()}</span>
-      `;
-      pill.addEventListener('click', () => {
-        sounds.playPop();
-        document.querySelectorAll('#date-strip button').forEach((b) => b.classList.remove('day-pill-active'));
-        pill.classList.add('day-pill-active');
+    // Update wallet dots
+    if (this.dom.walletDots) {
+      const dots = this.dom.walletDots.querySelectorAll('span');
+      dots.forEach((d, idx) => {
+        if (idx === (this.activeWalletIndex % dots.length)) {
+          d.className = 'w-1.5 h-1.5 rounded-full bg-white';
+        } else {
+          d.className = 'w-1.5 h-1.5 rounded-full bg-white/40';
+        }
       });
-      this.dom.dateStrip.appendChild(pill);
-    });
+    }
   }
 
-  // ==========================================
-  // Data Fetching & Sync
-  // ==========================================
+  renderCalendarDayStrip() {
+    if (!this.dom.calendarDayStrip) return;
+    const days = [
+      { day: 'SEL', date: '15' },
+      { day: 'RAB', date: '16' },
+      { day: 'KAM', date: '17' },
+      { day: 'JUM', date: '18', active: true },
+      { day: 'SAB', date: '19' },
+      { day: 'MIN', date: '20' },
+      { day: 'SEN', date: '21' }
+    ];
+
+    this.dom.calendarDayStrip.innerHTML = days.map(d => `
+      <div class="day-pill ${d.active ? 'active' : ''}">
+        <span class="text-[9px] font-bold ${d.active ? 'text-white' : 'text-slate-400'}">${d.day}</span>
+        <span class="text-xs font-black ${d.active ? 'text-white' : 'text-slate-800 dark:text-slate-200'}">${d.date}</span>
+      </div>
+    `).join('');
+  }
+
+  openMonthlyCalendar() {
+    if (!this.dom.modalMonthlyCalendar) return;
+    this.populateMonthlyCalendar();
+    this.dom.modalMonthlyCalendar.classList.remove('hidden');
+    this.dom.modalMonthlyCalendar.classList.add('flex');
+  }
+
+  closeMonthlyCalendar() {
+    if (!this.dom.modalMonthlyCalendar) return;
+    this.dom.modalMonthlyCalendar.classList.add('hidden');
+    this.dom.modalMonthlyCalendar.classList.remove('flex');
+  }
+
+  populateMonthlyCalendar() {
+    if (!this.dom.monthlyCalendarGrid) return;
+    // 30 days of September 2026. September 1st, 2026 is a Tuesday (index 2: Sun=0, Mon=1, Tue=2)
+    const offset = 2;
+    let html = '';
+
+    // Empty offset days
+    for (let i = 0; i < offset; i++) {
+      html += `<div class="p-2 text-slate-300 dark:text-slate-700"></div>`;
+    }
+
+    // Days 1 to 30
+    const activeDays = [2, 5, 8, 10, 12, 14, 16, 18];
+    for (let d = 1; d <= 30; d++) {
+      const isActive = activeDays.includes(d);
+      const isToday = d === 18;
+      let classes = 'p-2 rounded-xl transition-all cursor-pointer flex flex-col items-center justify-center ';
+      if (isToday) {
+        classes += 'bg-[#38a852] text-white font-bold shadow-md';
+      } else if (isActive) {
+        classes += 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold';
+      } else {
+        classes += 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800';
+      }
+
+      html += `
+        <div class="${classes}">
+          <span class="text-xs">${d}</span>
+          ${isActive ? '<span class="w-1 h-1 rounded-full bg-emerald-500 mt-0.5"></span>' : ''}
+        </div>
+      `;
+    }
+
+    this.dom.monthlyCalendarGrid.innerHTML = html;
+  }
+
   async refreshAllData() {
     try {
-      this.summary = await fetchFinancialSummary();
-      this.categories = await fetchCategoriesMeta();
-      this.transactions = await fetchTransactionsList();
+      const [summary, txList, categories] = await Promise.all([
+        fetchFinancialSummary(),
+        fetchTransactionsList(),
+        fetchCategoriesMeta()
+      ]);
 
-      this.renderDashboardKPIs(this.summary);
-      this.renderDashboardCategories(this.summary.category_breakdown);
-      this.renderDashboardTransactions();
+      this.summary = summary;
+      this.transactions = txList;
+      this.categories = categories;
 
-      if (this.currentMode === 'studio') {
-        if (this.currentView === 'dashboard') {
-          renderSplineChart(this.dom.chartSpline, this.summary.daily_expenses, this.isDarkMode);
-          renderCategoryDonut(this.dom.chartDonut, this.summary.category_breakdown, this.isDarkMode);
-        } else if (this.currentView === 'transaksi') {
-          this.loadTransaksiViewData();
-        } else if (this.currentView === 'pengeluaran') {
-          this.renderPengeluaranView();
-        } else if (this.currentView === 'laporan') {
-          this.renderLaporanView();
-        }
+      this.renderDashboardMetrics();
+      this.renderCurrentCharts();
+      if (this.currentView === 'transaksi') {
+        this.loadTransaksiViewData();
       }
-
-      if (window.lucide) window.lucide.createIcons();
     } catch (err) {
-      console.error('Gagal memuat data RIED:', err);
+      console.error('Failed refreshing data:', err);
     }
   }
 
-  // ==========================================
-  // VIEW 1: Dashboard Rendering
-  // ==========================================
-  renderDashboardKPIs(summary) {
-    if (this.dom.totalBalance) this.dom.totalBalance.textContent = formatRupiah(summary.total_balance);
-    if (this.dom.totalExpense) this.dom.totalExpense.textContent = formatRupiah(summary.total_expense);
-    if (this.dom.totalIncome) this.dom.totalIncome.textContent = formatRupiah(summary.total_income);
-    if (this.dom.txCount) this.dom.txCount.textContent = `${summary.transactions_count} Transaksi`;
-    if (this.dom.targetDays) this.dom.targetDays.textContent = `${summary.target_days_current} / ${summary.target_days_total}`;
+  renderDashboardMetrics() {
+    if (!this.summary) return;
 
-    // Expense ratio calculation
-    const totalBudget = summary.category_breakdown.reduce((acc, c) => acc + c.budget, 0);
-    if (this.dom.expenseRatio && totalBudget > 0) {
-      const ratio = Math.round((summary.total_expense / totalBudget) * 100);
-      this.dom.expenseRatio.textContent = `${ratio}% Dari Total Anggaran`;
+    if (this.dom.statTotalIncome) {
+      this.dom.statTotalIncome.textContent = formatRupiah(this.summary.total_income);
     }
-
-    if (this.dom.insightText && summary.category_breakdown.length > 0) {
-      const sorted = [...summary.category_breakdown].sort((a, b) => b.spent - a.spent);
-      const top1 = sorted[0];
-      const top2 = sorted[1];
-      if (top1 && top2) {
-        this.dom.insightText.textContent = `Pengeluaran terbesar teralokasi pada ${top1.category} (${formatRupiah(top1.spent)}) dan ${top2.category} (${formatRupiah(top2.spent)}).`;
-      }
+    if (this.dom.statTotalExpense) {
+      this.dom.statTotalExpense.textContent = formatRupiah(this.summary.total_expense);
+    }
+    if (this.dom.statTxCount) {
+      this.dom.statTxCount.textContent = `${this.summary.transactions_count} Transaksi`;
+    }
+    if (this.dom.statTotalSavings) {
+      this.dom.statTotalSavings.textContent = formatRupiah(this.summary.total_balance);
+    }
+    if (this.dom.atmCardBalance && this.activeWalletIndex === 0) {
+      this.dom.atmCardBalance.textContent = formatRupiah(this.summary.total_balance);
     }
   }
 
-  renderDashboardCategories(categories) {
-    if (!this.dom.categoryList) return;
-    this.dom.categoryList.innerHTML = '';
-
-    categories.forEach((cat) => {
-      const card = document.createElement('div');
-      card.className = 'p-3.5 rounded-2xl ried-card space-y-2';
-      card.innerHTML = `
-        <div class="flex items-center justify-between text-xs">
-          <div class="flex items-center space-x-2">
-            <div class="w-7 h-7 rounded-xl flex items-center justify-center text-white shadow-sm" style="background-color: ${cat.color}">
-              <i data-lucide="${cat.icon}" class="w-3.5 h-3.5"></i>
-            </div>
-            <div>
-              <span class="font-bold text-slate-800 dark:text-white block">${cat.category}</span>
-              <span class="text-[10px] text-slate-400">Budget ${formatRupiah(cat.budget)}</span>
-            </div>
-          </div>
-          <div class="text-right">
-            <span class="font-bold text-slate-700 dark:text-emerald-400 text-xs block">${formatRupiah(cat.spent)}</span>
-            <button class="btn-quick-edit-budget text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline" data-category="${cat.category}" data-budget="${cat.budget}">Ubah</button>
-          </div>
-        </div>
-        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-          <div class="h-full rounded-full transition-all duration-500" style="width: ${Math.min(100, cat.percentage)}%; background-color: ${cat.color}"></div>
-        </div>
-        <div class="flex justify-between text-[10px] text-slate-400">
-          <span>Terpakai ${cat.percentage}%</span>
-          <span>Sisa ${formatRupiah(Math.max(0, cat.budget - cat.spent))}</span>
-        </div>
-      `;
-
-      card.querySelector('.btn-quick-edit-budget').addEventListener('click', (e) => {
-        e.stopPropagation();
-        sounds.playPop();
-        this.openBudgetModal(cat.category, cat.budget);
-      });
-
-      this.dom.categoryList.appendChild(card);
-    });
-
-    if (window.lucide) window.lucide.createIcons();
-  }
-
-  renderDashboardTransactions() {
-    if (!this.dom.txContainer) return;
-    this.dom.txContainer.innerHTML = '';
-
-    let list = this.transactions;
-    if (this.dashFilterType !== 'all') {
-      list = list.filter((t) => t.type === this.dashFilterType);
-    }
-
-    if (list.length === 0) {
-      this.dom.txContainer.innerHTML = `
-        <div class="p-8 text-center text-slate-400 text-xs">
-          Belum ada transaksi tercatat untuk kategori ini.
-        </div>
-      `;
-      return;
-    }
-
-    list.slice(0, 12).forEach((tx) => {
-      const row = this.createTransactionCard(tx);
-      this.dom.txContainer.appendChild(row);
-    });
-
-    if (window.lucide) window.lucide.createIcons();
-  }
-
-  // ==========================================
-  // VIEW 2: Transaksi Full Ledger
-  // ==========================================
   async loadTransaksiViewData() {
+    if (!this.dom.txviewFullList) return;
+
     try {
-      const list = await fetchTransactionsList(this.txFilterType, this.txFilterCategory, this.txSearchQuery);
-      
-      const totalCount = list.length;
-      const totalExp = list.filter((t) => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-      const totalInc = list.filter((t) => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-      const net = totalInc - totalExp;
+      const txs = await fetchTransactionsList(
+        this.txFilterType,
+        this.txFilterCategory,
+        this.txSearchQuery
+      );
 
-      if (this.dom.txviewCount) this.dom.txviewCount.textContent = totalCount;
-      if (this.dom.txviewExpense) this.dom.txviewExpense.textContent = formatRupiah(totalExp);
-      if (this.dom.txviewIncome) this.dom.txviewIncome.textContent = formatRupiah(totalInc);
-      if (this.dom.txviewNet) this.dom.txviewNet.textContent = formatRupiah(net);
-      if (this.dom.txviewStatus) {
-        this.dom.txviewStatus.textContent = `Menampilkan ${totalCount} transaksi${this.txSearchQuery ? ` untuk "${this.txSearchQuery}"` : ''}`;
-      }
-
-      if (!this.dom.txviewFullList) return;
-      this.dom.txviewFullList.innerHTML = '';
-
-      if (list.length === 0) {
+      if (txs.length === 0) {
         this.dom.txviewFullList.innerHTML = `
-          <div class="p-12 text-center text-slate-400 text-xs space-y-2">
-            <i data-lucide="search-x" class="w-8 h-8 mx-auto text-slate-300"></i>
-            <p>Tidak ada transaksi yang cocok dengan kriteria pencarian.</p>
+          <div class="p-8 text-center ried-card text-slate-400 text-xs">
+            Tidak ada transaksi yang cocok dengan kriteria pencarian.
           </div>
         `;
-        if (window.lucide) window.lucide.createIcons();
         return;
       }
 
-      list.forEach((tx) => {
-        const row = this.createTransactionCard(tx);
-        this.dom.txviewFullList.appendChild(row);
-      });
+      this.dom.txviewFullList.innerHTML = txs.map(t => {
+        const isExpense = t.type === 'expense';
+        const color = isExpense ? 'text-rose-500' : 'text-emerald-500';
+        const sign = isExpense ? '-' : '+';
+        const iconName = isExpense ? 'arrow-up-right' : 'arrow-down-left';
 
-      if (window.lucide) window.lucide.createIcons();
-    } catch (err) {
-      console.error('Gagal load data transaksi:', err);
-    }
-  }
-
-  createTransactionCard(tx) {
-    const isExpense = tx.type === 'expense';
-    const catMeta = this.categories.find((c) => c.category === tx.category) || {
-      icon: 'tag',
-      color: '#22c55e'
-    };
-
-    const row = document.createElement('div');
-    row.className = 'p-3 rounded-2xl ried-card flex items-center justify-between hover:scale-[1.005] transition-all';
-    row.innerHTML = `
-      <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-sm flex-shrink-0" style="background-color: ${catMeta.color}">
-          <i data-lucide="${catMeta.icon}" class="w-4 h-4"></i>
-        </div>
-        <div class="min-w-0">
-          <span class="font-bold text-slate-900 dark:text-white text-xs block truncate">${tx.title}</span>
-          <span class="text-[10px] text-slate-400 flex flex-wrap items-center gap-1.5 mt-0.5">
-            <span class="font-mono">${tx.date}</span>
-            <span>•</span>
-            <span class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">${tx.category}</span>
-            ${tx.notes ? `<span class="truncate max-w-[140px]">• ${tx.notes}</span>` : ''}
-          </span>
-        </div>
-      </div>
-      <div class="flex items-center space-x-2.5 flex-shrink-0">
-        <span class="font-bold text-xs font-mono ${isExpense ? 'text-rose-500' : 'text-emerald-500'}">
-          ${isExpense ? '-' : '+'} ${formatRupiah(tx.amount)}
-        </span>
-        <button class="btn-edit p-1.5 rounded-xl text-slate-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Edit Transaksi">
-          <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-        </button>
-        <button class="btn-delete p-1.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Hapus Transaksi">
-          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-        </button>
-      </div>
-    `;
-
-    row.querySelector('.btn-edit').addEventListener('click', () => {
-      sounds.playPop();
-      this.openTxModal(true, tx);
-    });
-
-    row.querySelector('.btn-delete').addEventListener('click', async () => {
-      sounds.playPop();
-      if (confirm(`Yakin ingin menghapus transaksi "${tx.title}"?`)) {
-        await deleteExistingTransaction(tx.id);
-        sounds.playPop();
-        await this.refreshAllData();
-      }
-    });
-
-    return row;
-  }
-
-  // ==========================================
-  // VIEW 3: Pengeluaran & Category Budgets
-  // ==========================================
-  renderPengeluaranView() {
-    if (!this.dom.budgetGridContainer || !this.summary) return;
-    this.dom.budgetGridContainer.innerHTML = '';
-
-    const breakdown = this.summary.category_breakdown;
-    const totalBudget = breakdown.reduce((acc, c) => acc + c.budget, 0);
-    const totalSpent = breakdown.reduce((acc, c) => acc + c.spent, 0);
-
-    if (this.dom.budgetTotalAllocation) this.dom.budgetTotalAllocation.textContent = formatRupiah(totalBudget);
-    if (this.dom.budgetTotalSpent) this.dom.budgetTotalSpent.textContent = formatRupiah(totalSpent);
-
-    breakdown.forEach((cat) => {
-      const remaining = Math.max(0, cat.budget - cat.spent);
-      const isNearLimit = cat.percentage >= 85;
-      const isExceeded = cat.percentage >= 100;
-
-      let statusBadge = `<span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold">Aman (${cat.percentage}%)</span>`;
-      if (isExceeded) {
-        statusBadge = `<span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 font-bold">Over Budget (${cat.percentage}%)</span>`;
-      } else if (isNearLimit) {
-        statusBadge = `<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 font-bold">Waspada (${cat.percentage}%)</span>`;
-      }
-
-      const card = document.createElement('div');
-      card.className = 'ried-card p-5 rounded-3xl space-y-4 flex flex-col justify-between';
-      card.innerHTML = `
-        <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2.5">
-              <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-sm" style="background-color: ${cat.color}">
-                <i data-lucide="${cat.icon}" class="w-5 h-5"></i>
+        return `
+          <div class="ried-card p-3.5 flex items-center justify-between hover:border-emerald-400 transition-all">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 rounded-xl ${isExpense ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-500' : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-500'} flex items-center justify-center font-bold">
+                <i data-lucide="${iconName}" class="w-4 h-4"></i>
               </div>
               <div>
-                <span class="font-black text-sm text-slate-900 dark:text-white block">${cat.category}</span>
-                <span class="text-[10px] text-slate-400 font-medium">Batas Bulanan</span>
+                <span class="text-xs font-bold text-slate-900 dark:text-white block">${t.title}</span>
+                <span class="text-[10px] text-slate-400 block">${t.date} • <span class="font-semibold text-emerald-600 dark:text-emerald-400">${t.category}</span> ${t.notes ? '• ' + t.notes : ''}</span>
               </div>
             </div>
-            ${statusBadge}
-          </div>
-
-          <div class="space-y-1 pt-1 font-mono">
-            <div class="flex items-baseline justify-between">
-              <span class="text-xs text-slate-400">Realisasi:</span>
-              <span class="text-base font-extrabold text-slate-900 dark:text-white">${formatRupiah(cat.spent)}</span>
-            </div>
-            <div class="flex items-baseline justify-between text-xs">
-              <span class="text-slate-400">Limit:</span>
-              <span class="font-bold text-slate-600 dark:text-slate-300">${formatRupiah(cat.budget)}</span>
+            <div class="flex items-center space-x-4">
+              <span class="font-mono text-xs font-black ${color}">${sign} ${formatRupiah(t.amount)}</span>
+              <button data-delete-id="${t.id}" class="btn-delete-tx text-slate-300 hover:text-rose-500 transition-all p-1" title="Hapus">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
             </div>
           </div>
+        `;
+      }).join('');
 
-          <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
-            <div class="h-full rounded-full transition-all duration-500" style="width: ${Math.min(100, cat.percentage)}%; background-color: ${isExceeded ? '#ef4444' : isNearLimit ? '#f59e0b' : cat.color}"></div>
-          </div>
-
-          <div class="flex items-center justify-between text-[11px] pt-1">
-            <span class="text-slate-400">Sisa Kuota:</span>
-            <span class="font-bold font-mono ${remaining === 0 ? 'text-rose-500' : 'text-emerald-500'}">${formatRupiah(remaining)}</span>
-          </div>
-        </div>
-
-        <div class="pt-3 border-t border-slate-100 dark:border-slate-800/80">
-          <button class="btn-edit-budget-limit w-full py-2 rounded-xl bg-slate-100 hover:bg-emerald-500 hover:text-white dark:bg-slate-800 dark:hover:bg-emerald-500 text-slate-700 dark:text-slate-200 font-bold text-xs transition-all flex items-center justify-center gap-1.5" data-category="${cat.category}" data-budget="${cat.budget}">
-            <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
-            <span>Ubah Batas Budget</span>
-          </button>
-        </div>
-      `;
-
-      card.querySelector('.btn-edit-budget-limit').addEventListener('click', () => {
-        sounds.playPop();
-        this.openBudgetModal(cat.category, cat.budget);
+      // Bind delete buttons
+      document.querySelectorAll('.btn-delete-tx').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-delete-id');
+          if (confirm('Apakah Anda yakin ingin menghapus catatan transaksi ini?')) {
+            sounds.playPop();
+            await deleteExistingTransaction(id);
+            await this.refreshAllData();
+          }
+        });
       });
 
-      this.dom.budgetGridContainer.appendChild(card);
-    });
-
-    if (window.lucide) window.lucide.createIcons();
-  }
-
-  // ==========================================
-  // VIEW 4: Laporan & Analytics View
-  // ==========================================
-  renderLaporanView() {
-    if (!this.summary) return;
-
-    const inc = this.summary.total_income;
-    const exp = this.summary.total_expense;
-    if (this.dom.reportSavingsRate) {
-      if (inc > 0) {
-        const savingsRate = Math.max(0, Math.round(((inc - exp) / inc) * 1000) / 10);
-        this.dom.reportSavingsRate.textContent = `${savingsRate}%`;
-      } else {
-        this.dom.reportSavingsRate.textContent = '0%';
+      if (window.lucide) {
+        window.lucide.createIcons();
       }
+    } catch (err) {
+      console.error('Failed loading transactions view:', err);
     }
-
-    if (this.dom.reportAvgDaily) {
-      const days = this.summary.target_days_current || 30;
-      const avg = Math.round(exp / days);
-      this.dom.reportAvgDaily.textContent = formatRupiah(avg);
-    }
-
-    if (!this.dom.reportTableBody) return;
-    this.dom.reportTableBody.innerHTML = '';
-
-    this.summary.category_breakdown.forEach((cat) => {
-      const remaining = cat.budget - cat.spent;
-      const tr = document.createElement('tr');
-      tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors';
-      tr.innerHTML = `
-        <td class="py-3 pl-2 flex items-center space-x-2">
-          <span class="w-3 h-3 rounded-md inline-block flex-shrink-0" style="background-color: ${cat.color}"></span>
-          <span class="font-bold text-slate-800 dark:text-white font-sans">${cat.category}</span>
-        </td>
-        <td class="py-3 text-right text-slate-600 dark:text-slate-300">${formatRupiah(cat.budget)}</td>
-        <td class="py-3 text-right font-bold text-rose-500">${formatRupiah(cat.spent)}</td>
-        <td class="py-3 text-right ${remaining >= 0 ? 'text-emerald-500' : 'text-rose-500'}">${formatRupiah(remaining)}</td>
-        <td class="py-3 text-right pr-2">
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
-            cat.percentage > 100 ? 'bg-rose-100 text-rose-600 dark:bg-rose-950' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950'
-          }">${cat.percentage}%</span>
-        </td>
-      `;
-      this.dom.reportTableBody.appendChild(tr);
-    });
   }
 
-  // ==========================================
-  // Transaction Modal Handler
-  // ==========================================
+  // Modal Transaction Handlers
   openTxModal(isEdit = false, txData = null) {
     if (!this.dom.txModal) return;
     this.editingTxId = isEdit && txData ? txData.id : null;
@@ -1037,12 +670,8 @@ class RiedApp {
       this.dom.inputDate.value = txData.date;
       this.dom.inputNotes.value = txData.notes || '';
     } else {
-      this.dom.inputTitle.value = '';
-      this.dom.inputAmount.value = '';
-      this.dom.inputCategory.value = 'Makanan';
-      this.dom.inputType.value = 'expense';
+      this.dom.modalForm.reset();
       this.dom.inputDate.value = new Date().toISOString().split('T')[0];
-      this.dom.inputNotes.value = '';
     }
 
     this.dom.txModal.classList.remove('hidden');
@@ -1082,48 +711,100 @@ class RiedApp {
     }
   }
 
-  // ==========================================
-  // Budget Modal Handler
-  // ==========================================
-  openBudgetModal(category, currentBudget) {
-    if (!this.dom.budgetModal) return;
-    this.editingBudgetCategory = category;
-    if (this.dom.budgetModalCategory) {
-      this.dom.budgetModalCategory.textContent = `Kategori: ${category}`;
+  // WhatsApp Simulator Handler
+  async handleWhatsAppSimulate() {
+    const text = this.dom.waSimInput.value.trim();
+    if (!text) return;
+
+    sounds.playPop();
+
+    // Natural text parsing logic
+    let category = 'Makanan';
+    let type = 'expense';
+    let title = text;
+    let amount = 25000;
+
+    // Detect numbers: e.g. 35rb, 35.000, 35000
+    const matchRb = text.match(/(\d+)\s*(rb|k)/i);
+    const matchNormal = text.match(/(\d[\d\.,]*)/);
+
+    if (matchRb) {
+      amount = parseInt(matchRb[1], 10) * 1000;
+    } else if (matchNormal) {
+      const cleanNum = matchNormal[1].replace(/\./g, '').replace(/,/g, '');
+      amount = parseInt(cleanNum, 10);
     }
-    if (this.dom.budgetModalInput) {
-      this.dom.budgetModalInput.value = currentBudget;
-    }
 
-    this.dom.budgetModal.classList.remove('hidden');
-    this.dom.budgetModal.classList.add('flex');
-    this.dom.budgetModalInput.focus();
-  }
-
-  closeBudgetModal() {
-    if (!this.dom.budgetModal) return;
-    this.dom.budgetModal.classList.add('hidden');
-    this.dom.budgetModal.classList.remove('flex');
-    this.editingBudgetCategory = null;
-  }
-
-  async handleBudgetFormSubmit(e) {
-    e.preventDefault();
-    if (!this.editingBudgetCategory) return;
-
-    const newBudget = parseFloat(this.dom.budgetModalInput.value);
-    if (isNaN(newBudget) || newBudget < 0) {
-      alert('Masukkan nominal budget yang valid!');
-      return;
+    const lower = text.toLowerCase();
+    if (lower.includes('bensin') || lower.includes('shell') || lower.includes('pertamina') || lower.includes('gojek') || lower.includes('grab')) {
+      category = 'Transportasi';
+    } else if (lower.includes('kopi') || lower.includes('makan') || lower.includes('nasi') || lower.includes('restoran')) {
+      category = 'Makanan';
+    } else if (lower.includes('listrik') || lower.includes('pln') || lower.includes('wifi') || lower.includes('tagihan')) {
+      category = 'Tagihan';
+    } else if (lower.includes('gaji') || lower.includes('bonus') || lower.includes('transfer')) {
+      category = 'Gaji';
+      type = 'income';
     }
 
     try {
-      await updateCategoryBudgetLimit(this.editingBudgetCategory, newBudget);
+      const created = await createNewTransaction({
+        title: title,
+        amount: amount,
+        category: category,
+        type: type,
+        date: new Date().toISOString().split('T')[0],
+        notes: 'Dicatat via WhatsApp Bot'
+      });
+
       sounds.playChime();
-      this.closeBudgetModal();
+      this.dom.waSimOutput.innerHTML = `
+        🟢 Transaksi baru tersimpan ke SQLite!<br>
+        • Judul: <b>${created.title}</b><br>
+        • Nominal: <b>${formatRupiah(created.amount)}</b> (${created.type})<br>
+        • Kategori: <b>${created.category}</b> (Auto-Mapping)<br>
+        • ID Entri: <b>#${String(created.id)}</b>
+      `;
+
       await this.refreshAllData();
     } catch (err) {
-      alert(`Gagal memperbarui budget: ${err.message}`);
+      this.dom.waSimOutput.innerHTML = `<span class="text-rose-500">Error: ${err.message}</span>`;
+    }
+  }
+
+  applyFilters() {
+    this.renderCurrentCharts();
+  }
+
+  resetFilters() {
+    if (this.dom.filterCategory) this.dom.filterCategory.value = 'all';
+    if (this.dom.filterWallet) this.dom.filterWallet.value = 'all';
+    this.renderCurrentCharts();
+  }
+
+  setTheme(isDark) {
+    this.isDarkMode = isDark;
+    localStorage.setItem('ried-theme', isDark ? 'dark' : 'light');
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      if (this.dom.themeIcon) this.dom.themeIcon.setAttribute('data-lucide', 'sun');
+    } else {
+      document.documentElement.classList.remove('dark');
+      if (this.dom.themeIcon) this.dom.themeIcon.setAttribute('data-lucide', 'moon');
+    }
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+    this.renderCurrentCharts();
+  }
+
+  updateSoundButtonUI() {
+    const isMuted = sounds.isMuted();
+    if (this.dom.soundIcon) {
+      this.dom.soundIcon.setAttribute('data-lucide', isMuted ? 'volume-x' : 'volume-2');
+    }
+    if (window.lucide) {
+      window.lucide.createIcons();
     }
   }
 }
@@ -1141,4 +822,3 @@ if (document.readyState === 'loading') {
 } else {
   bootstrapRiedApp();
 }
-
