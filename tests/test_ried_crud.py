@@ -10,7 +10,7 @@ from backend.app.repository.db import (
 )
 
 
-class TestFinoFinancialCRUD(unittest.TestCase):
+class TestRiedFinancialCRUD(unittest.TestCase):
     def test_create_and_read_transaction(self):
         """Verify transaction creation and retrieval."""
         new_tx = TransactionCreate(

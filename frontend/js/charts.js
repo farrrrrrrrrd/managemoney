@@ -1,5 +1,6 @@
 /**
- * Fino Smooth Spline Area Chart & Category Donut Visualization
+ * Ried Smooth Spline Area Chart & Category Donut Visualization
+ * High-density vanilla HTML5 Canvas implementation with zero external runtime deps.
  */
 
 export function renderSplineChart(canvas, dataPoints, isDark = false) {

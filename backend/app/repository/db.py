@@ -1,13 +1,13 @@
 """
-Fino Financial Repository & Persistence Layer
-SQLite storage with transactions CRUD, category budget tracking, and real-time summaries.
+Ried Financial Repository & Persistence Layer
+SQLite-backed storage with category budgets and transaction ledger.
 """
 
 import sqlite3
-import csv
-import io
 from pathlib import Path
 from typing import List, Dict, Optional
+import csv
+import io
 from datetime import datetime, timedelta
 
 from backend.app.domain.models import (
@@ -19,7 +19,7 @@ from backend.app.domain.models import (
     DailyExpenseDataPoint
 )
 
-DB_PATH = Path(__file__).resolve().parent.parent.parent / "fino_finance.db"
+DB_PATH = Path(__file__).resolve().parent.parent.parent / "ried_finance.db"
 
 CATEGORY_DEFAULTS = {
     "Makanan": {"budget": 2500000.0, "color": "#22c55e", "icon": "utensils"},

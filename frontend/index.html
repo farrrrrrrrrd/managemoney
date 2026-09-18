@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FINO // Smart Financial Dashboard & Personal Budgeting</title>
+  <title>RIED // Smart Financial Dashboard & Personal Budgeting</title>
 
   <!-- Tailwind CSS Play CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -13,6 +13,18 @@
       theme: {
         extend: {
           colors: {
+            ried: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              300: '#86efac',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            },
             fino: {
               50: '#f0fdf4',
               100: '#dcfce7',
@@ -43,13 +55,13 @@
   <aside class="w-64 border-r border-emerald-100 dark:border-emerald-950/60 bg-white/80 dark:bg-[#121d15]/80 backdrop-blur-xl p-5 flex flex-col justify-between hidden md:flex sticky top-0 h-screen z-20">
     
     <div class="space-y-6">
-      <!-- Logo Fino -->
+      <!-- Logo Ried -->
       <div class="flex items-center space-x-3 px-2">
         <div class="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25">
           <i data-lucide="wallet" class="w-5 h-5"></i>
         </div>
         <div>
-          <span class="text-xl font-black tracking-tight text-emerald-900 dark:text-white">FINO<span class="text-emerald-500">.</span></span>
+          <span class="text-xl font-black tracking-tight text-emerald-900 dark:text-white">RIED<span class="text-emerald-500">.</span></span>
           <span class="text-[10px] block font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Financial SaaS v2.1</span>
         </div>
       </div>
@@ -94,10 +106,10 @@
       <!-- User Card -->
       <div class="flex items-center space-x-3 p-2 rounded-2xl fino-card">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-          F
+          R
         </div>
         <div class="overflow-hidden">
-          <span class="text-xs font-bold text-slate-800 dark:text-white block truncate">Fino Executive</span>
+          <span class="text-xs font-bold text-slate-800 dark:text-white block truncate">Ried Executive</span>
           <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Smart Personal Finance</span>
         </div>
       </div>
@@ -113,7 +125,7 @@
     <header class="p-6 pb-2 flex flex-wrap items-center justify-between gap-4 border-b border-emerald-100/50 dark:border-emerald-950/40 bg-white/40 dark:bg-[#121d15]/40 backdrop-blur-md sticky top-0 z-10">
       <div>
         <div class="flex items-center space-x-2">
-          <h1 id="view-title" class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Selamat pagi, Fino 👋</h1>
+          <h1 id="view-title" class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Selamat pagi, Ried 👋</h1>
           <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">LIVE</span>
         </div>
         <p id="view-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Kelola dan pantau keuangan personal Anda dengan presisi & gaya.</p>
@@ -157,7 +169,7 @@
             Ucapkan selamat tinggal pada catatan finansial yang kaku & membosankan 🌱
           </h2>
           <p class="text-xs text-slate-600 dark:text-slate-300">
-            FINO mendesain pelacakan pengeluaran dengan nuansa bento organik, visualisasi tren harian cerdas, dan kontrol batas budget real-time.
+            RIED mendesain pelacakan pengeluaran dengan nuansa bento organik, visualisasi tren harian cerdas, dan kontrol batas budget real-time.
           </p>
         </div>
         <div class="flex items-center space-x-2 self-end md:self-center">
@@ -499,7 +511,7 @@
             <h2 class="text-lg font-bold text-slate-900 dark:text-white">Laporan Keuangan & Analitik</h2>
             <p class="text-xs text-slate-400">Ringkasan arus kas, alokasi kategori, dan ekspor data pembukuan.</p>
           </div>
-          <a href="/api/export/csv" download="fino_transaksi.csv" class="flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 active:scale-95 transition-all">
+          <a href="/api/export/csv" download="ried_transaksi.csv" class="flex items-center space-x-2 px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 active:scale-95 transition-all">
             <i data-lucide="download" class="w-4 h-4"></i>
             <span>Download Laporan CSV</span>
           </a>
@@ -626,7 +638,7 @@
                   <span class="font-bold text-slate-800 dark:text-white block">Cadangan Data Lengkap</span>
                   <span class="text-[11px] text-slate-400">Unduh seluruh riwayat pembukuan</span>
                 </div>
-                <a href="/api/export/csv" download="fino_transaksi.csv" class="px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-bold hover:bg-emerald-500 hover:text-white transition-colors">
+                <a href="/api/export/csv" download="ried_transaksi.csv" class="px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-bold hover:bg-emerald-500 hover:text-white transition-colors">
                   Ekspor CSV
                 </a>
               </div>
@@ -646,14 +658,14 @@
 
         </div>
 
-        <!-- About FINO Platform -->
+        <!-- About RIED Platform -->
         <div class="fino-card p-6 rounded-3xl space-y-3">
           <div class="flex items-center space-x-2">
             <i data-lucide="shield-check" class="w-5 h-5 text-emerald-500"></i>
-            <span class="text-sm font-bold text-slate-900 dark:text-white">Tentang FINO Platform v2.1</span>
+            <span class="text-sm font-bold text-slate-900 dark:text-white">Tentang RIED Platform v2.1</span>
           </div>
           <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            FINO dirancang dengan arsitektur Zero AI Slop: antarmuka bento organik bergaya modern, performa responsif sub-millisecond, validasi skema Pydantic v2 yang ketat, dan visualisasi canvas dinamis tanpa dependensi library eksternal yang berat.
+            RIED dirancang dengan arsitektur Zero AI Slop: antarmuka bento organik bergaya modern, performa responsif sub-millisecond, validasi skema Pydantic v2 yang ketat, dan visualisasi canvas dinamis tanpa dependensi library eksternal yang berat.
           </p>
           <div class="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
             <span class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono font-medium">FastAPI Python</span>

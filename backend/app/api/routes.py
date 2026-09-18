@@ -28,7 +28,7 @@ from backend.app.repository.db import (
     init_db
 )
 
-router = APIRouter(prefix="/api", tags=["Fino Finance"])
+router = APIRouter(prefix="/api", tags=["Ried Finance"])
 
 
 class UpdateBudgetRequest(BaseModel):
@@ -39,7 +39,7 @@ class UpdateBudgetRequest(BaseModel):
 async def health_check():
     return {
         "status": "healthy",
-        "app": "Fino Dashboard // Personal & SME Finance Studio",
+        "app": "Ried Dashboard // Personal & SME Finance Studio",
         "version": "2.2.0"
     }
 
@@ -127,5 +127,5 @@ async def export_csv():
     return Response(
         content=csv_data,
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=fino_transaksi.csv"}
+        headers={"Content-Disposition": "attachment; filename=ried_transaksi.csv"}
     )

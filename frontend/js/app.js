@@ -1,5 +1,5 @@
 /**
- * FINO Financial Dashboard & SaaS App Controller
+ * RIED Financial Dashboard & SaaS App Controller
  * Full Multi-View SPA: Dashboard, Transaksi, Pengeluaran (Budgets), Laporan, Pengaturan.
  * Zero AI Slop - 100% Complete Implementation.
  */
@@ -24,7 +24,7 @@ export function formatRupiah(number) {
   }).format(number);
 }
 
-class FinoApp {
+class RiedApp {
   constructor() {
     this.currentView = 'dashboard';
     this.summary = null;
@@ -147,7 +147,7 @@ class FinoApp {
 
   async init() {
     // 1. Theme setup
-    const savedTheme = localStorage.getItem('fino-theme');
+    const savedTheme = localStorage.getItem('ried-theme') || localStorage.getItem('fino-theme');
     this.setTheme(savedTheme === 'dark');
 
     // 2. Set current date header
@@ -353,7 +353,7 @@ class FinoApp {
     // Update Top View Header
     const viewMetadata = {
       dashboard: {
-        title: 'Selamat pagi, Fino 👋',
+        title: 'Selamat pagi, Ried 👋',
         subtitle: 'Kelola dan pantau keuangan personal Anda dengan presisi & gaya.'
       },
       transaksi: {
@@ -369,7 +369,7 @@ class FinoApp {
         subtitle: 'Evaluasi tingkat kedisiplinan finansial, rasio simpanan, dan ekspor CSV.'
       },
       pengaturan: {
-        title: 'Pengaturan & Sistem FINO ⚙️',
+        title: 'Pengaturan & Sistem RIED ⚙️',
         subtitle: 'Konfigurasi preferensi tampilan, format lokal, dan cadangan data lokal.'
       }
     };
@@ -403,12 +403,12 @@ class FinoApp {
     const html = document.documentElement;
     if (isDark) {
       html.classList.add('dark');
-      localStorage.setItem('fino-theme', 'dark');
+      localStorage.setItem('ried-theme', 'dark');
       if (this.dom.themeIcon) this.dom.themeIcon.setAttribute('data-lucide', 'sun');
       if (this.dom.themeBadge) this.dom.themeBadge.textContent = 'Forest Dark';
     } else {
       html.classList.remove('dark');
-      localStorage.setItem('fino-theme', 'light');
+      localStorage.setItem('ried-theme', 'light');
       if (this.dom.themeIcon) this.dom.themeIcon.setAttribute('data-lucide', 'moon');
       if (this.dom.themeBadge) this.dom.themeBadge.textContent = 'Matcha Cream';
     }
@@ -481,7 +481,7 @@ class FinoApp {
 
       if (window.lucide) window.lucide.createIcons();
     } catch (err) {
-      console.error('Gagal memuat data FINO:', err);
+      console.error('Gagal memuat data RIED:', err);
     }
   }
 
@@ -919,5 +919,5 @@ class FinoApp {
 
 // Instantiate on DOM ready
 window.addEventListener('DOMContentLoaded', () => {
-  new FinoApp();
+  new RiedApp();
 });

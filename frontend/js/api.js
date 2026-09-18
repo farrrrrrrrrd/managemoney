@@ -1,5 +1,5 @@
 /**
- * Fino Dashboard API Client
+ * Ried Dashboard API Client
  */
 
 const API_BASE = '';
