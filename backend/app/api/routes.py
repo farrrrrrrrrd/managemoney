@@ -1,11 +1,12 @@
 """
 Fino Financial REST API Routes
-Provides endpoints for financial dashboard summaries, transaction CRUD,
-and category budget analytics.
+Provides endpoints for financial dashboard summaries, multi-view transaction CRUD,
+category budget analytics, and CSV data export.
 """
 
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, Response
+from pydantic import BaseModel, Field
 
 from backend.app.domain.models import (
     Transaction,
@@ -21,10 +22,17 @@ from backend.app.repository.db import (
     update_transaction,
     delete_transaction,
     get_financial_summary,
-    CATEGORY_METADATA
+    update_category_budget,
+    get_category_budgets,
+    export_transactions_csv,
+    init_db
 )
 
 router = APIRouter(prefix="/api", tags=["Fino Finance"])
+
+
+class UpdateBudgetRequest(BaseModel):
+    budget: float = Field(..., gt=0.0, description="Batas budget baru dalam Rupiah")
 
 
 @router.get("/health", summary="Health Check")
@@ -32,7 +40,7 @@ async def health_check():
     return {
         "status": "healthy",
         "app": "Fino Dashboard // Personal & SME Finance Studio",
-        "version": "2.1.0"
+        "version": "2.2.0"
     }
 
 
@@ -51,11 +59,12 @@ async def get_dashboard_summary():
 @router.get("/transactions", response_model=List[Transaction], summary="List Transactions")
 async def list_transactions(
     limit: int = Query(100, ge=1, le=500),
-    type: Optional[str] = Query(None, regex="^(expense|income)$"),
-    category: Optional[str] = None
+    type: Optional[str] = Query(None, pattern="^(expense|income)$"),
+    category: Optional[str] = None,
+    search: Optional[str] = None
 ):
-    """Retrieves transaction history with optional filters."""
-    return get_transactions(limit=limit, tx_type=type, category=category)
+    """Retrieves transaction history with optional filters and keyword search."""
+    return get_transactions(limit=limit, tx_type=type, category=category, search=search)
 
 
 @router.post("/transactions", response_model=Transaction, status_code=status.HTTP_201_CREATED, summary="Create Transaction")
@@ -98,13 +107,25 @@ async def remove_transaction(tx_id: int):
 
 @router.get("/categories", summary="Get Categories and Budgets")
 async def list_categories():
-    """Returns available categories with default budget limits and colors."""
-    return [
-        {
-            "category": k,
-            "budget": v["budget"],
-            "color": v["color"],
-            "icon": v["icon"]
-        }
-        for k, v in CATEGORY_METADATA.items()
-    ]
+    """Returns available categories with current budget limits and colors."""
+    return get_category_budgets()
+
+
+@router.put("/categories/{category}", summary="Update Category Budget")
+async def set_category_budget(category: str, payload: UpdateBudgetRequest):
+    """Updates the monthly budget limit for a category."""
+    updated = update_category_budget(category, payload.budget)
+    if not updated:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kategori tidak ditemukan")
+    return {"status": "success", "category": category, "new_budget": payload.budget}
+
+
+@router.get("/export/csv", summary="Export Transactions to CSV")
+async def export_csv():
+    """Exports all transaction history to a CSV file."""
+    csv_data = export_transactions_csv()
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=fino_transaksi.csv"}
+    )

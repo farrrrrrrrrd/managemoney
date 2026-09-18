@@ -10,10 +10,11 @@ export async function fetchFinancialSummary() {
   return await res.json();
 }
 
-export async function fetchTransactionsList(type = null, category = null) {
-  let url = `${API_BASE}/api/transactions?limit=100`;
+export async function fetchTransactionsList(type = null, category = null, search = null) {
+  let url = `${API_BASE}/api/transactions?limit=150`;
   if (type) url += `&type=${encodeURIComponent(type)}`;
   if (category) url += `&category=${encodeURIComponent(category)}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error('Gagal memuat daftar transaksi');
   return await res.json();
@@ -56,5 +57,15 @@ export async function deleteExistingTransaction(id) {
 export async function fetchCategoriesMeta() {
   const res = await fetch(`${API_BASE}/api/categories`);
   if (!res.ok) throw new Error('Gagal memuat kategori');
+  return await res.json();
+}
+
+export async function updateCategoryBudgetLimit(category, newBudget) {
+  const res = await fetch(`${API_BASE}/api/categories/${encodeURIComponent(category)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ budget: parseFloat(newBudget) })
+  });
+  if (!res.ok) throw new Error('Gagal memperbarui budget kategori');
   return await res.json();
 }

@@ -78,3 +78,41 @@ body {
   background-color: #16a34a !important;
   box-shadow: 0 6px 20px -2px rgba(22, 163, 74, 0.5);
 }
+
+/* Nav Link Active State */
+.nav-link-active {
+  background-color: #22c55e !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 16px -2px rgba(34, 197, 94, 0.3) !important;
+}
+
+.dark .nav-link-active {
+  background-color: #16a34a !important;
+  box-shadow: 0 6px 20px -2px rgba(22, 163, 74, 0.4) !important;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Claymorphic & Glass accents */
+.clay-card {
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.6), 0 8px 24px -4px rgba(34, 197, 94, 0.08);
+}
+
+.dark .clay-card {
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.08), 0 8px 30px -4px rgba(0, 0, 0, 0.5);
+}
+

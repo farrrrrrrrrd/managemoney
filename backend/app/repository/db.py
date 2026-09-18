@@ -4,6 +4,8 @@ SQLite storage with transactions CRUD, category budget tracking, and real-time s
 """
 
 import sqlite3
+import csv
+import io
 from pathlib import Path
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
@@ -19,7 +21,7 @@ from backend.app.domain.models import (
 
 DB_PATH = Path(__file__).resolve().parent.parent.parent / "fino_finance.db"
 
-CATEGORY_METADATA = {
+CATEGORY_DEFAULTS = {
     "Makanan": {"budget": 2500000.0, "color": "#22c55e", "icon": "utensils"},
     "Tagihan": {"budget": 1500000.0, "color": "#3b82f6", "icon": "receipt"},
     "Transportasi": {"budget": 800000.0, "color": "#f59e0b", "icon": "car"},
@@ -53,6 +55,24 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_trans_date ON transactions(date)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_trans_type ON transactions(type)")
+
+    # Category Budgets table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS category_budgets (
+            category TEXT PRIMARY KEY,
+            budget REAL NOT NULL,
+            color TEXT NOT NULL,
+            icon TEXT NOT NULL
+        )
+    """)
+
+    # Pre-populate category budgets if not present
+    for cat, meta in CATEGORY_DEFAULTS.items():
+        cursor.execute("""
+            INSERT OR IGNORE INTO category_budgets (category, budget, color, icon)
+            VALUES (?, ?, ?, ?)
+        """, (cat, meta["budget"], meta["color"], meta["icon"]))
+
     conn.commit()
 
     # Check if empty; if so, pre-seed with realistic financial data matching the video
@@ -112,7 +132,7 @@ def create_transaction(data: TransactionCreate) -> Transaction:
     return Transaction(**dict(row))
 
 
-def get_transactions(limit: int = 100, tx_type: Optional[str] = None, category: Optional[str] = None) -> List[Transaction]:
+def get_transactions(limit: int = 100, tx_type: Optional[str] = None, category: Optional[str] = None, search: Optional[str] = None) -> List[Transaction]:
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -124,6 +144,10 @@ def get_transactions(limit: int = 100, tx_type: Optional[str] = None, category: 
     if category:
         query += " AND category = ?"
         params.append(category)
+    if search:
+        query += " AND (title LIKE ? OR notes LIKE ?)"
+        params.append(f"%{search}%")
+        params.append(f"%{search}%")
 
     query += " ORDER BY date DESC, id DESC LIMIT ?"
     params.append(limit)
@@ -147,7 +171,6 @@ def update_transaction(tx_id: int, data: TransactionUpdate) -> Optional[Transact
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Get current
     cursor.execute("SELECT * FROM transactions WHERE id = ?", (tx_id,))
     existing = cursor.fetchone()
     if not existing:
@@ -187,6 +210,40 @@ def delete_transaction(tx_id: int) -> bool:
     return deleted
 
 
+def update_category_budget(category: str, new_budget: float) -> bool:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE category_budgets SET budget = ? WHERE category = ?", (new_budget, category))
+    updated = cursor.rowcount > 0
+    conn.commit()
+    conn.close()
+    return updated
+
+
+def get_category_budgets() -> List[Dict]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT category, budget, color, icon FROM category_budgets")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def export_transactions_csv() -> str:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, date, title, category, type, amount, notes FROM transactions ORDER BY date DESC, id DESC")
+    rows = cursor.fetchall()
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["ID", "Tanggal", "Judul", "Kategori", "Jenis", "Nominal (Rp)", "Catatan"])
+    for r in rows:
+        writer.writerow([r["id"], r["date"], r["title"], r["category"], r["type"], r["amount"], r["notes"] or ""])
+    return output.getvalue()
+
+
 def get_financial_summary() -> FinancialSummary:
     conn = get_connection()
     cursor = conn.cursor()
@@ -214,18 +271,23 @@ def get_financial_summary() -> FinancialSummary:
     category_rows = cursor.fetchall()
     spent_by_category = {r["category"]: float(r["spent"]) for r in category_rows}
 
+    # Fetch dynamic budgets from table
+    cursor.execute("SELECT category, budget, color, icon FROM category_budgets")
+    budget_rows = cursor.fetchall()
+
     breakdown = []
-    for cat, meta in CATEGORY_METADATA.items():
+    for b in budget_rows:
+        cat = b["category"]
         spent = spent_by_category.get(cat, 0.0)
-        budget = meta["budget"]
+        budget = float(b["budget"])
         pct = round((spent / budget) * 100, 1) if budget > 0 else 0.0
         breakdown.append(CategoryBudget(
             category=cat,
             spent=spent,
             budget=budget,
             percentage=pct,
-            color=meta["color"],
-            icon=meta["icon"]
+            color=b["color"],
+            icon=b["icon"]
         ))
 
     # 3. Daily Expenses (Last 10 days)
@@ -244,8 +306,8 @@ def get_financial_summary() -> FinancialSummary:
             amount=amt
         ))
 
-    # 4. Recent Transactions (limit 8)
-    cursor.execute("SELECT * FROM transactions ORDER BY date DESC, id DESC LIMIT 8")
+    # 4. Recent Transactions (limit 10)
+    cursor.execute("SELECT * FROM transactions ORDER BY date DESC, id DESC LIMIT 10")
     recent_rows = cursor.fetchall()
     recent = [Transaction(**dict(r)) for r in recent_rows]
 
