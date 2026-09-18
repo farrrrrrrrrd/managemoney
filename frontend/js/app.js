@@ -16,13 +16,15 @@ import {
   createNewTransaction,
   updateExistingTransaction,
   deleteExistingTransaction,
-  fetchCategoriesMeta
+  fetchCategoriesMeta,
+  updateCategoryBudgetLimit
 } from './api.js';
 
 import {
   renderSplineChart,
   renderTransactionBarChart,
-  renderStackedBudgetChart
+  renderStackedBudgetChart,
+  attachCanvasInteractivity
 } from './charts.js';
 
 import { sounds } from './audio.js';
@@ -35,10 +37,21 @@ export function formatRupiah(number) {
   }).format(number);
 }
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 class RiedApp {
   constructor() {
     this.currentView = 'dashboard';
     this.chartMode = 'daily'; // 'daily' or 'transaction'
+    this.activeRange = '30d'; // '7d', '14d', '30d'
     this.summary = null;
     this.transactions = [];
     this.categories = [];
@@ -58,6 +71,9 @@ class RiedApp {
 
     // Transaction modal state
     this.editingTxId = null;
+
+    // Budget modal state
+    this.editingBudgetCategory = null;
 
     // Theme state
     this.isDarkMode = false;
@@ -85,10 +101,10 @@ class RiedApp {
         dashboard: document.getElementById('view-dashboard'),
         transaksi: document.getElementById('view-transaksi'),
         pengaturan: document.getElementById('view-pengaturan'),
-        'gateway-wa': document.getElementById('view-gateway-wa'),
+        'gateway-telegram': document.getElementById('view-gateway-telegram'),
         'format-balasan': document.getElementById('view-format-balasan'),
         kamus: document.getElementById('view-kamus'),
-        'review-pesan': document.getElementById('view-review-pesan')
+        'log-telegram': document.getElementById('view-log-telegram')
       },
 
       // Dashboard Elements
@@ -110,11 +126,16 @@ class RiedApp {
       statTxCount: document.getElementById('stat-tx-count'),
       statTotalSavings: document.getElementById('stat-total-savings'),
 
-      // Charts & Toggles
+      // Charts, Toggles & Tooltips
+      chartTooltip: document.getElementById('chart-tooltip'),
       chartMainExpense: document.getElementById('chart-main-expense'),
       toggleChartDaily: document.getElementById('toggle-chart-daily'),
       toggleChartTx: document.getElementById('toggle-chart-tx'),
       chartBudgetStacked: document.getElementById('chart-budget-stacked'),
+      rangePresets: document.querySelectorAll('.btn-range-preset'),
+
+      // Interactive Dompet Rows
+      dompetRows: document.querySelectorAll('.dompet-row-clickable'),
 
       // Filter Box
       filterMonth: document.getElementById('filter-month'),
@@ -153,10 +174,19 @@ class RiedApp {
       inputDate: document.getElementById('input-date'),
       inputNotes: document.getElementById('input-notes'),
 
-      // WhatsApp Simulator Elements
-      waSimInput: document.getElementById('wa-sim-input'),
-      waSimSubmit: document.getElementById('wa-sim-submit'),
-      waSimOutput: document.getElementById('wa-sim-output'),
+      // Budget Adjustment Modal
+      budgetModal: document.getElementById('budget-modal'),
+      budgetModalCat: document.getElementById('budget-modal-category'),
+      budgetModalInput: document.getElementById('budget-modal-input'),
+      budgetModalForm: document.getElementById('budget-modal-form'),
+      budgetModalClose: document.getElementById('budget-modal-close'),
+      budgetModalCancel: document.getElementById('budget-modal-cancel'),
+
+      // Telegram Simulator Elements
+      tgChatFeed: document.getElementById('tg-chat-feed'),
+      tgChatInput: document.getElementById('tg-chat-input'),
+      btnTgSend: document.getElementById('btn-tg-send'),
+      tgAuditLogContainer: document.getElementById('tg-audit-log-container'),
       btnExportCsv: document.getElementById('btn-export-csv')
     };
   }
@@ -173,12 +203,46 @@ class RiedApp {
     this.bindEvents();
     this.renderCalendarDayStrip();
 
-    // 4. Load initial data
+    // 4. Attach Canvas Interactivity
+    this.initCanvasInteractivity();
+
+    // 5. Load initial data
     await this.refreshAllData();
 
-    // 5. Initialize Lucide icons
+    // 6. Initialize Lucide icons
     if (window.lucide) {
       window.lucide.createIcons();
+    }
+  }
+
+  initCanvasInteractivity() {
+    // Main Expense Chart (Spline Points & Bars)
+    if (this.dom.chartMainExpense && this.dom.chartTooltip) {
+      attachCanvasInteractivity(this.dom.chartMainExpense, this.dom.chartTooltip, (type, item) => {
+        sounds.playPop();
+        if (type === 'date') {
+          // Switch to Transaksi view and filter by selected date
+          this.switchView('transaksi');
+          if (this.dom.txSearchInput) {
+            this.dom.txSearchInput.value = item.date;
+            this.txSearchQuery = item.date;
+            this.loadTransaksiViewData();
+          }
+        } else if (type === 'tx') {
+          // Open Transaction modal in edit mode
+          this.openTxModal(true, item);
+        }
+      });
+    }
+
+    // Stacked Budget Chart (Category Columns)
+    if (this.dom.chartBudgetStacked && this.dom.chartTooltip) {
+      attachCanvasInteractivity(this.dom.chartBudgetStacked, this.dom.chartTooltip, (type, item) => {
+        if (type === 'category') {
+          sounds.playPop();
+          this.openBudgetModal(item.category, item.budget);
+        }
+      });
     }
   }
 
@@ -246,6 +310,33 @@ class RiedApp {
       });
     }
 
+    // Clickable Dompet Rows
+    if (this.dom.dompetRows) {
+      this.dom.dompetRows.forEach((row) => {
+        row.addEventListener('click', () => {
+          sounds.playPop();
+          const idx = parseInt(row.getAttribute('data-wallet-idx'), 10);
+          if (!isNaN(idx) && this.wallets[idx]) {
+            this.setWalletIndex(idx);
+          }
+        });
+      });
+    }
+
+    // Quick Range Presets (7 Hari, 14 Hari, 30 Hari)
+    if (this.dom.rangePresets) {
+      this.dom.rangePresets.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          sounds.playPop();
+          const range = btn.getAttribute('data-range');
+          this.activeRange = range;
+          this.dom.rangePresets.forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          this.renderCurrentCharts();
+        });
+      });
+    }
+
     // Chart Mode Toggles (Per hari vs Per transaksi)
     if (this.dom.toggleChartDaily) {
       this.dom.toggleChartDaily.addEventListener('click', () => {
@@ -278,7 +369,7 @@ class RiedApp {
     if (this.dom.btnExportExcel || this.dom.btnExportCsv) {
       const exportAction = () => {
         sounds.playChime();
-        window.location.href = '/api/transactions/export/csv';
+        window.location.href = '/api/export/csv';
       };
       if (this.dom.btnExportExcel) this.dom.btnExportExcel.addEventListener('click', exportAction);
       if (this.dom.btnExportCsv) this.dom.btnExportCsv.addEventListener('click', exportAction);
@@ -359,12 +450,34 @@ class RiedApp {
       this.dom.modalForm.addEventListener('submit', (e) => this.handleTxFormSubmit(e));
     }
 
-    // WhatsApp Message Simulator
-    if (this.dom.waSimSubmit && this.dom.waSimInput) {
-      this.dom.waSimSubmit.addEventListener('click', () => this.handleWhatsAppSimulate());
-      this.dom.waSimInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') this.handleWhatsAppSimulate();
+    // Budget Adjustment Modal Handlers
+    if (this.dom.budgetModalClose) {
+      this.dom.budgetModalClose.addEventListener('click', () => {
+        sounds.playPop();
+        this.closeBudgetModal();
       });
+    }
+    if (this.dom.budgetModalCancel) {
+      this.dom.budgetModalCancel.addEventListener('click', () => {
+        sounds.playPop();
+        this.closeBudgetModal();
+      });
+    }
+    if (this.dom.budgetModalForm) {
+      this.dom.budgetModalForm.addEventListener('submit', (e) => this.handleBudgetFormSubmit(e));
+    }
+
+    // Telegram Bot Simulator Handlers
+    if (this.dom.btnTgSend && this.dom.tgChatInput) {
+      this.dom.btnTgSend.addEventListener('click', () => this.handleTelegramSimulate());
+      this.dom.tgChatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.handleTelegramSimulate();
+      });
+    }
+
+    // Telegram Inline Button Actions (Event Delegation)
+    if (this.dom.tgChatFeed) {
+      this.dom.tgChatFeed.addEventListener('click', (e) => this.handleTelegramInlineAction(e));
     }
 
     // Resize handler for Canvas charts
@@ -380,6 +493,7 @@ class RiedApp {
     // Toggle views visibility
     Object.keys(this.dom.views).forEach((key) => {
       const el = this.dom.views[key];
+      if (!el) return;
       if (key === viewName) {
         el.classList.remove('hidden');
         el.classList.add('animate-fade-in');
@@ -404,10 +518,10 @@ class RiedApp {
       dashboard: 'Ried Dashboard',
       transaksi: 'Buku Transaksi',
       pengaturan: 'Pengaturan Sistem',
-      'gateway-wa': 'Gateway WhatsApp',
+      'gateway-telegram': 'Bot Telegram',
       'format-balasan': 'Format Balasan Bot',
       kamus: 'Kamus Auto-Kategori',
-      'review-pesan': 'Review Pesan Masuk'
+      'log-telegram': 'Log Chat Telegram'
     };
     if (this.dom.breadcrumbTitle) {
       this.dom.breadcrumbTitle.textContent = titles[viewName] || 'Ried Dashboard';
@@ -444,7 +558,13 @@ class RiedApp {
     if (!this.summary) return;
 
     if (this.chartMode === 'daily') {
-      renderSplineChart(this.dom.chartMainExpense, this.summary.daily_expenses, this.isDarkMode);
+      let dailyData = this.summary.daily_expenses || [];
+      if (this.activeRange === '7d') {
+        dailyData = dailyData.slice(-7);
+      } else if (this.activeRange === '14d') {
+        dailyData = dailyData.slice(-14);
+      }
+      renderSplineChart(this.dom.chartMainExpense, dailyData, this.isDarkMode);
     } else {
       renderTransactionBarChart(this.dom.chartMainExpense, this.transactions, this.isDarkMode);
     }
@@ -454,8 +574,8 @@ class RiedApp {
     }
   }
 
-  cycleWallet() {
-    this.activeWalletIndex = (this.activeWalletIndex + 1) % this.wallets.length;
+  setWalletIndex(idx) {
+    this.activeWalletIndex = idx;
     const w = this.wallets[this.activeWalletIndex];
 
     if (this.dom.atmCardBalance) {
@@ -468,14 +588,19 @@ class RiedApp {
     // Update wallet dots
     if (this.dom.walletDots) {
       const dots = this.dom.walletDots.querySelectorAll('span');
-      dots.forEach((d, idx) => {
-        if (idx === (this.activeWalletIndex % dots.length)) {
+      dots.forEach((d, dIdx) => {
+        if (dIdx === (this.activeWalletIndex % dots.length)) {
           d.className = 'w-1.5 h-1.5 rounded-full bg-white';
         } else {
           d.className = 'w-1.5 h-1.5 rounded-full bg-white/40';
         }
       });
     }
+  }
+
+  cycleWallet() {
+    const nextIdx = (this.activeWalletIndex + 1) % this.wallets.length;
+    this.setWalletIndex(nextIdx);
   }
 
   renderCalendarDayStrip() {
@@ -711,39 +836,140 @@ class RiedApp {
     }
   }
 
-  // WhatsApp Simulator Handler
-  async handleWhatsAppSimulate() {
-    const text = this.dom.waSimInput.value.trim();
+  // Budget Modal Handlers
+  openBudgetModal(category, currentBudget) {
+    if (!this.dom.budgetModal) return;
+    this.editingBudgetCategory = category;
+    if (this.dom.budgetModalCat) {
+      this.dom.budgetModalCat.textContent = `Kategori: ${category}`;
+    }
+    if (this.dom.budgetModalInput) {
+      this.dom.budgetModalInput.value = currentBudget || 1500000;
+    }
+    this.dom.budgetModal.classList.remove('hidden');
+    this.dom.budgetModal.classList.add('flex');
+    this.dom.budgetModalInput.focus();
+  }
+
+  closeBudgetModal() {
+    if (!this.dom.budgetModal) return;
+    this.dom.budgetModal.classList.add('hidden');
+    this.dom.budgetModal.classList.remove('flex');
+    this.editingBudgetCategory = null;
+  }
+
+  async handleBudgetFormSubmit(e) {
+    e.preventDefault();
+    if (!this.editingBudgetCategory) return;
+    const newBudget = parseFloat(this.dom.budgetModalInput.value);
+    if (isNaN(newBudget) || newBudget <= 0) {
+      alert('Masukkan limit budget valid.');
+      return;
+    }
+
+    try {
+      await updateCategoryBudgetLimit(this.editingBudgetCategory, newBudget);
+      sounds.playChime();
+      this.closeBudgetModal();
+      await this.refreshAllData();
+    } catch (err) {
+      alert(`Gagal memperbarui budget: ${err.message}`);
+    }
+  }
+
+  // Telegram Simulator Handlers
+  async handleTelegramSimulate() {
+    const text = this.dom.tgChatInput.value.trim();
     if (!text) return;
 
     sounds.playPop();
+    this.dom.tgChatInput.value = '';
 
-    // Natural text parsing logic
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const todayIso = now.toISOString().split('T')[0];
+
+    // 1. Append User Bubble
+    const userBubbleHtml = `
+      <div class="flex items-end justify-end">
+        <div class="tg-bubble-user p-3 max-w-[80%] space-y-1">
+          <p>${escapeHtml(text)}</p>
+          <div class="text-[9px] text-slate-500 flex items-center justify-end gap-1">
+            <span>${timeStr}</span>
+            <span>✓✓</span>
+          </div>
+        </div>
+      </div>
+    `;
+    this.dom.tgChatFeed.insertAdjacentHTML('beforeend', userBubbleHtml);
+    this.dom.tgChatFeed.scrollTop = this.dom.tgChatFeed.scrollHeight;
+
+    // Check for bot command /budget
+    if (text.toLowerCase() === '/budget') {
+      const budgetLines = (this.summary && this.summary.category_breakdown)
+        ? this.summary.category_breakdown.map(c => {
+            const rem = Math.max(0, c.budget - c.spent);
+            return `• <b>${c.category}</b>: Terpakai ${formatRupiah(c.spent)} / Sisa ${formatRupiah(rem)}`;
+          }).join('<br>')
+        : 'Data kuota belum tersedia.';
+
+      const botReplyHtml = `
+        <div class="flex items-start">
+          <div class="tg-bubble-bot p-3.5 max-w-[85%] space-y-2">
+            <div class="font-bold text-sky-600 dark:text-sky-400 text-[11px] flex items-center gap-1">
+              <span>RIED Bot</span>
+              <i data-lucide="badge-check" class="w-3 h-3"></i>
+            </div>
+            <p class="font-mono text-xs leading-relaxed">
+              📊 <b>STATUS ANGGARAN SEPTEMBER 2026:</b><br><br>
+              ${budgetLines}
+            </p>
+            <span class="text-[9px] text-slate-400 block text-right">${timeStr}</span>
+          </div>
+        </div>
+      `;
+      this.dom.tgChatFeed.insertAdjacentHTML('beforeend', botReplyHtml);
+      this.dom.tgChatFeed.scrollTop = this.dom.tgChatFeed.scrollHeight;
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+
+    // 2. Natural text parsing logic
     let category = 'Makanan';
     let type = 'expense';
     let title = text;
-    let amount = 25000;
+    let amount = 30000;
 
-    // Detect numbers: e.g. 35rb, 35.000, 35000
+    // Detect amounts: e.g. 35rb, 35k, 50.000, 50000
     const matchRb = text.match(/(\d+)\s*(rb|k)/i);
-    const matchNormal = text.match(/(\d[\d\.,]*)/);
+    const matchNormal = text.match(/(?:rp\.?\s*)?(\d{1,3}(?:\.\d{3})+|\d+)/i);
 
     if (matchRb) {
       amount = parseInt(matchRb[1], 10) * 1000;
     } else if (matchNormal) {
       const cleanNum = matchNormal[1].replace(/\./g, '').replace(/,/g, '');
-      amount = parseInt(cleanNum, 10);
+      const parsed = parseInt(cleanNum, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        amount = parsed;
+      }
     }
 
     const lower = text.toLowerCase();
-    if (lower.includes('bensin') || lower.includes('shell') || lower.includes('pertamina') || lower.includes('gojek') || lower.includes('grab')) {
+    if (lower.includes('bensin') || lower.includes('shell') || lower.includes('pertamina') || lower.includes('gojek') || lower.includes('grab') || lower.includes('tol') || lower.includes('parkir')) {
       category = 'Transportasi';
-    } else if (lower.includes('kopi') || lower.includes('makan') || lower.includes('nasi') || lower.includes('restoran')) {
+    } else if (lower.includes('kopi') || lower.includes('makan') || lower.includes('nasi') || lower.includes('resto') || lower.includes('starbucks') || lower.includes('padang')) {
       category = 'Makanan';
-    } else if (lower.includes('listrik') || lower.includes('pln') || lower.includes('wifi') || lower.includes('tagihan')) {
+    } else if (lower.includes('listrik') || lower.includes('pln') || lower.includes('wifi') || lower.includes('indihome') || lower.includes('tagihan') || lower.includes('paket data') || lower.includes('pulsa')) {
       category = 'Tagihan';
-    } else if (lower.includes('gaji') || lower.includes('bonus') || lower.includes('transfer')) {
+    } else if (lower.includes('shopee') || lower.includes('tokopedia') || lower.includes('baju') || lower.includes('sepatu') || lower.includes('belanja')) {
+      category = 'Belanja';
+    } else if (lower.includes('bioskop') || lower.includes('cinema') || lower.includes('netflix') || lower.includes('game') || lower.includes('steam')) {
+      category = 'Hiburan';
+    } else if (lower.includes('gaji') || lower.includes('salary') || lower.includes('transfer masuk')) {
       category = 'Gaji';
+      type = 'income';
+    } else if (lower.includes('freelance') || lower.includes('project') || lower.includes('honor')) {
+      category = 'Freelance';
       type = 'income';
     }
 
@@ -753,22 +979,149 @@ class RiedApp {
         amount: amount,
         category: category,
         type: type,
-        date: new Date().toISOString().split('T')[0],
-        notes: 'Dicatat via WhatsApp Bot'
+        date: todayIso,
+        notes: 'Dicatat via Bot Telegram @RiedFinanceBot'
       });
 
       sounds.playChime();
-      this.dom.waSimOutput.innerHTML = `
-        🟢 Transaksi baru tersimpan ke SQLite!<br>
-        • Judul: <b>${created.title}</b><br>
-        • Nominal: <b>${formatRupiah(created.amount)}</b> (${created.type})<br>
-        • Kategori: <b>${created.category}</b> (Auto-Mapping)<br>
-        • ID Entri: <b>#${String(created.id)}</b>
-      `;
 
+      // Find remaining budget
+      let remainingText = 'Rp 1.500.000';
+      if (this.summary && this.summary.category_breakdown) {
+        const catInfo = this.summary.category_breakdown.find(c => c.category.toLowerCase() === category.toLowerCase());
+        if (catInfo) {
+          const rem = Math.max(0, catInfo.budget - (catInfo.spent + amount));
+          remainingText = formatRupiah(rem);
+        }
+      }
+
+      // 3. Append Telegram Bot Reply Bubble with Inline Keyboard
+      const botReplyHtml = `
+        <div class="flex items-start">
+          <div class="tg-bubble-bot p-3.5 max-w-[85%] space-y-2">
+            <div class="font-bold text-sky-600 dark:text-sky-400 text-[11px] flex items-center gap-1">
+              <span>RIED Bot</span>
+              <i data-lucide="badge-check" class="w-3 h-3"></i>
+            </div>
+            <p class="font-mono leading-relaxed text-xs">
+              ✅ <b>Transaksi Berhasil Dicatat!</b><br><br>
+              🏷️ <b>${escapeHtml(created.title)}</b><br>
+              💰 <b>${formatRupiah(created.amount)}</b> (${created.category})<br>
+              📅 ${created.date}<br><br>
+              📊 Sisa Kuota ${created.category}: <b>${remainingText}</b>
+            </p>
+            
+            <div class="flex flex-wrap gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+              <button class="tg-inline-btn" data-action="filter-cat" data-cat="${created.category}">🏷️ ${created.category}</button>
+              <button class="tg-inline-btn" data-action="check-budget">📊 Cek Kuota</button>
+              <button class="tg-inline-btn text-rose-500 hover:text-rose-600" data-action="cancel-tx" data-tx-id="${created.id}">❌ Batalkan</button>
+            </div>
+            <span class="text-[9px] text-slate-400 block text-right">${timeStr}</span>
+          </div>
+        </div>
+      `;
+      this.dom.tgChatFeed.insertAdjacentHTML('beforeend', botReplyHtml);
+      this.dom.tgChatFeed.scrollTop = this.dom.tgChatFeed.scrollHeight;
+
+      // 4. Update Audit Log in Log Telegram View
+      if (this.dom.tgAuditLogContainer) {
+        const auditEntryHtml = `
+          <div class="flex items-center justify-between p-3 rounded-xl bg-[#edf4e8] dark:bg-[#16241b] animate-fade-in">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 rounded-full bg-[#229ED9] text-white flex items-center justify-center font-bold text-xs">
+                <i data-lucide="send" class="w-4 h-4 -rotate-12"></i>
+              </div>
+              <div>
+                <span class="text-xs font-bold text-slate-900 dark:text-white block">"${escapeHtml(text)}"</span>
+                <span class="text-[10px] text-slate-400 block">@ried_exec • ${created.date}, ${timeStr} WIB • Masuk ke ${created.category}</span>
+              </div>
+            </div>
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">Tersimpan (#${created.id})</span>
+          </div>
+        `;
+        this.dom.tgAuditLogContainer.insertAdjacentHTML('afterbegin', auditEntryHtml);
+      }
+
+      if (window.lucide) window.lucide.createIcons();
       await this.refreshAllData();
     } catch (err) {
-      this.dom.waSimOutput.innerHTML = `<span class="text-rose-500">Error: ${err.message}</span>`;
+      const errReplyHtml = `
+        <div class="flex items-start">
+          <div class="tg-bubble-bot p-3.5 max-w-[85%] text-rose-500 text-xs">
+            ⚠️ Gagal memproses transaksi: ${escapeHtml(err.message)}
+          </div>
+        </div>
+      `;
+      this.dom.tgChatFeed.insertAdjacentHTML('beforeend', errReplyHtml);
+      this.dom.tgChatFeed.scrollTop = this.dom.tgChatFeed.scrollHeight;
+    }
+  }
+
+  async handleTelegramInlineAction(e) {
+    const btn = e.target.closest('.tg-inline-btn');
+    if (!btn) return;
+
+    sounds.playPop();
+    const action = btn.getAttribute('data-action');
+
+    if (action === 'check-budget') {
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const budgetLines = (this.summary && this.summary.category_breakdown)
+        ? this.summary.category_breakdown.map(c => {
+            const rem = Math.max(0, c.budget - c.spent);
+            return `• <b>${c.category}</b>: Terpakai ${formatRupiah(c.spent)} / Limit ${formatRupiah(c.budget)} (Sisa: ${formatRupiah(rem)})`;
+          }).join('<br>')
+        : 'Data kuota belum tersedia.';
+
+      const replyHtml = `
+        <div class="flex items-start">
+          <div class="tg-bubble-bot p-3.5 max-w-[85%] space-y-1.5">
+            <div class="font-bold text-sky-600 dark:text-sky-400 text-[11px] flex items-center gap-1">
+              <span>RIED Bot</span>
+              <i data-lucide="badge-check" class="w-3 h-3"></i>
+            </div>
+            <p class="font-mono text-xs leading-relaxed">
+              📊 <b>RINCIAN ANGGARAN AKTIF:</b><br><br>
+              ${budgetLines}
+            </p>
+            <span class="text-[9px] text-slate-400 block text-right">${timeStr}</span>
+          </div>
+        </div>
+      `;
+      this.dom.tgChatFeed.insertAdjacentHTML('beforeend', replyHtml);
+      this.dom.tgChatFeed.scrollTop = this.dom.tgChatFeed.scrollHeight;
+      if (window.lucide) window.lucide.createIcons();
+    } else if (action === 'filter-cat') {
+      const cat = btn.getAttribute('data-cat');
+      this.switchView('transaksi');
+      this.txFilterCategory = cat;
+      this.loadTransaksiViewData();
+    } else if (action === 'cancel-tx') {
+      const txId = btn.getAttribute('data-tx-id');
+      if (!txId) return;
+      try {
+        await deleteExistingTransaction(txId);
+        sounds.playPop();
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const replyHtml = `
+          <div class="flex items-start">
+            <div class="tg-bubble-bot p-3.5 max-w-[85%] space-y-1 bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 text-xs">
+              <span class="font-bold text-rose-600 dark:text-rose-400">🗑️ Transaksi Dibatalkan</span>
+              <p class="text-slate-600 dark:text-slate-300">Catatan transaksi #${escapeHtml(txId)} telah berhasil dihapus dari database SQLite lokal.</p>
+              <span class="text-[9px] text-slate-400 block text-right">${timeStr}</span>
+            </div>
+          </div>
+        `;
+        this.dom.tgChatFeed.insertAdjacentHTML('beforeend', replyHtml);
+        this.dom.tgChatFeed.scrollTop = this.dom.tgChatFeed.scrollHeight;
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'line-through');
+        await this.refreshAllData();
+      } catch (err) {
+        alert(`Gagal membatalkan transaksi: ${err.message}`);
+      }
     }
   }
 

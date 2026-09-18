@@ -288,3 +288,134 @@ body {
     transform: scale(1) translateY(0);
   }
 }
+
+/* Floating Canvas Tooltip */
+.chart-tooltip-floating {
+  position: absolute;
+  pointer-events: none;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(56, 168, 82, 0.25);
+  box-shadow: 0 10px 25px -4px rgba(0, 30, 10, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #1e2920;
+  transition: opacity 0.12s ease, transform 0.08s ease;
+  transform: translate(-50%, -120%);
+}
+
+.dark .chart-tooltip-floating {
+  background: rgba(19, 30, 22, 0.95);
+  border: 1px solid rgba(78, 250, 139, 0.25);
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.6);
+  color: #e2ede5;
+}
+
+/* Telegram Simulator Theme */
+.tg-chat-container {
+  background: radial-gradient(circle at 50% 50%, #eaf2e8 0%, #e2ede0 100%);
+  border-radius: 20px;
+  border: 1px solid #dde7da;
+}
+
+.dark .tg-chat-container {
+  background: radial-gradient(circle at 50% 50%, #121c15 0%, #0d1510 100%);
+  border: 1px solid #1c2b20;
+}
+
+.tg-bubble-user {
+  background-color: #e1ffc7;
+  color: #111b13;
+  border-radius: 16px;
+  border-top-right-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.dark .tg-bubble-user {
+  background-color: #2b5278;
+  color: #f0f7ff;
+}
+
+.tg-bubble-bot {
+  background-color: #ffffff;
+  color: #1e2920;
+  border-radius: 16px;
+  border-top-left-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.dark .tg-bubble-bot {
+  background-color: #182533;
+  color: #e2ede5;
+}
+
+.tg-inline-btn {
+  background-color: rgba(34, 158, 217, 0.08);
+  color: #229ed9;
+  border: 1px solid rgba(34, 158, 217, 0.25);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tg-inline-btn:hover {
+  background-color: rgba(34, 158, 217, 0.18);
+  border-color: #229ed9;
+  transform: translateY(-1px);
+}
+
+.dark .tg-inline-btn {
+  background-color: rgba(34, 158, 217, 0.15);
+  color: #4dc2f8;
+  border-color: rgba(34, 158, 217, 0.35);
+}
+
+.dark .tg-inline-btn:hover {
+  background-color: rgba(34, 158, 217, 0.25);
+  border-color: #4dc2f8;
+}
+
+/* Quick Range Pills */
+.range-pill {
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #7d9685;
+  transition: all 0.15s ease;
+}
+
+.range-pill:hover {
+  color: #1e2920;
+}
+
+.range-pill.active {
+  background-color: #ffffff;
+  color: #38a852;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.dark .range-pill.active {
+  background-color: #24382a;
+  color: #4efa8b;
+}
+
+/* Interactive Dompet Row */
+.dompet-row-clickable {
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 12px;
+  transition: all 0.15s ease;
+}
+
+.dompet-row-clickable:hover {
+  background-color: rgba(56, 168, 82, 0.08);
+  transform: translateX(2px);
+}
+

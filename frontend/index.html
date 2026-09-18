@@ -39,6 +39,9 @@
 </head>
 <body class="min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white">
 
+  <!-- Floating Dynamic Chart Tooltip -->
+  <div id="chart-tooltip" class="chart-tooltip-floating opacity-0"></div>
+
   <!-- ========================================================================= -->
   <!-- MAIN APP WRAPPER: SIDEBAR + CONTENT AREA -->
   <!-- ========================================================================= -->
@@ -79,13 +82,13 @@
           </button>
         </div>
 
-        <!-- Navigation Group 2: OPERASIONAL -->
+        <!-- Navigation Group 2: OPERASIONAL (TELEGRAM BOT ECOSYSTEM) -->
         <div class="space-y-1">
-          <div class="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Operasional</div>
+          <div class="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Operasional Bot</div>
 
-          <button data-view="gateway-wa" class="sidebar-link w-full text-left">
-            <i data-lucide="message-square" class="w-4 h-4 text-emerald-500"></i>
-            <span>Gateway WA</span>
+          <button data-view="gateway-telegram" class="sidebar-link w-full text-left">
+            <i data-lucide="send" class="w-4 h-4 text-sky-500"></i>
+            <span>Bot Telegram</span>
           </button>
 
           <button data-view="format-balasan" class="sidebar-link w-full text-left">
@@ -98,9 +101,9 @@
             <span>Kamus Kategori</span>
           </button>
 
-          <button data-view="review-pesan" class="sidebar-link w-full text-left">
-            <i data-lucide="check-check" class="w-4 h-4"></i>
-            <span>Review Pesan</span>
+          <button data-view="log-telegram" class="sidebar-link w-full text-left">
+            <i data-lucide="list-checks" class="w-4 h-4"></i>
+            <span>Log Chat Telegram</span>
           </button>
         </div>
 
@@ -175,7 +178,7 @@
           <!-- 1. AUTHENTIC MATCHA WELCOME BANNER -->
           <div class="banner-matcha p-6 text-slate-900 dark:text-white flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
             
-            <!-- Abstract Organic Vector Contours (matching video) -->
+            <!-- Abstract Organic Vector Contours -->
             <svg class="banner-vector-shapes" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M120 20C180 -10 260 0 320 40C380 80 390 140 370 180" stroke="white" stroke-width="28" stroke-linecap="round"/>
               <circle cx="280" cy="90" r="50" fill="white" fill-opacity="0.3"/>
@@ -194,7 +197,7 @@
               </p>
             </div>
 
-            <!-- Action Buttons: Excel & PDF (as seen in video) -->
+            <!-- Action Buttons: Excel & PDF -->
             <div class="flex items-center space-x-2.5 z-10 shrink-0">
               <button id="btn-export-excel" class="px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-slate-800 dark:bg-slate-900/80 dark:hover:bg-slate-900 dark:text-white font-bold text-xs shadow-sm flex items-center space-x-1.5 transition-all">
                 <i data-lucide="sheet" class="w-3.5 h-3.5 text-emerald-600"></i>
@@ -267,25 +270,26 @@
               </div>
             </div>
 
-            <!-- ATM / Dompet Virtual Card (Col 4) (matching frame_02) -->
-            <div class="md:col-span-4 atm-card p-5 flex flex-col justify-between h-48 cursor-pointer relative" id="atm-card-widget">
+            <!-- ATM / Dompet Virtual Card (Col 4) -->
+            <div class="md:col-span-4 atm-card p-5 flex flex-col justify-between h-48 cursor-pointer relative transition-transform hover:scale-[1.01]" id="atm-card-widget" title="Klik untuk mengganti dompet aktif">
               <div class="flex items-start justify-between">
                 <div>
-                  <span class="text-[10px] font-bold text-emerald-100 uppercase tracking-widest block">RIED DOMPET UTAMA</span>
+                  <span class="text-[10px] font-bold text-emerald-100 uppercase tracking-widest block" id="atm-card-subtitle">RIED DOMPET UTAMA</span>
                   <span class="text-xs text-emerald-100/90 block">Total Saldo:</span>
-                  <span id="atm-card-balance" class="text-xl font-black font-mono tracking-tight text-white block">Rp 9.894.500</span>
+                  <span id="atm-card-balance" class="text-xl font-black font-mono tracking-tight text-white block">Rp 9.435.500</span>
                 </div>
                 <div class="atm-chip"></div>
               </div>
 
               <div>
-                <div class="text-xs font-mono tracking-widest text-emerald-100/90 mb-2">
+                <div class="text-xs font-mono tracking-widest text-emerald-100/90 mb-2" id="atm-card-number">
                   •••• •••• •••• 7652
                 </div>
                 <div class="flex items-center justify-between text-[11px] font-semibold text-white/90 border-t border-white/20 pt-2">
                   <span id="atm-wallet-name">Semua Dompet</span>
                   <div class="flex items-center space-x-1" id="wallet-dots">
                     <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-white/40"></span>
                     <span class="w-1.5 h-1.5 rounded-full bg-white/40"></span>
                     <span class="w-1.5 h-1.5 rounded-full bg-white/40"></span>
                   </div>
@@ -317,7 +321,7 @@
                 <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-rose-500"></i>
               </div>
               <div class="text-base font-black text-rose-600 dark:text-rose-400" id="stat-total-expense">
-                Rp 6.958.000
+                Rp 7.161.000
               </div>
               <span class="text-[10px] text-slate-400 block truncate">Semua catatan periode ini</span>
             </div>
@@ -329,7 +333,7 @@
                 <i data-lucide="receipt" class="w-3.5 h-3.5 text-emerald-500"></i>
               </div>
               <div class="text-base font-black text-slate-900 dark:text-white" id="stat-tx-count">
-                20 Transaksi
+                22 Transaksi
               </div>
               <span class="text-[10px] text-slate-400 block truncate">3 dompet • 7 kategori</span>
             </div>
@@ -341,38 +345,47 @@
                 <i data-lucide="piggy-bank" class="w-3.5 h-3.5 text-emerald-500"></i>
               </div>
               <div class="text-base font-black text-emerald-600 dark:text-emerald-400" id="stat-total-savings">
-                Rp 9.638.500
+                Rp 9.435.500
               </div>
               <span class="text-[10px] text-slate-400 block truncate">Kategori tabungan aktif</span>
             </div>
 
           </div>
 
-          <!-- 4. ROW 3: GRAFIK PENGELUARAN (Left 8 cols) + FILTER ANALITIK (Right 4 cols) -->
+          <!-- 4. ROW 3: GRAFIK PENGELUARAN INTERAKTIF + FILTER ANALITIK -->
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
             
-            <!-- Left: Grafik Pengeluaran with "Per hari" / "Per transaksi" toggle -->
+            <!-- Left: Grafik Pengeluaran with Quick Range Presets & Mode Toggles -->
             <div class="lg:col-span-8 ried-card p-5 space-y-4">
-              <div class="flex items-center justify-between">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">Grafik Pengeluaran</span>
-                  <span class="text-sm font-bold text-slate-900 dark:text-white">Pengeluaran harian</span>
+                  <span class="text-sm font-bold text-slate-900 dark:text-white">Pengeluaran harian & tren</span>
                 </div>
                 
-                <!-- Toggle Mode: Per hari vs Per transaksi (as in frame_30 and frame_45) -->
-                <div class="flex items-center bg-[#edf4e8] dark:bg-[#1a291e] p-1 rounded-xl border border-[#dde7da] dark:border-[#233628]">
-                  <button id="toggle-chart-daily" class="toggle-pill active">Per hari</button>
-                  <button id="toggle-chart-tx" class="toggle-pill text-slate-500 dark:text-slate-400">Per transaksi</button>
+                <div class="flex items-center gap-2">
+                  <!-- Quick Range Presets (7 Hari / 14 Hari / 30 Hari) -->
+                  <div class="flex items-center bg-[#edf4e8] dark:bg-[#1a291e] p-0.5 rounded-xl border border-[#dde7da] dark:border-[#233628]">
+                    <button data-range="7d" class="btn-range-preset range-pill">7 Hari</button>
+                    <button data-range="14d" class="btn-range-preset range-pill">14 Hari</button>
+                    <button data-range="30d" class="btn-range-preset range-pill active">30 Hari</button>
+                  </div>
+
+                  <!-- Toggle Mode: Per hari vs Per transaksi -->
+                  <div class="flex items-center bg-[#edf4e8] dark:bg-[#1a291e] p-0.5 rounded-xl border border-[#dde7da] dark:border-[#233628]">
+                    <button id="toggle-chart-daily" class="toggle-pill active">Per hari</button>
+                    <button id="toggle-chart-tx" class="toggle-pill text-slate-500 dark:text-slate-400">Per transaksi</button>
+                  </div>
                 </div>
               </div>
 
-              <!-- Canvas Chart -->
+              <!-- Interactive Canvas Chart -->
               <div class="relative w-full h-64">
                 <canvas id="chart-main-expense" class="w-full h-full"></canvas>
               </div>
             </div>
 
-            <!-- Right: Filter Analitik Box (matching frame_30 & frame_45) -->
+            <!-- Right: Filter Analitik Box -->
             <div class="lg:col-span-4 ried-card p-5 space-y-3.5 flex flex-col justify-between">
               <div>
                 <div class="flex items-center justify-between pb-2 border-b border-[#dde7da] dark:border-[#1c2b20]">
@@ -440,17 +453,17 @@
 
           </div>
 
-          <!-- 5. ROW 4: PROYEKSI BUDGET + SALDO AKTIF DOMPET + PERHATIAN QUICK INSIGHT (frame_30) -->
+          <!-- 5. ROW 4: PROYEKSI BUDGET (INTERACTIVE) + SALDO AKTIF DOMPET (CLICKABLE) + PERHATIAN -->
           <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
             
-            <!-- Proyeksi Budget (4 cols) -->
+            <!-- Proyeksi Budget (4 cols - Clickable Columns) -->
             <div class="md:col-span-4 ried-card p-5 space-y-3">
               <div class="flex items-center justify-between">
                 <div>
                   <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">Proyeksi Budget</span>
-                  <span class="text-xs font-bold text-slate-900 dark:text-white">Budget kategori</span>
+                  <span class="text-xs font-bold text-slate-900 dark:text-white">Budget kategori (Interaktif)</span>
                 </div>
-                <i data-lucide="target" class="w-4 h-4 text-emerald-500"></i>
+                <span class="text-[9px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full font-bold">Klik Bar</span>
               </div>
 
               <div class="relative w-full h-52">
@@ -458,21 +471,22 @@
               </div>
             </div>
 
-            <!-- Saldo Aktif Dompet (4 cols) -->
+            <!-- Saldo Aktif Dompet (4 cols - Click to switch ATM card) -->
             <div class="md:col-span-4 ried-card p-5 space-y-3.5">
               <div class="flex items-center justify-between">
                 <div>
                   <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">Saldo Aktif</span>
-                  <span class="text-xs font-bold text-slate-900 dark:text-white">Dompet</span>
+                  <span class="text-xs font-bold text-slate-900 dark:text-white">Dompet (Pilih untuk melihat)</span>
                 </div>
                 <i data-lucide="wallet" class="w-4 h-4 text-emerald-500"></i>
               </div>
 
-              <!-- Dompet Horizontal Progress Items -->
-              <div class="space-y-4 pt-1">
-                <div>
+              <!-- Dompet Horizontal Progress Items with Clickable Rows -->
+              <div class="space-y-2 pt-1">
+                
+                <div class="dompet-row-clickable" data-wallet-idx="1" title="Klik untuk menampilkan di kartu">
                   <div class="flex items-center justify-between text-xs mb-1">
-                    <span class="font-bold text-slate-800 dark:text-slate-200">Bank</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200">Bank BCA Utama</span>
                     <span class="font-mono text-amber-600 dark:text-amber-400 font-semibold">Rp 5.200.000 (85%)</span>
                   </div>
                   <div class="dompet-progress-bar">
@@ -480,9 +494,9 @@
                   </div>
                 </div>
 
-                <div>
+                <div class="dompet-row-clickable" data-wallet-idx="2" title="Klik untuk menampilkan di kartu">
                   <div class="flex items-center justify-between text-xs mb-1">
-                    <span class="font-bold text-slate-800 dark:text-slate-200">Cash</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200">Dompet Tunai (Cash)</span>
                     <span class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">Rp 1.438.500 (30%)</span>
                   </div>
                   <div class="dompet-progress-bar">
@@ -490,15 +504,16 @@
                   </div>
                 </div>
 
-                <div>
+                <div class="dompet-row-clickable" data-wallet-idx="3" title="Klik untuk menampilkan di kartu">
                   <div class="flex items-center justify-between text-xs mb-1">
-                    <span class="font-bold text-slate-800 dark:text-slate-200">Utama</span>
-                    <span class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">Rp 3.000.000 (50%)</span>
+                    <span class="font-bold text-slate-800 dark:text-slate-200">Kas Tabungan</span>
+                    <span class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">Rp 3.256.000 (50%)</span>
                   </div>
                   <div class="dompet-progress-bar">
                     <div class="h-full bg-emerald-500 rounded-full" style="width: 50%"></div>
                   </div>
                 </div>
+
               </div>
 
               <!-- Scale Indicator -->
@@ -521,7 +536,7 @@
                 <i data-lucide="sparkles" class="w-4 h-4 text-emerald-500"></i>
               </div>
 
-              <!-- Alert Items List (as seen in frame_30) -->
+              <!-- Alert Items List -->
               <div class="space-y-2.5 pt-1 text-xs">
                 
                 <div class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/30">
@@ -615,105 +630,185 @@
         </div>
 
         <!-- ========================================================================= -->
-        <!-- VIEW 3: GATEWAY WA (WhatsApp Expense Tracker Simulator) -->
+        <!-- VIEW 3: BOT TELEGRAM (Full Telegram Ecosystem & Web Chat Simulator) -->
         <!-- ========================================================================= -->
-        <div id="view-gateway-wa" class="spa-view hidden space-y-6 animate-fade-in">
+        <div id="view-gateway-telegram" class="spa-view hidden space-y-6 animate-fade-in">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-xl font-bold text-slate-900 dark:text-white">Gateway WhatsApp</h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Koneksi bot WhatsApp untuk pencatatan otomatis transaksi melalui pesan instan.</p>
+              <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>Bot Telegram RIED</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-600 dark:text-sky-400 font-bold">@RiedFinanceBot</span>
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Asisten bot Telegram cerdas untuk mencatat pengeluaran harian dan cek limit anggaran secara realtime.</p>
             </div>
-            <div class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-              <span>TERHUBUNG</span>
+            <div class="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-400 font-bold text-xs">
+              <span class="w-2 h-2 rounded-full bg-sky-500 animate-ping"></span>
+              <span>POLLING AKTIF</span>
             </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
             
-            <!-- Connection Card & QR -->
-            <div class="md:col-span-5 ried-card p-6 flex flex-col items-center justify-center text-center space-y-4">
-              <div class="w-48 h-48 rounded-2xl bg-white border border-[#dde7da] p-3 flex items-center justify-center shadow-inner">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=RIED-FINANCE-BOT-ACTIVE" alt="QR WhatsApp" class="w-full h-full object-contain rounded-lg">
+            <!-- Left: Telegram Bot Identity Card & Info -->
+            <div class="md:col-span-5 ried-card p-6 flex flex-col justify-between space-y-5">
+              <div class="flex flex-col items-center text-center space-y-3">
+                <div class="w-20 h-20 rounded-full bg-[#229ED9] text-white flex items-center justify-center shadow-lg shadow-sky-500/30">
+                  <i data-lucide="send" class="w-10 h-10 transform -rotate-12 translate-x-0.5"></i>
+                </div>
+                <div>
+                  <h3 class="text-base font-bold text-slate-900 dark:text-white">RIED Financial Bot</h3>
+                  <a href="https://t.me/RiedFinanceBot" target="_blank" class="text-xs text-sky-500 hover:underline font-mono font-semibold">@RiedFinanceBot</a>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                  Bot resmi terintegrasi langsung ke database SQLite lokal Anda dengan latensi sub-millisecond.
+                </p>
               </div>
-              <div>
-                <span class="text-sm font-bold text-slate-900 dark:text-white block">Bot WhatsApp RIED</span>
-                <span class="text-xs text-slate-500 block font-mono mt-0.5">+62 812-3456-7890</span>
-                <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block">Device Session: Active (Chromium V8)</span>
+
+              <!-- Technical Details -->
+              <div class="p-3.5 rounded-2xl bg-[#edf4e8] dark:bg-[#152219] border border-[#dde7da] dark:border-[#233628] space-y-2 text-xs">
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500">API Gateway</span>
+                  <span class="font-mono font-bold text-slate-800 dark:text-slate-200">Telegram Bot API v7.2</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500">Mode Koneksi</span>
+                  <span class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">Long Polling (Active)</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500">Token Status</span>
+                  <span class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">Verified (BotFather)</span>
+                </div>
               </div>
+
+              <a href="https://t.me/RiedFinanceBot" target="_blank" class="w-full py-2.5 rounded-xl bg-[#229ED9] hover:bg-[#1e8ec3] text-white font-bold text-xs shadow-md shadow-sky-500/20 text-center flex items-center justify-center gap-2 transition-all">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                <span>Buka di Telegram</span>
+              </a>
             </div>
 
-            <!-- WhatsApp Message Parser Simulator -->
-            <div class="md:col-span-7 ried-card p-6 space-y-4">
-              <div class="border-b border-[#dde7da] dark:border-[#1c2b20] pb-3">
-                <span class="text-sm font-bold text-slate-900 dark:text-white block">Simulasi Catat Pengeluaran via WhatsApp</span>
-                <span class="text-xs text-slate-400">Ketik pesan natural seperti "beli kopi 25rb" untuk menguji mesin parsing otomatis.</span>
+            <!-- Right: Authentic Telegram Web Chat Simulator -->
+            <div class="md:col-span-7 ried-card p-5 flex flex-col justify-between h-[480px]">
+              
+              <!-- Telegram Chat Header -->
+              <div class="flex items-center justify-between border-b border-[#dde7da] dark:border-[#1c2b20] pb-3">
+                <div class="flex items-center space-x-2.5">
+                  <div class="w-8 h-8 rounded-full bg-[#229ED9] text-white flex items-center justify-center font-bold text-xs">
+                    <i data-lucide="send" class="w-4 h-4 -rotate-12"></i>
+                  </div>
+                  <div>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white block">RIED Financial Bot</span>
+                    <span class="text-[10px] text-sky-500 block font-semibold">bot • selalu online</span>
+                  </div>
+                </div>
+                <span class="text-[10px] text-slate-400 font-mono">Telegram Web Simulator</span>
               </div>
 
-              <div class="space-y-3">
-                <div>
-                  <label class="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">Pesan Masuk Pengguna:</label>
-                  <div class="flex gap-2">
-                    <input id="wa-sim-input" type="text" value="Beli nasi goreng seafood 35rb" class="flex-1 ried-input text-xs">
-                    <button id="wa-sim-submit" class="px-4 py-2 rounded-xl bg-[#38a852] hover:bg-emerald-600 text-white font-bold text-xs shadow-sm">
-                      Kirim Pesan
-                    </button>
+              <!-- Telegram Chat Message Stream -->
+              <div id="tg-chat-feed" class="flex-1 overflow-y-auto p-3 space-y-3 tg-chat-container my-3 text-xs">
+                
+                <!-- Bot Welcome Message -->
+                <div class="flex items-start">
+                  <div class="tg-bubble-bot p-3.5 max-w-[85%] space-y-1.5">
+                    <div class="font-bold text-sky-600 dark:text-sky-400 text-[11px] flex items-center gap-1">
+                      <span>RIED Bot</span>
+                      <i data-lucide="badge-check" class="w-3 h-3"></i>
+                    </div>
+                    <p class="leading-relaxed">
+                      👋 Halo Ried! Saya asisten pencatatan finansial pribadi Anda.<br><br>
+                      Ketik transaksi Anda langsung secara natural, contoh:<br>
+                      • <code>Beli bensin Shell 50rb</code><br>
+                      • <code>Kopi Kenangan 28rb</code><br>
+                      • <code>Paket data Indosat 100rb</code><br><br>
+                      Pesan akan otomatis diproses dan dicatat ke database SQLite!
+                    </p>
+                    <span class="text-[9px] text-slate-400 block text-right">09:00</span>
                   </div>
                 </div>
 
-                <div class="p-3.5 rounded-xl bg-[#edf4e8] dark:bg-[#16241b] border border-[#dde7da] dark:border-[#233628] space-y-2">
-                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Hasil Analisis Bot NLP:</span>
-                  <div id="wa-sim-output" class="text-xs font-mono text-slate-800 dark:text-slate-200">
-                    🟢 Transaksi berhasil diproses: <br>
-                    • Judul: <b>Beli nasi goreng seafood</b><br>
-                    • Nominal: <b>Rp 35.000</b><br>
-                    • Kategori: <b>Makanan</b> (Kamus Kata Kunci)<br>
-                    • Status: <b>Tersimpan ke SQLite</b>
+                <!-- Initial Simulated User Message -->
+                <div class="flex items-end justify-end">
+                  <div class="tg-bubble-user p-3 max-w-[80%] space-y-1">
+                    <p>Beli nasi padang rendang 35rb</p>
+                    <div class="text-[9px] text-slate-500 flex items-center justify-end gap-1">
+                      <span>09:15</span>
+                      <span>✓✓</span>
+                    </div>
                   </div>
                 </div>
+
+                <!-- Initial Simulated Bot Reply with Inline Keyboard -->
+                <div class="flex items-start">
+                  <div class="tg-bubble-bot p-3.5 max-w-[85%] space-y-2">
+                    <p class="font-mono leading-relaxed">
+                      ✅ <b>Transaksi Berhasil Dicatat!</b><br><br>
+                      🏷️ <b>Nasi Padang Rendang</b><br>
+                      💰 <b>Rp 35.000</b> (Makanan)<br>
+                      📅 18 September 2026<br><br>
+                      📊 Sisa Kuota Makanan: <b>Rp 1.778.500</b>
+                    </p>
+                    
+                    <!-- Inline Buttons -->
+                    <div class="flex flex-wrap gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <button class="tg-inline-btn" data-action="cat-makanan">🏷️ Makanan</button>
+                      <button class="tg-inline-btn" data-action="check-budget">📊 Cek Kuota</button>
+                    </div>
+                    <span class="text-[9px] text-slate-400 block text-right">09:15</span>
+                  </div>
+                </div>
+
               </div>
+
+              <!-- Telegram Chat Input Bar -->
+              <div class="flex items-center gap-2 pt-1 border-t border-[#dde7da] dark:border-[#1c2b20]">
+                <input id="tg-chat-input" type="text" placeholder="Tulis pesan transaksi (contoh: Kopi Kenangan 28rb)..." class="flex-1 ried-input text-xs">
+                <button id="btn-tg-send" class="p-2.5 rounded-xl bg-[#229ED9] hover:bg-[#1e8ec3] text-white shadow-sm transition-all" title="Kirim Pesan">
+                  <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+              </div>
+
             </div>
 
           </div>
         </div>
 
         <!-- ========================================================================= -->
-        <!-- VIEW 4: FORMAT BALASAN -->
+        <!-- VIEW 4: FORMAT BALASAN (Telegram MarkdownV2 / HTML Format) -->
         <!-- ========================================================================= -->
         <div id="view-format-balasan" class="spa-view hidden space-y-6 animate-fade-in">
           <div>
-            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Format Balasan Bot</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Pengaturan template teks konfirmasi otomatis yang dikirim ke pengguna WhatsApp.</p>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Format Balasan Bot Telegram</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Pengaturan template pesan otomatis Telegram menggunakan format MarkdownV2 / HTML.</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="ried-card p-6 space-y-4">
-              <span class="text-xs font-bold text-slate-900 dark:text-white block">Template Balasan Transaksi Berhasil</span>
-              <textarea rows="7" class="w-full ried-input font-mono text-xs leading-relaxed">
-✅ Transaksi Berhasil Dicatat!
+              <span class="text-xs font-bold text-slate-900 dark:text-white block">Template Balasan Telegram</span>
+              <textarea rows="8" class="w-full ried-input font-mono text-xs leading-relaxed">
+✅ *Transaksi Berhasil Dicatat!*
 
-🏷️ {{nama_transaksi}}
-💰 {{nominal}} ({{kategori}})
+🏷️ *{{nama_transaksi}}*
+💰 *{{nominal}}* ({{kategori}})
 📅 {{tanggal}}
 
-📊 Total pengeluaran bulan ini: {{total_bulan_ini}}
-🎯 Sisa kuota budget {{kategori}}: {{sisa_budget}}
+📊 Total pengeluaran bulan ini: *{{total_bulan_ini}}*
+🎯 Sisa kuota budget {{kategori}}: *{{sisa_budget}}*
 
-Ketik *laporan* untuk ringkasan cepat.</textarea>
-              <button class="px-4 py-2 rounded-xl bg-[#38a852] text-white font-bold text-xs shadow-sm">Simpan Template</button>
+Gunakan /budget untuk melihat seluruh ringkasan.</textarea>
+              <button class="px-4 py-2 rounded-xl bg-[#229ED9] text-white font-bold text-xs shadow-sm">Simpan Template</button>
             </div>
 
             <div class="ried-card p-6 space-y-3">
-              <span class="text-xs font-bold text-slate-900 dark:text-white block">Preview Balasan di WhatsApp</span>
-              <div class="p-4 rounded-2xl bg-[#e1f2cd] dark:bg-[#1a3320] border border-[#cfebbe] dark:border-[#274d2f] text-xs font-mono text-slate-800 dark:text-slate-100 shadow-sm space-y-1">
-                <p>✅ Transaksi Berhasil Dicatat!</p>
+              <span class="text-xs font-bold text-slate-900 dark:text-white block">Preview Balasan di Aplikasi Telegram</span>
+              <div class="p-4 rounded-2xl bg-white dark:bg-[#182533] border border-[#dde7da] dark:border-[#233628] text-xs font-mono text-slate-800 dark:text-slate-100 shadow-sm space-y-1">
+                <p class="text-sky-500 font-bold">RIED Financial Bot:</p>
+                <p>✅ <b>Transaksi Berhasil Dicatat!</b></p>
                 <br>
-                <p>🏷️ Bensin Shell V-Power</p>
-                <p>💰 Rp 165.000 (Transportasi)</p>
-                <p>📅 2026-09-18</p>
+                <p>🏷️ <b>Bensin Shell V-Power</b></p>
+                <p>💰 <b>Rp 165.000</b> (Transportasi)</p>
+                <p>📅 18 September 2026</p>
                 <br>
-                <p>📊 Total pengeluaran bulan ini: Rp 6.958.000</p>
-                <p>🎯 Sisa kuota budget Transportasi: Rp 5.000</p>
+                <p>📊 Total pengeluaran bulan ini: <b>Rp 7.161.000</b></p>
+                <p>🎯 Sisa kuota budget Transportasi: <b>Rp 5.000</b></p>
               </div>
             </div>
           </div>
@@ -726,7 +821,7 @@ Ketik *laporan* untuk ringkasan cepat.</textarea>
           <div class="flex items-center justify-between">
             <div>
               <h2 class="text-xl font-bold text-slate-900 dark:text-white">Kamus Auto-Kategori</h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Daftar kata kunci yang otomatis memetakan transaksi ke pos anggaran yang tepat.</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Daftar kata kunci yang otomatis memetakan pesan Telegram pengguna ke pos anggaran yang tepat.</p>
             </div>
             <button id="btn-add-keyword" class="px-4 py-2 rounded-xl bg-[#38a852] text-white font-bold text-xs shadow-sm flex items-center gap-1.5">
               <i data-lucide="plus" class="w-4 h-4"></i>
@@ -746,19 +841,19 @@ Ketik *laporan* untuk ringkasan cepat.</textarea>
               </thead>
               <tbody class="divide-y divide-[#dde7da] dark:divide-[#1c2b20] text-slate-700 dark:text-slate-200">
                 <tr>
-                  <td class="p-3.5 pl-5 font-semibold">kopi, starbucks, cafe, indomaret point</td>
+                  <td class="p-3.5 pl-5 font-semibold">kopi, starbucks, cafe, indomaret point, kenangan</td>
                   <td class="p-3.5"><span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">Makanan</span></td>
                   <td class="p-3.5 text-slate-400">Pengeluaran</td>
                   <td class="p-3.5 text-right pr-5"><button class="text-slate-400 hover:text-rose-500 font-semibold">Hapus</button></td>
                 </tr>
                 <tr>
-                  <td class="p-3.5 pl-5 font-semibold">shell, pertamina, gojek, grab, tol</td>
+                  <td class="p-3.5 pl-5 font-semibold">shell, pertamina, gojek, grab, tol, bensin</td>
                   <td class="p-3.5"><span class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-bold text-[10px]">Transportasi</span></td>
                   <td class="p-3.5 text-slate-400">Pengeluaran</td>
                   <td class="p-3.5 text-right pr-5"><button class="text-slate-400 hover:text-rose-500 font-semibold">Hapus</button></td>
                 </tr>
                 <tr>
-                  <td class="p-3.5 pl-5 font-semibold">listrik, pln, pdam, wifi, indihome</td>
+                  <td class="p-3.5 pl-5 font-semibold">listrik, pln, pdam, wifi, indihome, paket data, pulsa</td>
                   <td class="p-3.5"><span class="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-[10px]">Tagihan</span></td>
                   <td class="p-3.5 text-slate-400">Pengeluaran</td>
                   <td class="p-3.5 text-right pr-5"><button class="text-slate-400 hover:text-rose-500 font-semibold">Hapus</button></td>
@@ -769,35 +864,45 @@ Ketik *laporan* untuk ringkasan cepat.</textarea>
         </div>
 
         <!-- ========================================================================= -->
-        <!-- VIEW 6: REVIEW PESAN -->
+        <!-- VIEW 6: LOG CHAT TELEGRAM (Audit Trail) -->
         <!-- ========================================================================= -->
-        <div id="view-review-pesan" class="spa-view hidden space-y-6 animate-fade-in">
-          <div>
-            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Review Pesan Masuk</h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">Pesan WhatsApp yang telah diproses secara otomatis oleh sistem pencatatan cerdas.</p>
+        <div id="view-log-telegram" class="spa-view hidden space-y-6 animate-fade-in">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900 dark:text-white">Log Chat Telegram</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Riwayat audit pesan masuk dari pengguna Telegram beserta hasil ekstraksi NLP.</p>
+            </div>
+            <span class="text-xs font-mono px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold">
+              Chat ID: 94827103
+            </span>
           </div>
 
-          <div class="ried-card p-5 space-y-3">
+          <div class="ried-card p-5 space-y-3" id="tg-audit-log-container">
+            <!-- Dynamically populated or rendered -->
             <div class="flex items-center justify-between p-3 rounded-xl bg-[#edf4e8] dark:bg-[#16241b]">
               <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs">WA</div>
+                <div class="w-8 h-8 rounded-full bg-[#229ED9] text-white flex items-center justify-center font-bold text-xs">
+                  <i data-lucide="send" class="w-4 h-4 -rotate-12"></i>
+                </div>
                 <div>
                   <span class="text-xs font-bold text-slate-900 dark:text-white block">"Bensin Shell V-Power 165rb"</span>
-                  <span class="text-[10px] text-slate-400 block">18 Sep 2026, 09:15 WIB • Otomatis masuk ke Transportasi</span>
+                  <span class="text-[10px] text-slate-400 block">@ried_exec • 18 Sep 2026, 09:15 WIB • Otomatis masuk ke Transportasi</span>
                 </div>
               </div>
-              <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">Terverifikasi</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">Tersimpan ke SQLite</span>
             </div>
 
             <div class="flex items-center justify-between p-3 rounded-xl bg-[#edf4e8] dark:bg-[#16241b]">
               <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs">WA</div>
+                <div class="w-8 h-8 rounded-full bg-[#229ED9] text-white flex items-center justify-center font-bold text-xs">
+                  <i data-lucide="send" class="w-4 h-4 -rotate-12"></i>
+                </div>
                 <div>
                   <span class="text-xs font-bold text-slate-900 dark:text-white block">"Kopi espresso double shot 38rb"</span>
-                  <span class="text-[10px] text-slate-400 block">18 Sep 2026, 08:30 WIB • Otomatis masuk ke Makanan</span>
+                  <span class="text-[10px] text-slate-400 block">@ried_exec • 18 Sep 2026, 08:30 WIB • Otomatis masuk ke Makanan</span>
                 </div>
               </div>
-              <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">Terverifikasi</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">Tersimpan ke SQLite</span>
             </div>
           </div>
         </div>
@@ -891,14 +996,14 @@ Ketik *laporan* untuk ringkasan cepat.</textarea>
         <span>Sab</span>
       </div>
 
-      <!-- 30 Days Grid (matching frame_15.png) -->
+      <!-- 30 Days Grid -->
       <div id="monthly-calendar-grid" class="grid grid-cols-7 gap-1.5 text-center text-xs">
         <!-- Dynamically populated via app.js -->
       </div>
 
       <!-- Modal Footer -->
       <div class="pt-3 border-t border-[#dde7da] dark:border-[#1c2b20] text-center text-[11px] text-slate-500 dark:text-slate-400">
-        <span id="monthly-cal-summary">20 transaksi • Rp 6.958.000 keluar bulan ini</span>
+        <span id="monthly-cal-summary">22 transaksi • Rp 7.161.000 keluar bulan ini</span>
       </div>
 
     </div>
@@ -969,6 +1074,35 @@ Ketik *laporan* untuk ringkasan cepat.</textarea>
         </div>
       </form>
 
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 3: BUDGET LIMIT ADJUSTMENT -->
+  <!-- ========================================================================= -->
+  <div id="budget-modal" class="modal-overlay hidden">
+    <div class="ried-card max-w-sm w-full p-6 space-y-4 animate-fade-in shadow-2xl bg-white dark:bg-[#131e16]">
+      <div class="flex items-center justify-between border-b border-[#dde7da] dark:border-[#1c2b20] pb-3">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Ubah Limit Budget</h3>
+          <span id="budget-modal-category" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Kategori: Makanan</span>
+        </div>
+        <button id="budget-modal-close" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="budget-modal-form" class="space-y-4 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Limit Anggaran Bulanan (Rp)</label>
+          <input id="budget-modal-input" type="number" step="10000" min="50000" required placeholder="1500000" class="w-full ried-input font-mono text-sm font-bold">
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-2 border-t border-[#dde7da] dark:border-[#1c2b20]">
+          <button type="button" id="budget-modal-cancel" class="px-3 py-1.5 rounded-lg text-slate-500 font-semibold">Batal</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-[#38a852] text-white font-bold shadow-sm">Simpan Limit</button>
+        </div>
+      </form>
     </div>
   </div>
 
