@@ -5,3 +5,8 @@
 .gemini/
 .superpowers/
 *.log
+
+__pycache__/
+*.pyc
+*.db
+
