@@ -1,4 +1,11 @@
-
+# Environment and Secrets (CRITICAL: Never commit real .env to git)
+.env
+.env.local
+.env.*.local
+!.env.example
+*.token
+*.key
+secrets/
 
 # Antigravity & AI Agent Artifacts
 .agents/scratch/
@@ -9,4 +16,3 @@
 __pycache__/
 *.pyc
 *.db
-

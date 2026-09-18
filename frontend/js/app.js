@@ -980,7 +980,7 @@ class RiedApp {
         category: category,
         type: type,
         date: todayIso,
-        notes: 'Dicatat via Bot Telegram @RiedFinanceBot'
+        notes: 'Dicatat via Bot Telegram @RiedutBot'
       });
 
       sounds.playChime();

@@ -1,19 +1,33 @@
 """
-ApexAlpha Application Entrypoint
-Initializes FastAPI, mounts REST routes, enables CORS, and serves the static frontend.
+RIED Application Entrypoint
+Initializes FastAPI, mounts REST routes, enables CORS, manages Telegram bot lifecycle,
+and serves the static frontend.
 """
 
 from pathlib import Path
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend.app.api.routes import router
+from backend.app.telegram_service import telegram_service
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Launch Telegram Bot Long-Polling Service
+    telegram_service.start()
+    yield
+    # Shutdown: Gracefully stop Telegram Bot Long-Polling
+    await telegram_service.stop()
+
 
 app = FastAPI(
-    title="ApexAlpha // Quantitative Portfolio & Risk Engine SaaS",
-    description="Production-grade Modern Portfolio Theory & Monte Carlo Simulation API.",
-    version="2.0.0"
+    title="RIED Financial Studio // Smart Personal Finance & Telegram Bot API",
+    description="High-density personal & SME financial management with real-time Telegram integration.",
+    version="2.5.0",
+    lifespan=lifespan
 )
 
 # Security & CORS Middleware (Allow frontend communication)

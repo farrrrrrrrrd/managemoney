@@ -129,3 +129,27 @@ async def export_csv():
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=ried_transaksi.csv"}
     )
+
+
+@router.get("/telegram/status", summary="Get Telegram Bot Status")
+async def get_telegram_status():
+    """Returns real-time status of the Telegram Bot Long-Polling service."""
+    from backend.app.telegram_service import telegram_service
+    return telegram_service.get_status()
+
+
+@router.post("/telegram/start", summary="Start Telegram Bot Poller")
+async def start_telegram_bot():
+    """Starts Telegram Bot polling in the background."""
+    from backend.app.telegram_service import telegram_service
+    telegram_service.start()
+    return {"status": "started", "diagnostics": telegram_service.get_status()}
+
+
+@router.post("/telegram/stop", summary="Stop Telegram Bot Poller")
+async def stop_telegram_bot():
+    """Stops Telegram Bot polling."""
+    from backend.app.telegram_service import telegram_service
+    await telegram_service.stop()
+    return {"status": "stopped", "diagnostics": telegram_service.get_status()}
+
