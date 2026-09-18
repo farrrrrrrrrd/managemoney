@@ -1,334 +1,383 @@
 /**
- * ApexAlpha Main Dashboard State & Interaction Controller
+ * Fino Dashboard Main Application Controller
+ * Handles Bento UI state, calendar strip, transactions CRUD modal, and theme toggling.
  */
 
-import { fetchAssets, runPortfolioAnalysis, savePortfolioRecord, fetchSavedPortfolios } from './api.js';
-import { renderMonteCarloChart, renderEfficientFrontierChart, renderAllocationDonut } from './charts.js';
+import {
+  fetchFinancialSummary,
+  fetchTransactionsList,
+  createNewTransaction,
+  updateExistingTransaction,
+  deleteExistingTransaction,
+  fetchCategoriesMeta
+} from './api.js';
 
-class ApexAlphaApp {
+import { renderSplineChart, renderCategoryDonut } from './charts.js';
+
+export function formatRupiah(number) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0
+  }).format(number);
+}
+
+class FinoApp {
   constructor() {
-    this.assets = [];
-    this.assetsMap = {};
-    this.allocations = [];
-    this.initialCapital = 100000.0;
-    this.riskFreeRate = 0.04;
-    this.horizonYears = 5;
-    this.analysisData = null;
+    this.summary = null;
+    this.transactions = [];
+    this.categories = [];
+    this.currentFilter = 'all';
+    this.isDarkMode = false;
+    this.editingTxId = null;
 
     this.dom = {
-      capitalInput: document.getElementById('input-capital'),
-      horizonInput: document.getElementById('input-horizon'),
-      horizonVal: document.getElementById('horizon-val'),
-      rfInput: document.getElementById('input-rf'),
-      btnAnalyze: document.getElementById('btn-analyze'),
-      btnSave: document.getElementById('btn-save'),
-      sliderContainer: document.getElementById('sliders-container'),
-      donutCanvas: document.getElementById('donut-canvas'),
-      mcCanvas: document.getElementById('monte-carlo-canvas'),
-      frontierCanvas: document.getElementById('frontier-canvas'),
-      metricReturn: document.getElementById('metric-return'),
-      metricVol: document.getElementById('metric-vol'),
-      metricSharpe: document.getElementById('metric-sharpe'),
-      metricVar: document.getElementById('metric-var'),
-      metricCvar: document.getElementById('metric-cvar'),
-      metricDrawdown: document.getElementById('metric-drawdown'),
-      stressContainer: document.getElementById('stress-container'),
-      rebalanceTable: document.getElementById('rebalance-table'),
-      savedList: document.getElementById('saved-portfolios-list')
+      themeToggle: document.getElementById('theme-toggle'),
+      themeIcon: document.getElementById('theme-icon'),
+      dateStrip: document.getElementById('date-strip'),
+      btnAddTx: document.getElementById('btn-add-tx'),
+      modal: document.getElementById('tx-modal'),
+      modalTitle: document.getElementById('modal-title'),
+      modalForm: document.getElementById('modal-form'),
+      modalCancel: document.getElementById('modal-cancel'),
+      inputTitle: document.getElementById('input-title'),
+      inputAmount: document.getElementById('input-amount'),
+      inputCategory: document.getElementById('input-category'),
+      inputType: document.getElementById('input-type'),
+      inputDate: document.getElementById('input-date'),
+      inputNotes: document.getElementById('input-notes'),
+      totalBalance: document.getElementById('stat-total-balance'),
+      totalExpense: document.getElementById('stat-total-expense'),
+      totalIncome: document.getElementById('stat-total-income'),
+      txCount: document.getElementById('stat-tx-count'),
+      targetDays: document.getElementById('stat-target-days'),
+      chartSpline: document.getElementById('chart-spline'),
+      chartDonut: document.getElementById('chart-donut'),
+      categoryList: document.getElementById('category-list'),
+      txContainer: document.getElementById('tx-container'),
+      btnFilterAll: document.getElementById('filter-all'),
+      btnFilterExpense: document.getElementById('filter-expense'),
+      btnFilterIncome: document.getElementById('filter-income')
     };
 
     this.init();
   }
 
   async init() {
-    try {
-      this.assets = await fetchAssets();
-      this.assets.forEach(a => { this.assetsMap[a.id] = a; });
-
-      // Default Standard Balanced Allocation
-      this.allocations = [
-        { asset_id: "SP500", weight: 0.35 },
-        { asset_id: "TECH", weight: 0.20 },
-        { asset_id: "BONDS", weight: 0.25 },
-        { asset_id: "GOLD", weight: 0.10 },
-        { asset_id: "CRYPTO", weight: 0.10 }
-      ];
-
-      this.renderSliders();
-      this.bindEvents();
-      await this.executeAnalysis();
-      await this.loadSavedPortfolios();
-    } catch (err) {
-      console.error("Initialization error:", err);
+    // 1. Setup Theme Preference
+    const savedTheme = localStorage.getItem('fino-theme');
+    if (savedTheme === 'dark') {
+      this.setTheme(true);
+    } else {
+      this.setTheme(false);
     }
+
+    // 2. Bind UI Events
+    this.bindEvents();
+    this.renderCalendarStrip();
+
+    // 3. Load Initial Backend Data
+    await this.refreshDashboard();
+
+    // Responsive Canvas Resize
+    window.addEventListener('resize', () => {
+      if (this.summary) {
+        renderSplineChart(this.dom.chartSpline, this.summary.daily_expenses, this.isDarkMode);
+        renderCategoryDonut(this.dom.chartDonut, this.summary.category_breakdown, this.isDarkMode);
+      }
+    });
   }
 
   bindEvents() {
-    if (this.dom.capitalInput) {
-      this.dom.capitalInput.addEventListener('change', (e) => {
-        this.initialCapital = Math.max(1000, parseFloat(e.target.value) || 100000);
-        this.executeAnalysis();
+    // Theme Toggle
+    if (this.dom.themeToggle) {
+      this.dom.themeToggle.addEventListener('click', () => {
+        this.setTheme(!this.isDarkMode);
       });
     }
 
-    if (this.dom.horizonInput) {
-      this.dom.horizonInput.addEventListener('input', (e) => {
-        this.horizonYears = parseInt(e.target.value, 10);
-        if (this.dom.horizonVal) this.dom.horizonVal.textContent = `${this.horizonYears} Yrs`;
+    // Add Transaction Modal Button
+    if (this.dom.btnAddTx) {
+      this.dom.btnAddTx.addEventListener('click', () => this.openModal(false));
+    }
+
+    // Modal Cancel
+    if (this.dom.modalCancel) {
+      this.dom.modalCancel.addEventListener('click', () => this.closeModal());
+    }
+
+    // Modal Form Submit
+    if (this.dom.modalForm) {
+      this.dom.modalForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
+    }
+
+    // Filters
+    const setFilter = (type, btn) => {
+      this.currentFilter = type;
+      [this.dom.btnFilterAll, this.dom.btnFilterExpense, this.dom.btnFilterIncome].forEach(b => {
+        if (b) {
+          b.classList.remove('bg-emerald-500', 'text-white');
+          b.classList.add('bg-transparent', 'text-slate-500');
+        }
       });
-      this.dom.horizonInput.addEventListener('change', () => this.executeAnalysis());
-    }
-
-    if (this.dom.rfInput) {
-      this.dom.rfInput.addEventListener('change', (e) => {
-        this.riskFreeRate = Math.max(0.0, Math.min(0.20, (parseFloat(e.target.value) || 4.0) / 100));
-        this.executeAnalysis();
-      });
-    }
-
-    if (this.dom.btnAnalyze) {
-      this.dom.btnAnalyze.addEventListener('click', () => this.executeAnalysis());
-    }
-
-    if (this.dom.btnSave) {
-      this.dom.btnSave.addEventListener('click', () => this.saveCurrentPortfolio());
-    }
-
-    window.addEventListener('resize', () => {
-      if (this.analysisData) {
-        renderMonteCarloChart(this.dom.mcCanvas, this.analysisData.monte_carlo);
-        renderEfficientFrontierChart(
-          this.dom.frontierCanvas,
-          this.analysisData.efficient_frontier,
-          {
-            volatility: this.analysisData.metrics.annualized_volatility,
-            return: this.analysisData.metrics.expected_annual_return
-          }
-        );
-        renderAllocationDonut(this.dom.donutCanvas, this.allocations, this.assetsMap);
+      if (btn) {
+        btn.classList.remove('bg-transparent', 'text-slate-500');
+        btn.classList.add('bg-emerald-500', 'text-white');
       }
+      this.loadTransactions();
+    };
+
+    if (this.dom.btnFilterAll) this.dom.btnFilterAll.addEventListener('click', () => setFilter('all', this.dom.btnFilterAll));
+    if (this.dom.btnFilterExpense) this.dom.btnFilterExpense.addEventListener('click', () => setFilter('expense', this.dom.btnFilterExpense));
+    if (this.dom.btnFilterIncome) this.dom.btnFilterIncome.addEventListener('click', () => setFilter('income', this.dom.btnFilterIncome));
+  }
+
+  setTheme(isDark) {
+    this.isDarkMode = isDark;
+    const html = document.documentElement;
+    if (isDark) {
+      html.classList.add('dark');
+      localStorage.setItem('fino-theme', 'dark');
+      if (this.dom.themeIcon) {
+        this.dom.themeIcon.setAttribute('data-lucide', 'sun');
+      }
+    } else {
+      html.classList.remove('dark');
+      localStorage.setItem('fino-theme', 'light');
+      if (this.dom.themeIcon) {
+        this.dom.themeIcon.setAttribute('data-lucide', 'moon');
+      }
+    }
+    if (window.lucide) window.lucide.createIcons();
+
+    if (this.summary) {
+      renderSplineChart(this.dom.chartSpline, this.summary.daily_expenses, this.isDarkMode);
+      renderCategoryDonut(this.dom.chartDonut, this.summary.category_breakdown, this.isDarkMode);
+    }
+  }
+
+  renderCalendarStrip() {
+    if (!this.dom.dateStrip) return;
+    this.dom.dateStrip.innerHTML = '';
+
+    const today = new Date();
+    const days = [];
+
+    // Generate 7 days around today
+    for (let i = -3; i <= 3; i++) {
+      const d = new Date();
+      d.setDate(today.getDate() + i);
+      days.push(d);
+    }
+
+    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+    days.forEach((d) => {
+      const isToday = d.toDateString() === today.toDateString();
+      const pill = document.createElement('button');
+      pill.className = `flex flex-col items-center justify-center w-12 py-2.5 rounded-2xl text-xs transition-all font-medium fino-card ${isToday ? 'day-pill-active font-bold' : 'text-slate-600 dark:text-slate-400 hover:border-emerald-400'}`;
+      pill.innerHTML = `
+        <span class="text-[10px] uppercase">${dayNames[d.getDay()]}</span>
+        <span class="text-sm font-bold mt-0.5">${d.getDate()}</span>
+      `;
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('#date-strip button').forEach(b => b.classList.remove('day-pill-active'));
+        pill.classList.add('day-pill-active');
+      });
+      this.dom.dateStrip.appendChild(pill);
     });
   }
 
-  renderSliders() {
-    if (!this.dom.sliderContainer) return;
-    this.dom.sliderContainer.innerHTML = '';
+  async refreshDashboard() {
+    try {
+      this.summary = await fetchFinancialSummary();
+      this.categories = await fetchCategoriesMeta();
 
-    this.allocations.forEach((alloc) => {
-      const asset = this.assetsMap[alloc.asset_id];
-      if (!asset) return;
+      this.renderKPIs(this.summary);
+      this.renderCategoryBreakdown(this.summary.category_breakdown);
+      await this.loadTransactions();
 
+      renderSplineChart(this.dom.chartSpline, this.summary.daily_expenses, this.isDarkMode);
+      renderCategoryDonut(this.dom.chartDonut, this.summary.category_breakdown, this.isDarkMode);
+
+      if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+      console.error("Gagal refresh dashboard:", err);
+    }
+  }
+
+  renderKPIs(summary) {
+    if (this.dom.totalBalance) this.dom.totalBalance.textContent = formatRupiah(summary.total_balance);
+    if (this.dom.totalExpense) this.dom.totalExpense.textContent = formatRupiah(summary.total_expense);
+    if (this.dom.totalIncome) this.dom.totalIncome.textContent = formatRupiah(summary.total_income);
+    if (this.dom.txCount) this.dom.txCount.textContent = `${summary.transactions_count} Transaksi`;
+    if (this.dom.targetDays) this.dom.targetDays.textContent = `${summary.target_days_current} / ${summary.target_days_total} Hari`;
+  }
+
+  renderCategoryBreakdown(categories) {
+    if (!this.dom.categoryList) return;
+    this.dom.categoryList.innerHTML = '';
+
+    categories.forEach((cat) => {
       const card = document.createElement('div');
-      card.className = 'p-3 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-2';
+      card.className = 'p-3.5 rounded-2xl fino-card space-y-2';
       card.innerHTML = `
         <div class="flex items-center justify-between text-xs">
           <div class="flex items-center space-x-2">
-            <span class="w-3 h-3 rounded-full shadow-sm" style="background-color: ${asset.color}"></span>
-            <span class="font-bold text-white">${asset.name}</span>
+            <div class="w-7 h-7 rounded-xl flex items-center justify-center text-white" style="background-color: ${cat.color}">
+              <i data-lucide="${cat.icon}" class="w-3.5 h-3.5"></i>
+            </div>
+            <div>
+              <span class="font-bold text-slate-800 dark:text-white block">${cat.category}</span>
+              <span class="text-[10px] text-slate-400">Budget ${formatRupiah(cat.budget)}</span>
+            </div>
           </div>
-          <span id="pct-${asset.id}" class="font-mono font-bold text-cyan-400 text-xs">${Math.round(alloc.weight * 100)}%</span>
+          <span class="font-bold text-slate-700 dark:text-emerald-400 text-xs">${formatRupiah(cat.spent)}</span>
         </div>
-        <input 
-          id="slider-${asset.id}" 
-          type="range" 
-          min="0" 
-          max="100" 
-          step="1" 
-          value="${Math.round(alloc.weight * 100)}" 
-          class="w-full cursor-pointer"
-        >
-        <div class="flex justify-between text-[10px] text-slate-500 font-mono">
-          <span>Exp Ret: ${(asset.expected_return * 100).toFixed(1)}%</span>
-          <span>Vol: ${(asset.volatility * 100).toFixed(1)}%</span>
+        <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all duration-500" style="width: ${Math.min(100, cat.percentage)}%; background-color: ${cat.color}"></div>
+        </div>
+        <div class="flex justify-between text-[10px] text-slate-400">
+          <span>Terpakai ${cat.percentage}%</span>
+          <span>Sisa ${formatRupiah(Math.max(0, cat.budget - cat.spent))}</span>
         </div>
       `;
-
-      this.dom.sliderContainer.appendChild(card);
-
-      const slider = card.querySelector(`#slider-${asset.id}`);
-      slider.addEventListener('input', (e) => {
-        const val = parseInt(e.target.value, 10);
-        this.updateWeight(asset.id, val / 100);
-      });
-      slider.addEventListener('change', () => this.executeAnalysis());
+      this.dom.categoryList.appendChild(card);
     });
-
-    renderAllocationDonut(this.dom.donutCanvas, this.allocations, this.assetsMap);
   }
 
-  updateWeight(modifiedAssetId, newWeight) {
-    const remainingWeight = Math.max(0, 1.0 - newWeight);
-    const otherAllocations = this.allocations.filter(a => a.asset_id !== modifiedAssetId);
-    const otherSum = otherAllocations.reduce((sum, a) => sum + a.weight, 0);
-
-    this.allocations.forEach(a => {
-      if (a.asset_id === modifiedAssetId) {
-        a.weight = newWeight;
-      } else if (otherSum > 0) {
-        a.weight = (a.weight / otherSum) * remainingWeight;
-      } else {
-        a.weight = remainingWeight / otherAllocations.length;
-      }
-    });
-
-    // Update slider UI labels
-    this.allocations.forEach(a => {
-      const pctEl = document.getElementById(`pct-${a.asset_id}`);
-      const sliderEl = document.getElementById(`slider-${a.asset_id}`);
-      if (pctEl) pctEl.textContent = `${Math.round(a.weight * 100)}%`;
-      if (sliderEl && a.asset_id !== modifiedAssetId) sliderEl.value = Math.round(a.weight * 100);
-    });
-
-    renderAllocationDonut(this.dom.donutCanvas, this.allocations, this.assetsMap);
-  }
-
-  async executeAnalysis() {
+  async loadTransactions() {
     try {
-      const payload = {
-        initial_capital: this.initialCapital,
-        risk_free_rate: this.riskFreeRate,
-        horizon_years: this.horizonYears,
-        allocations: this.allocations.map(a => ({ asset_id: a.asset_id, weight: a.weight }))
-      };
-
-      this.analysisData = await runPortfolioAnalysis(payload);
-      this.renderMetrics(this.analysisData.metrics, this.analysisData.monte_carlo);
-      this.renderStressTests(this.analysisData.stress_tests);
-      this.renderRebalanceTable(this.analysisData.rebalance_orders);
-
-      renderMonteCarloChart(this.dom.mcCanvas, this.analysisData.monte_carlo);
-      renderEfficientFrontierChart(
-        this.dom.frontierCanvas,
-        this.analysisData.efficient_frontier,
-        {
-          volatility: this.analysisData.metrics.annualized_volatility,
-          return: this.analysisData.metrics.expected_annual_return
-        }
-      );
+      const typeParam = this.currentFilter === 'all' ? null : this.currentFilter;
+      this.transactions = await fetchTransactionsList(typeParam);
+      this.renderTransactionsList(this.transactions);
+      if (window.lucide) window.lucide.createIcons();
     } catch (err) {
-      console.error("Analysis execution error:", err);
+      console.error("Gagal load transaksi:", err);
     }
   }
 
-  renderMetrics(metrics, mc) {
-    if (this.dom.metricReturn) this.dom.metricReturn.textContent = `${(metrics.expected_annual_return * 100).toFixed(2)}%`;
-    if (this.dom.metricVol) this.dom.metricVol.textContent = `${(metrics.annualized_volatility * 100).toFixed(2)}%`;
-    if (this.dom.metricSharpe) this.dom.metricSharpe.textContent = metrics.sharpe_ratio.toFixed(2);
-    if (this.dom.metricVar) this.dom.metricVar.textContent = `-${mc.var_95_percent.toFixed(2)}%`;
-    if (this.dom.metricCvar) this.dom.metricCvar.textContent = `-${mc.cvar_95_percent.toFixed(2)}%`;
-    if (this.dom.metricDrawdown) this.dom.metricDrawdown.textContent = `-${mc.max_drawdown_percent.toFixed(2)}%`;
-  }
+  renderTransactionsList(transactions) {
+    if (!this.dom.txContainer) return;
+    this.dom.txContainer.innerHTML = '';
 
-  renderStressTests(tests) {
-    if (!this.dom.stressContainer) return;
-    this.dom.stressContainer.innerHTML = '';
-
-    tests.forEach((t) => {
-      const card = document.createElement('div');
-      card.className = 'p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center justify-between';
-      const isLoss = t.impact_percent < 0;
-      card.innerHTML = `
-        <div class="space-y-0.5">
-          <span class="text-xs font-bold text-white block">${t.scenario_name}</span>
-          <span class="text-[10px] text-slate-400 block">${t.description}</span>
-        </div>
-        <div class="text-right font-mono">
-          <span class="text-xs font-bold ${isLoss ? 'text-rose-400' : 'text-emerald-400'} block">
-            ${isLoss ? '' : '+'}${t.impact_percent.toFixed(1)}%
-          </span>
-          <span class="text-[10px] text-slate-500 block">
-            ${isLoss ? `-$${Math.round(t.capital_lost).toLocaleString()}` : 'No Capital Lost'}
-          </span>
+    if (transactions.length === 0) {
+      this.dom.txContainer.innerHTML = `
+        <div class="p-8 text-center text-slate-400 text-xs">
+          Belum ada transaksi tercatat untuk kategori ini.
         </div>
       `;
-      this.dom.stressContainer.appendChild(card);
-    });
-  }
+      return;
+    }
 
-  renderRebalanceTable(orders) {
-    if (!this.dom.rebalanceTable) return;
-    this.dom.rebalanceTable.innerHTML = '';
+    transactions.forEach((tx) => {
+      const isExpense = tx.type === 'expense';
+      const catMeta = this.categories.find(c => c.category === tx.category) || { icon: 'tag', color: '#22c55e' };
 
-    orders.forEach((o) => {
-      const row = document.createElement('tr');
-      row.className = 'border-b border-slate-800/60 text-xs font-mono';
-      
-      let badgeClass = 'bg-slate-800 text-slate-400';
-      if (o.action === 'BUY') badgeClass = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-      else if (o.action === 'SELL') badgeClass = 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
-
+      const row = document.createElement('div');
+      row.className = 'p-3 rounded-2xl fino-card flex items-center justify-between hover:scale-[1.005] transition-all';
       row.innerHTML = `
-        <td class="py-2.5 px-3 font-sans font-medium text-white">${o.asset_name}</td>
-        <td class="py-2.5 px-3 text-slate-400">${o.current_weight.toFixed(1)}%</td>
-        <td class="py-2.5 px-3 text-cyan-300 font-bold">${o.target_weight.toFixed(1)}%</td>
-        <td class="py-2.5 px-3">
-          <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${badgeClass}">
-            ${o.action}
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-sm" style="background-color: ${catMeta.color}">
+            <i data-lucide="${catMeta.icon}" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <span class="font-bold text-slate-900 dark:text-white text-xs block">${tx.title}</span>
+            <span class="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+              <span>${tx.date}</span>
+              <span>•</span>
+              <span class="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium">${tx.category}</span>
+              ${tx.notes ? `<span>• ${tx.notes}</span>` : ''}
+            </span>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3">
+          <span class="font-bold text-xs ${isExpense ? 'text-rose-500' : 'text-emerald-500'}">
+            ${isExpense ? '-' : '+'} ${formatRupiah(tx.amount)}
           </span>
-        </td>
-        <td class="py-2.5 px-3 text-right font-bold ${o.action === 'BUY' ? 'text-emerald-400' : o.action === 'SELL' ? 'text-rose-400' : 'text-slate-500'}">
-          ${o.action !== 'HOLD' ? `$${Math.round(o.amount_usd).toLocaleString()}` : '$0'}
-        </td>
+          <button class="btn-edit p-1.5 rounded-lg text-slate-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Edit Transaksi">
+            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+          </button>
+          <button class="btn-delete p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Hapus Transaksi">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
       `;
-      this.dom.rebalanceTable.appendChild(row);
+
+      // Event Listeners for Edit & Delete
+      row.querySelector('.btn-edit').addEventListener('click', () => {
+        this.openModal(true, tx);
+      });
+
+      row.querySelector('.btn-delete').addEventListener('click', async () => {
+        if (confirm(`Yakin ingin menghapus transaksi "${tx.title}"?`)) {
+          await deleteExistingTransaction(tx.id);
+          await this.refreshDashboard();
+        }
+      });
+
+      this.dom.txContainer.appendChild(row);
     });
   }
 
-  async saveCurrentPortfolio() {
-    const name = prompt("Enter a name for this portfolio configuration:", `Portfolio ${new Date().toLocaleDateString()}`);
-    if (!name) return;
+  openModal(isEdit = false, txData = null) {
+    if (!this.dom.modal) return;
+    this.editingTxId = isEdit && txData ? txData.id : null;
+    this.dom.modalTitle.textContent = isEdit ? 'Edit Transaksi' : 'Tambah Transaksi Baru';
 
-    try {
-      const payload = {
-        name,
-        initial_capital: this.initialCapital,
-        risk_free_rate: this.riskFreeRate,
-        horizon_years: this.horizonYears,
-        allocations: this.allocations
-      };
-      await savePortfolioRecord(payload);
-      alert(`Portfolio "${name}" successfully saved to SQLite database!`);
-      await this.loadSavedPortfolios();
-    } catch (err) {
-      alert(`Failed to save: ${err.message}`);
+    if (isEdit && txData) {
+      this.dom.inputTitle.value = txData.title;
+      this.dom.inputAmount.value = txData.amount;
+      this.dom.inputCategory.value = txData.category;
+      this.dom.inputType.value = txData.type;
+      this.dom.inputDate.value = txData.date;
+      this.dom.inputNotes.value = txData.notes || '';
+    } else {
+      this.dom.inputTitle.value = '';
+      this.dom.inputAmount.value = '';
+      this.dom.inputCategory.value = 'Makanan';
+      this.dom.inputType.value = 'expense';
+      this.dom.inputDate.value = new Date().toISOString().split('T')[0];
+      this.dom.inputNotes.value = '';
     }
+
+    this.dom.modal.classList.remove('hidden');
+    this.dom.modal.classList.add('flex');
+    this.dom.inputTitle.focus();
   }
 
-  async loadSavedPortfolios() {
-    if (!this.dom.savedList) return;
-    try {
-      const saved = await fetchSavedPortfolios();
-      this.dom.savedList.innerHTML = '';
-      if (saved.length === 0) {
-        this.dom.savedList.innerHTML = '<span class="text-[11px] text-slate-500 italic">No saved configurations yet.</span>';
-        return;
-      }
+  closeModal() {
+    if (!this.dom.modal) return;
+    this.dom.modal.classList.add('hidden');
+    this.dom.modal.classList.remove('flex');
+    this.editingTxId = null;
+  }
 
-      saved.forEach((item) => {
-        const pill = document.createElement('button');
-        pill.className = 'px-3 py-1 rounded-xl text-xs bg-slate-900 border border-slate-800 hover:border-cyan-500/40 text-slate-300 hover:text-white transition-all';
-        pill.textContent = `${item.name} ($${Math.round(item.initial_capital).toLocaleString()})`;
-        pill.addEventListener('click', () => {
-          this.initialCapital = item.initial_capital;
-          this.riskFreeRate = item.risk_free_rate;
-          this.horizonYears = item.horizon_years;
-          this.allocations = item.allocations;
-          if (this.dom.capitalInput) this.dom.capitalInput.value = this.initialCapital;
-          if (this.dom.horizonInput) this.dom.horizonInput.value = this.horizonYears;
-          if (this.dom.horizonVal) this.dom.horizonVal.textContent = `${this.horizonYears} Yrs`;
-          if (this.dom.rfInput) this.dom.rfInput.value = (this.riskFreeRate * 100).toFixed(1);
-          this.renderSliders();
-          this.executeAnalysis();
-        });
-        this.dom.savedList.appendChild(pill);
-      });
+  async handleFormSubmit(e) {
+    e.preventDefault();
+    const payload = {
+      title: this.dom.inputTitle.value.trim(),
+      amount: parseFloat(this.dom.inputAmount.value),
+      category: this.dom.inputCategory.value,
+      type: this.dom.inputType.value,
+      date: this.dom.inputDate.value,
+      notes: this.dom.inputNotes.value.trim() || null
+    };
+
+    try {
+      if (this.editingTxId) {
+        await updateExistingTransaction(this.editingTxId, payload);
+      } else {
+        await createNewTransaction(payload);
+      }
+      this.closeModal();
+      await this.refreshDashboard();
     } catch (err) {
-      console.error("Load saved error:", err);
+      alert(`Gagal menyimpan transaksi: ${err.message}`);
     }
   }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  new ApexAlphaApp();
-  if (window.lucide) window.lucide.createIcons();
+  new FinoApp();
 });

@@ -1,41 +1,60 @@
 /**
- * ApexAlpha API Client
- * Clean Async Fetch Service for REST Endpoints.
+ * Fino Dashboard API Client
  */
 
 const API_BASE = '';
 
-export async function fetchAssets() {
-  const res = await fetch(`${API_BASE}/api/assets`);
-  if (!res.ok) throw new Error(`Failed to load assets: ${res.statusText}`);
+export async function fetchFinancialSummary() {
+  const res = await fetch(`${API_BASE}/api/summary`);
+  if (!res.ok) throw new Error('Gagal memuat ringkasan keuangan');
   return await res.json();
 }
 
-export async function runPortfolioAnalysis(payload) {
-  const res = await fetch(`${API_BASE}/api/analyze`, {
+export async function fetchTransactionsList(type = null, category = null) {
+  let url = `${API_BASE}/api/transactions?limit=100`;
+  if (type) url += `&type=${encodeURIComponent(type)}`;
+  if (category) url += `&category=${encodeURIComponent(category)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Gagal memuat daftar transaksi');
+  return await res.json();
+}
+
+export async function createNewTransaction(payload) {
+  const res = await fetch(`${API_BASE}/api/transactions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || 'Analysis request failed');
+    const err = await res.json().catch(() => ({ detail: 'Gagal membuat transaksi' }));
+    throw new Error(err.detail || 'Gagal membuat transaksi');
   }
   return await res.json();
 }
 
-export async function savePortfolioRecord(payload) {
-  const res = await fetch(`${API_BASE}/api/portfolios/save`, {
-    method: 'POST',
+export async function updateExistingTransaction(id, payload) {
+  const res = await fetch(`${API_BASE}/api/transactions/${id}`, {
+    method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
-  if (!res.ok) throw new Error('Failed to save portfolio');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Gagal memperbarui transaksi' }));
+    throw new Error(err.detail || 'Gagal memperbarui transaksi');
+  }
   return await res.json();
 }
 
-export async function fetchSavedPortfolios() {
-  const res = await fetch(`${API_BASE}/api/portfolios/saved`);
-  if (!res.ok) throw new Error('Failed to fetch saved portfolios');
+export async function deleteExistingTransaction(id) {
+  const res = await fetch(`${API_BASE}/api/transactions/${id}`, {
+    method: 'DELETE'
+  });
+  if (!res.ok) throw new Error('Gagal menghapus transaksi');
+  return await res.json();
+}
+
+export async function fetchCategoriesMeta() {
+  const res = await fetch(`${API_BASE}/api/categories`);
+  if (!res.ok) throw new Error('Gagal memuat kategori');
   return await res.json();
 }
