@@ -17,14 +17,23 @@ import {
   updateExistingTransaction,
   deleteExistingTransaction,
   fetchCategoriesMeta,
-  updateCategoryBudgetLimit
+  updateCategoryBudgetLimit,
+  fetchPortfolioAssets,
+  analyzePortfolio,
+  fetchSavingsGoals,
+  createSavingsGoal,
+  depositSavingsGoal,
+  deleteSavingsGoal,
+  fetchFinancialHealth
 } from './api.js';
 
 import {
   renderSplineChart,
   renderTransactionBarChart,
   renderStackedBudgetChart,
-  attachCanvasInteractivity
+  attachCanvasInteractivity,
+  renderEfficientFrontierChart,
+  renderMonteCarloChart
 } from './charts.js';
 
 import { sounds } from './audio.js';
@@ -75,6 +84,19 @@ class RiedApp {
     // Budget modal state
     this.editingBudgetCategory = null;
 
+    // Quant Portfolio state
+    this.portfolioAssets = [];
+    this.portfolioAnalysis = null;
+    this.portfolioInitialCapital = 100000000;
+    this.portfolioHorizonYears = 5;
+
+    // Celengan Impian (Savings Goals) state
+    this.savingsGoals = [];
+    this.activeGoalDepositId = null;
+
+    // Financial Health Radar state
+    this.financialHealth = null;
+
     // Theme state
     this.isDarkMode = false;
 
@@ -100,12 +122,96 @@ class RiedApp {
       views: {
         dashboard: document.getElementById('view-dashboard'),
         transaksi: document.getElementById('view-transaksi'),
+        investasi: document.getElementById('view-investasi'),
         pengaturan: document.getElementById('view-pengaturan'),
         'gateway-telegram': document.getElementById('view-gateway-telegram'),
         'format-balasan': document.getElementById('view-format-balasan'),
         kamus: document.getElementById('view-kamus'),
         'log-telegram': document.getElementById('view-log-telegram')
       },
+
+      // Smart Financial Health Radar
+      healthRadarScore: document.getElementById('health-radar-score'),
+      healthRadarGrade: document.getElementById('health-radar-grade'),
+      healthRadarStatus: document.getElementById('health-radar-status'),
+      healthBarNeeds: document.getElementById('health-bar-needs'),
+      healthBarWants: document.getElementById('health-bar-wants'),
+      healthBarSavings: document.getElementById('health-bar-savings'),
+      healthNeedsVal: document.getElementById('health-needs-val'),
+      healthWantsVal: document.getElementById('health-wants-val'),
+      healthSavingsVal: document.getElementById('health-savings-val'),
+      healthNeedsRp: document.getElementById('health-needs-rp'),
+      healthWantsRp: document.getElementById('health-wants-rp'),
+      healthSavingsRp: document.getElementById('health-savings-rp'),
+      healthRunwayMonths: document.getElementById('health-runway-months'),
+      healthRadarSummary: document.getElementById('health-radar-summary'),
+      healthBurnLabel: document.getElementById('health-burn-label'),
+
+      // Celengan Impian (Savings Goals)
+      savingsGoalsContainer: document.getElementById('savings-goals-container'),
+      btnCreateSavingsGoal: document.getElementById('btn-create-savings-goal'),
+      modalCreateGoal: document.getElementById('modal-create-goal'),
+      formCreateGoal: document.getElementById('form-create-goal'),
+      btnCloseCreateGoalModal: document.getElementById('btn-close-create-goal-modal'),
+      btnCancelCreateGoal: document.getElementById('btn-cancel-create-goal'),
+      inputGoalTitle: document.getElementById('input-goal-title'),
+      inputGoalTarget: document.getElementById('input-goal-target'),
+      inputGoalInitial: document.getElementById('input-goal-initial'),
+      inputGoalCategory: document.getElementById('input-goal-category'),
+      inputGoalDate: document.getElementById('input-goal-date'),
+
+      // Savings Deposit Modal
+      modalSavingsDeposit: document.getElementById('modal-savings-deposit'),
+      formSavingsDeposit: document.getElementById('form-savings-deposit'),
+      btnCloseDepositModal: document.getElementById('btn-close-deposit-modal'),
+      btnCancelDeposit: document.getElementById('btn-cancel-deposit'),
+      inputDepositAmount: document.getElementById('input-deposit-amount'),
+      depositGoalTitle: document.getElementById('deposit-goal-title'),
+      depositGoalSubtitle: document.getElementById('deposit-goal-subtitle'),
+      btnDepositChips: document.querySelectorAll('.btn-deposit-chip'),
+
+      // Quant Portfolio View Elements
+      quantInitialCapital: document.getElementById('quant-initial-capital'),
+      quantMetricReturn: document.getElementById('quant-metric-return'),
+      quantMetricVolatility: document.getElementById('quant-metric-volatility'),
+      quantMetricSharpe: document.getElementById('quant-metric-sharpe'),
+      quantMetricVar: document.getElementById('quant-metric-var'),
+      chartEfficientFrontier: document.getElementById('chart-efficient-frontier'),
+      chartMonteCarlo: document.getElementById('chart-monte-carlo'),
+      quantSelectHorizon: document.getElementById('quant-select-horizon'),
+      mcFinalMedianLabel: document.getElementById('mc-final-median-label'),
+      allocTotalBadge: document.getElementById('alloc-total-badge'),
+      slidersAlloc: document.querySelectorAll('.slider-alloc'),
+      btnCalcRebalance: document.getElementById('btn-calc-rebalance'),
+      rebalanceOrdersTbody: document.getElementById('rebalance-orders-tbody'),
+
+      // Command Palette
+      btnOpenCommandPalette: document.getElementById('btn-open-command-palette'),
+      commandPalette: document.getElementById('command-palette'),
+      paletteSearchInput: document.getElementById('palette-search-input'),
+      paletteResultsList: document.getElementById('palette-results-list'),
+      paletteItems: document.querySelectorAll('.palette-item'),
+
+      // RIED Wrapped
+      btnOpenWrapped: document.getElementById('btn-open-wrapped'),
+      modalRiedWrapped: document.getElementById('modal-ried-wrapped'),
+      btnCloseWrapped: document.getElementById('btn-close-wrapped'),
+      btnDownloadWrappedPng: document.getElementById('btn-download-wrapped-png'),
+      wrappedCardPreview: document.getElementById('wrapped-card-preview'),
+      wrappedPersonaTitle: document.getElementById('wrapped-persona-title'),
+      wrappedStatIncome: document.getElementById('wrapped-stat-income'),
+      wrappedStatExpense: document.getElementById('wrapped-stat-expense'),
+      wrappedStatTopcat: document.getElementById('wrapped-stat-topcat'),
+      wrappedStatScore: document.getElementById('wrapped-stat-score'),
+
+      // Floating Action Button
+      fabContainer: document.getElementById('fab-container'),
+      fabMainBtn: document.getElementById('fab-main-btn'),
+      fabMenu: document.getElementById('fab-menu'),
+      fabIcon: document.getElementById('fab-icon'),
+      fabActionTx: document.getElementById('fab-action-tx'),
+      fabActionGoal: document.getElementById('fab-action-goal'),
+      fabActionWrapped: document.getElementById('fab-action-wrapped'),
 
       // Dashboard Elements
       btnExportExcel: document.getElementById('btn-export-excel'),
@@ -202,6 +308,11 @@ class RiedApp {
     // 3. Bind event listeners
     this.bindEvents();
     this.renderCalendarDayStrip();
+    this.initSavingsGoals();
+    this.initQuantPortfolio();
+    this.initCommandPalette();
+    this.initFloatingActionButton();
+    this.initWrappedModal();
 
     // 4. Attach Canvas Interactivity
     this.initCanvasInteractivity();
@@ -517,6 +628,7 @@ class RiedApp {
     const titles = {
       dashboard: 'Ried Dashboard',
       transaksi: 'Buku Transaksi',
+      investasi: 'Investasi & Frontier',
       pengaturan: 'Pengaturan Sistem',
       'gateway-telegram': 'Bot Telegram',
       'format-balasan': 'Format Balasan Bot',
@@ -531,6 +643,8 @@ class RiedApp {
       setTimeout(() => this.renderCurrentCharts(), 50);
     } else if (viewName === 'transaksi') {
       this.loadTransaksiViewData();
+    } else if (viewName === 'investasi') {
+      setTimeout(() => this.runPortfolioAnalysis(), 50);
     }
 
     if (window.lucide) {
@@ -674,20 +788,29 @@ class RiedApp {
 
   async refreshAllData() {
     try {
-      const [summary, txList, categories] = await Promise.all([
+      const [summary, txList, categories, health, savings] = await Promise.all([
         fetchFinancialSummary(),
         fetchTransactionsList(),
-        fetchCategoriesMeta()
+        fetchCategoriesMeta(),
+        fetchFinancialHealth(),
+        fetchSavingsGoals()
       ]);
 
       this.summary = summary;
       this.transactions = txList;
       this.categories = categories;
+      this.financialHealth = health;
+      this.savingsGoals = savings;
 
       this.renderDashboardMetrics();
       this.renderCurrentCharts();
+      this.renderHealthRadarUI(health);
+      this.renderSavingsGoalsUI(savings);
+
       if (this.currentView === 'transaksi') {
         this.loadTransaksiViewData();
+      } else if (this.currentView === 'investasi') {
+        this.runPortfolioAnalysis();
       }
     } catch (err) {
       console.error('Failed refreshing data:', err);
@@ -1123,6 +1246,808 @@ class RiedApp {
         alert(`Gagal membatalkan transaksi: ${err.message}`);
       }
     }
+  }
+
+  renderHealthRadarUI(health) {
+    if (!health) return;
+    const score = health.score ?? health.overall_score ?? 98;
+    if (this.dom.healthRadarScore) {
+      this.dom.healthRadarScore.textContent = Math.round(score);
+    }
+    if (this.dom.healthRadarGrade) {
+      const fullGrade = health.grade || 'A - Prima';
+      this.dom.healthRadarGrade.textContent = fullGrade.startsWith('Grade') ? fullGrade : `Grade ${fullGrade}`;
+      const firstLetter = fullGrade.charAt(0);
+      const gradeColors = {
+        A: 'text-emerald-500',
+        B: 'text-lime-500',
+        C: 'text-amber-500',
+        D: 'text-rose-500'
+      };
+      this.dom.healthRadarGrade.className = `text-xs font-black ${gradeColors[firstLetter] || 'text-emerald-500'}`;
+    }
+    if (this.dom.healthRadarStatus) {
+      this.dom.healthRadarStatus.textContent = health.summary || health.status_label || 'Status Finansial Prima';
+    }
+    if (health.rule_50_30_20) {
+      const r = health.rule_50_30_20;
+      if (this.dom.healthBarNeeds) this.dom.healthBarNeeds.style.width = `${Math.min(100, r.needs_pct)}%`;
+      if (this.dom.healthBarWants) this.dom.healthBarWants.style.width = `${Math.min(100, r.wants_pct)}%`;
+      if (this.dom.healthBarSavings) this.dom.healthBarSavings.style.width = `${Math.min(100, r.savings_pct)}%`;
+      if (this.dom.healthNeedsVal) this.dom.healthNeedsVal.textContent = `${r.needs_pct.toFixed(1)}%`;
+      if (this.dom.healthWantsVal) this.dom.healthWantsVal.textContent = `${r.wants_pct.toFixed(1)}%`;
+      if (this.dom.healthSavingsVal) this.dom.healthSavingsVal.textContent = `${r.savings_pct.toFixed(1)}%`;
+      if (this.dom.healthNeedsRp) this.dom.healthNeedsRp.textContent = formatRupiah(r.needs_spent ?? r.needs_rp ?? 0);
+      if (this.dom.healthWantsRp) this.dom.healthWantsRp.textContent = formatRupiah(r.wants_spent ?? r.wants_rp ?? 0);
+      if (this.dom.healthSavingsRp) this.dom.healthSavingsRp.textContent = formatRupiah(r.savings_spent ?? r.savings_rp ?? 0);
+    }
+    if (this.dom.healthRunwayMonths) {
+      const runway = health.cash_runway_months ?? health.runway_months ?? 0;
+      this.dom.healthRunwayMonths.textContent = `${runway.toFixed(1)} Bulan`;
+    }
+    if (this.dom.healthBurnLabel) {
+      const burn = health.monthly_burn_rate ?? 0;
+      this.dom.healthBurnLabel.textContent = `${formatRupiah(burn)} / bln`;
+    }
+    if (this.dom.healthRadarSummary) {
+      const reco = Array.isArray(health.recommendations) ? health.recommendations[0] : (health.ai_recommendation || health.summary);
+      this.dom.healthRadarSummary.textContent = reco || 'Kondisi kas dan tabungan Anda sangat sehat.';
+    }
+  }
+
+  initSavingsGoals() {
+    if (this.dom.btnCreateSavingsGoal) {
+      this.dom.btnCreateSavingsGoal.addEventListener('click', () => {
+        sounds.playPop();
+        if (this.dom.modalCreateGoal) {
+          this.dom.modalCreateGoal.classList.remove('hidden');
+          this.dom.modalCreateGoal.classList.add('flex');
+          if (this.dom.inputGoalDate) {
+            const future = new Date();
+            future.setMonth(future.getMonth() + 6);
+            this.dom.inputGoalDate.value = future.toISOString().split('T')[0];
+          }
+        }
+      });
+    }
+
+    const closeCreateModal = () => {
+      sounds.playPop();
+      if (this.dom.modalCreateGoal) {
+        this.dom.modalCreateGoal.classList.add('hidden');
+        this.dom.modalCreateGoal.classList.remove('flex');
+      }
+    };
+
+    if (this.dom.btnCloseCreateGoalModal) this.dom.btnCloseCreateGoalModal.addEventListener('click', closeCreateModal);
+    if (this.dom.btnCancelCreateGoal) this.dom.btnCancelCreateGoal.addEventListener('click', closeCreateModal);
+
+    if (this.dom.formCreateGoal) {
+      this.dom.formCreateGoal.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        sounds.playPop();
+        const payload = {
+          title: this.dom.inputGoalTitle.value.trim(),
+          target_amount: parseFloat(this.dom.inputGoalTarget.value),
+          initial_deposit: parseFloat(this.dom.inputGoalInitial.value || 0),
+          category: this.dom.inputGoalCategory.value,
+          target_date: this.dom.inputGoalDate.value
+        };
+        try {
+          await createSavingsGoal(payload);
+          sounds.playChime();
+          closeCreateModal();
+          this.dom.formCreateGoal.reset();
+          await this.refreshAllData();
+        } catch (err) {
+          alert(`Gagal membuat target: ${err.message}`);
+        }
+      });
+    }
+
+    // Deposit modal handlers
+    const closeDepositModal = () => {
+      sounds.playPop();
+      if (this.dom.modalSavingsDeposit) {
+        this.dom.modalSavingsDeposit.classList.add('hidden');
+        this.dom.modalSavingsDeposit.classList.remove('flex');
+      }
+      this.activeGoalDepositId = null;
+    };
+
+    if (this.dom.btnCloseDepositModal) this.dom.btnCloseDepositModal.addEventListener('click', closeDepositModal);
+    if (this.dom.btnCancelDeposit) this.dom.btnCancelDeposit.addEventListener('click', closeDepositModal);
+
+    if (this.dom.formSavingsDeposit) {
+      this.dom.formSavingsDeposit.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!this.activeGoalDepositId) return;
+        const amount = parseFloat(this.dom.inputDepositAmount.value);
+        if (isNaN(amount) || amount === 0) {
+          alert('Masukkan nominal valid.');
+          return;
+        }
+        try {
+          sounds.playPop();
+          await depositSavingsGoal(this.activeGoalDepositId, amount);
+          sounds.playChime();
+          closeDepositModal();
+          this.dom.formSavingsDeposit.reset();
+          await this.refreshAllData();
+        } catch (err) {
+          alert(`Gagal menabung: ${err.message}`);
+        }
+      });
+    }
+
+    if (this.dom.btnDepositChips) {
+      this.dom.btnDepositChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          sounds.playPop();
+          const val = chip.getAttribute('data-val');
+          if (val && this.dom.inputDepositAmount) {
+            const current = parseFloat(this.dom.inputDepositAmount.value) || 0;
+            this.dom.inputDepositAmount.value = current + parseFloat(val);
+          }
+        });
+      });
+    }
+  }
+
+  renderSavingsGoalsUI(goals) {
+    if (!this.dom.savingsGoalsContainer) return;
+    if (!goals || goals.length === 0) {
+      this.dom.savingsGoalsContainer.innerHTML = `
+        <div class="col-span-full p-8 text-center ried-card text-slate-400 text-xs">
+          Belum ada target tabungan aktif. Klik "+ Target Baru" untuk mulai mewujudkan impian.
+        </div>
+      `;
+      return;
+    }
+
+    const catIcons = {
+      Darurat: 'shield-alert',
+      Gadget: 'smartphone',
+      Liburan: 'plane',
+      Kendaraan: 'car',
+      Investasi: 'trending-up',
+      Lainnya: 'piggy-bank'
+    };
+
+    this.dom.savingsGoalsContainer.innerHTML = goals.map(g => {
+      const pct = Math.min(100, Math.round((g.current_amount / g.target_amount) * 100));
+      const remaining = Math.max(0, g.target_amount - g.current_amount);
+      const icon = catIcons[g.category] || 'piggy-bank';
+      const isCompleted = g.current_amount >= g.target_amount;
+
+      return `
+        <div class="ried-card p-4 space-y-3 flex flex-col justify-between hover:border-emerald-500/50 transition-all goal-card">
+          <div class="space-y-2">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-xl ${isCompleted ? 'bg-emerald-500 text-white' : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'} flex items-center justify-center font-bold">
+                  <i data-lucide="${icon}" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-black text-slate-900 dark:text-white leading-tight">${escapeHtml(g.title)}</h4>
+                  <span class="text-[10px] text-slate-400 block">${escapeHtml(g.category)} • Target ${g.target_date || 'Fleksibel'}</span>
+                </div>
+              </div>
+              <button data-delete-goal="${g.id}" class="btn-delete-goal text-slate-300 hover:text-rose-500 p-1 transition-colors" title="Hapus Target">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex items-center justify-between font-mono text-[11px]">
+                <span class="font-bold text-slate-900 dark:text-white">${formatRupiah(g.current_amount)}</span>
+                <span class="text-slate-400">Target ${formatRupiah(g.target_amount)}</span>
+              </div>
+              <div class="w-full bg-[#edf4e8] dark:bg-[#1a291e] h-2 rounded-full overflow-hidden">
+                <div class="h-full ${isCompleted ? 'bg-emerald-400' : 'bg-[#38a852]'} rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+              </div>
+              <div class="flex items-center justify-between text-[10px]">
+                <span class="font-bold ${isCompleted ? 'text-emerald-500' : 'text-slate-500 dark:text-slate-400'}">${pct}% Tercapai</span>
+                <span class="text-slate-400 font-mono">${isCompleted ? 'Tercapai! 🎉' : `Sisa ${formatRupiah(remaining)}`}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-[#dde7da] dark:border-[#1c2b20] flex items-center justify-end">
+            <button data-deposit-goal="${g.id}" data-goal-title="${escapeHtml(g.title)}" class="btn-open-deposit px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-200 text-xs font-bold transition-all flex items-center space-x-1">
+              <i data-lucide="plus" class="w-3 h-3"></i>
+              <span>+ Tabung</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Bind deposit and delete buttons
+    this.dom.savingsGoalsContainer.querySelectorAll('.btn-open-deposit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        sounds.playPop();
+        const goalId = parseInt(btn.getAttribute('data-deposit-goal'), 10);
+        const goal = this.savingsGoals.find(g => g.id === goalId);
+        if (!goal) return;
+        this.activeGoalDepositId = goalId;
+        if (this.dom.depositGoalTitle) this.dom.depositGoalTitle.textContent = goal.title;
+        if (this.dom.depositGoalSubtitle) {
+          this.dom.depositGoalSubtitle.textContent = `Terkumpul ${formatRupiah(goal.current_amount)} dari target ${formatRupiah(goal.target_amount)}`;
+        }
+        if (this.dom.inputDepositAmount) this.dom.inputDepositAmount.value = '';
+        if (this.dom.modalSavingsDeposit) {
+          this.dom.modalSavingsDeposit.classList.remove('hidden');
+          this.dom.modalSavingsDeposit.classList.add('flex');
+          if (this.dom.inputDepositAmount) this.dom.inputDepositAmount.focus();
+        }
+      });
+    });
+
+    this.dom.savingsGoalsContainer.querySelectorAll('.btn-delete-goal').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const goalId = parseInt(btn.getAttribute('data-delete-goal'), 10);
+        if (confirm('Hapus target celengan ini?')) {
+          sounds.playPop();
+          try {
+            await deleteSavingsGoal(goalId);
+            sounds.playChime();
+            await this.refreshAllData();
+          } catch (err) {
+            alert(`Gagal menghapus: ${err.message}`);
+          }
+        }
+      });
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  initQuantPortfolio() {
+    if (this.dom.slidersAlloc) {
+      this.dom.slidersAlloc.forEach(slider => {
+        slider.addEventListener('input', () => {
+          const asset = slider.getAttribute('data-asset');
+          const valLabel = document.getElementById(`label-weight-${asset}`);
+          if (valLabel) valLabel.textContent = `${slider.value}%`;
+          this.updateAllocationBadge();
+        });
+      });
+    }
+
+    if (this.dom.quantInitialCapital) {
+      this.dom.quantInitialCapital.addEventListener('change', () => {
+        const val = parseFloat(this.dom.quantInitialCapital.value);
+        if (!isNaN(val) && val > 0) {
+          this.portfolioInitialCapital = val;
+          this.runPortfolioAnalysis();
+        }
+      });
+    }
+
+    if (this.dom.quantSelectHorizon) {
+      this.dom.quantSelectHorizon.addEventListener('change', () => {
+        this.portfolioHorizonYears = parseInt(this.dom.quantSelectHorizon.value, 10) || 5;
+        this.runPortfolioAnalysis();
+      });
+    }
+
+    if (this.dom.btnCalcRebalance) {
+      this.dom.btnCalcRebalance.addEventListener('click', () => {
+        sounds.playChime();
+        this.runPortfolioAnalysis();
+      });
+    }
+  }
+
+  updateAllocationBadge() {
+    if (!this.dom.slidersAlloc || !this.dom.allocTotalBadge) return;
+    let total = 0;
+    this.dom.slidersAlloc.forEach(s => {
+      total += parseFloat(s.value) || 0;
+    });
+    this.dom.allocTotalBadge.textContent = `${total}%`;
+    if (total === 100) {
+      this.dom.allocTotalBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black font-mono bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300';
+    } else {
+      this.dom.allocTotalBadge.className = 'px-2 py-0.5 rounded-full text-[10px] font-black font-mono bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300';
+    }
+  }
+
+  async runPortfolioAnalysis() {
+    if (!this.dom.slidersAlloc) return;
+
+    const allocations = [];
+    this.dom.slidersAlloc.forEach(s => {
+      const asset = s.getAttribute('data-asset');
+      allocations.push({
+        asset_id: asset,
+        weight: (parseFloat(s.value) || 0) / 100
+      });
+    });
+
+    const capital = parseFloat(this.dom.quantInitialCapital ? this.dom.quantInitialCapital.value : 100000000) || 100000000;
+    const horizonYears = parseInt(this.dom.quantSelectHorizon ? this.dom.quantSelectHorizon.value : 5, 10) || 5;
+
+    const payload = {
+      allocations: allocations,
+      initial_capital: capital,
+      horizon_years: horizonYears,
+      risk_free_rate: 0.045
+    };
+
+    try {
+      const res = await analyzePortfolio(payload);
+      this.portfolioAnalysis = res;
+
+      // 1. Update Metrics Strip
+      if (this.dom.quantMetricReturn && res.metrics) {
+        this.dom.quantMetricReturn.textContent = `${(res.metrics.expected_annual_return * 100).toFixed(2)}%`;
+      }
+      if (this.dom.quantMetricVolatility && res.metrics) {
+        this.dom.quantMetricVolatility.textContent = `${(res.metrics.annualized_volatility * 100).toFixed(2)}%`;
+      }
+      if (this.dom.quantMetricSharpe && res.metrics) {
+        this.dom.quantMetricSharpe.textContent = res.metrics.sharpe_ratio.toFixed(3);
+      }
+      if (this.dom.quantMetricVar && res.monte_carlo) {
+        this.dom.quantMetricVar.textContent = `${(res.monte_carlo.var_95_percent * 100).toFixed(2)}%`;
+      }
+
+      // 2. Render Frontier Chart
+      if (this.dom.chartEfficientFrontier && res.efficient_frontier) {
+        const currentPt = res.metrics ? {
+          volatility: res.metrics.annualized_volatility * 100,
+          return: res.metrics.expected_annual_return * 100
+        } : null;
+        renderEfficientFrontierChart(
+          this.dom.chartEfficientFrontier,
+          res.efficient_frontier,
+          currentPt,
+          this.isDarkMode
+        );
+      }
+
+      // 3. Render Monte Carlo Chart
+      if (this.dom.chartMonteCarlo && res.monte_carlo) {
+        renderMonteCarloChart(
+          this.dom.chartMonteCarlo,
+          res.monte_carlo,
+          this.isDarkMode
+        );
+      }
+
+      // 4. Update Monte Carlo Median Label
+      if (this.dom.mcFinalMedianLabel && res.monte_carlo) {
+        this.dom.mcFinalMedianLabel.textContent = `Median: ${formatRupiah(res.monte_carlo.final_capital_median)}`;
+      }
+
+      // 5. Render Rebalance Orders Table
+      this.renderRebalanceTable(res.rebalance_orders);
+
+      if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+      console.error('Failed analyzing portfolio:', err);
+    }
+  }
+
+  renderRebalanceTable(orders) {
+    if (!this.dom.rebalanceOrdersTbody) return;
+    if (!orders || orders.length === 0) {
+      this.dom.rebalanceOrdersTbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-4 text-slate-400">Portofolio sudah optimal seimbang.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    this.dom.rebalanceOrdersTbody.innerHTML = orders.map(o => {
+      const isBuy = o.action === 'BUY';
+      const isSell = o.action === 'SELL';
+      const actionBadge = isBuy
+        ? '<span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold">BELI</span>'
+        : isSell
+        ? '<span class="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 font-bold">JUAL</span>'
+        : '<span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold">TAHAN</span>';
+
+      const curWeight = o.current_weight > 1 ? o.current_weight : (o.current_weight * 100);
+      const tgtWeight = o.target_weight > 1 ? o.target_weight : (o.target_weight * 100);
+      const dltWeight = Math.abs(o.delta_weight) > 1 ? o.delta_weight : (o.delta_weight * 100);
+
+      const deltaClass = dltWeight > 0.05 ? 'text-emerald-600 dark:text-emerald-400' : dltWeight < -0.05 ? 'text-rose-500' : 'text-slate-400';
+      const sign = dltWeight > 0.05 ? '+' : '';
+
+      return `
+        <tr class="hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+          <td class="py-2.5 font-bold text-slate-900 dark:text-white font-sans">${escapeHtml(o.asset_name)}</td>
+          <td class="py-2.5 text-right text-slate-500 dark:text-slate-400">${curWeight.toFixed(1)}%</td>
+          <td class="py-2.5 text-right font-bold text-slate-800 dark:text-slate-200">${tgtWeight.toFixed(1)}%</td>
+          <td class="py-2.5 text-right font-bold ${deltaClass}">${sign}${dltWeight.toFixed(1)}%</td>
+          <td class="py-2.5 text-center">${actionBadge}</td>
+          <td class="py-2.5 text-right font-bold ${deltaClass}">${formatRupiah(Math.abs(o.amount_usd))}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  initCommandPalette() {
+    const openPalette = () => {
+      sounds.playPop();
+      if (this.dom.commandPalette) {
+        this.dom.commandPalette.classList.remove('hidden');
+        this.dom.commandPalette.classList.add('flex');
+        if (this.dom.paletteSearchInput) {
+          this.dom.paletteSearchInput.value = '';
+          this.dom.paletteSearchInput.focus();
+        }
+        if (this.dom.paletteItems) {
+          this.dom.paletteItems.forEach(item => item.classList.remove('hidden'));
+        }
+      }
+    };
+
+    const closePalette = () => {
+      sounds.playPop();
+      if (this.dom.commandPalette) {
+        this.dom.commandPalette.classList.add('hidden');
+        this.dom.commandPalette.classList.remove('flex');
+      }
+    };
+
+    if (this.dom.btnOpenCommandPalette) {
+      this.dom.btnOpenCommandPalette.addEventListener('click', openPalette);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (this.dom.commandPalette && !this.dom.commandPalette.classList.contains('hidden')) {
+          closePalette();
+        } else {
+          openPalette();
+        }
+      } else if (e.key === 'Escape' && this.dom.commandPalette && !this.dom.commandPalette.classList.contains('hidden')) {
+        closePalette();
+      }
+    });
+
+    if (this.dom.commandPalette) {
+      this.dom.commandPalette.addEventListener('click', (e) => {
+        if (e.target === this.dom.commandPalette) closePalette();
+      });
+    }
+
+    if (this.dom.paletteSearchInput) {
+      this.dom.paletteSearchInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        if (!this.dom.paletteItems) return;
+        this.dom.paletteItems.forEach(item => {
+          const text = item.textContent.toLowerCase();
+          if (text.includes(q)) {
+            item.classList.remove('hidden');
+          } else {
+            item.classList.add('hidden');
+          }
+        });
+      });
+    }
+
+    if (this.dom.paletteItems) {
+      this.dom.paletteItems.forEach(item => {
+        item.addEventListener('click', () => {
+          sounds.playPop();
+          closePalette();
+          const action = item.getAttribute('data-action');
+          if (action === 'new-tx') {
+            this.openTxModal(false);
+          } else if (action === 'new-goal') {
+            if (this.dom.modalCreateGoal) {
+              this.dom.modalCreateGoal.classList.remove('hidden');
+              this.dom.modalCreateGoal.classList.add('flex');
+            }
+          } else if (action === 'open-wrapped') {
+            this.openRiedWrappedModal();
+          } else if (action === 'export-csv') {
+            window.location.href = '/api/export/csv';
+          } else if (action === 'toggle-theme') {
+            this.setTheme(!this.isDarkMode);
+          } else if (action === 'nav-investasi') {
+            this.switchView('investasi');
+          } else if (action === 'nav-dashboard') {
+            this.switchView('dashboard');
+          } else if (action === 'nav-transaksi') {
+            this.switchView('transaksi');
+          } else if (action === 'nav-gateway-telegram') {
+            this.switchView('gateway-telegram');
+          } else if (action === 'nav-format-balasan') {
+            this.switchView('format-balasan');
+          } else if (action === 'nav-kamus') {
+            this.switchView('kamus');
+          }
+        });
+      });
+    }
+  }
+
+  initFloatingActionButton() {
+    if (!this.dom.fabMainBtn || !this.dom.fabMenu) return;
+
+    this.dom.fabMainBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sounds.playPop();
+      const isHidden = this.dom.fabMenu.classList.contains('hidden');
+      if (isHidden) {
+        this.dom.fabMenu.classList.remove('hidden');
+        if (this.dom.fabIcon) this.dom.fabIcon.classList.add('rotate-45');
+      } else {
+        this.dom.fabMenu.classList.add('hidden');
+        if (this.dom.fabIcon) this.dom.fabIcon.classList.remove('rotate-45');
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (this.dom.fabContainer && !this.dom.fabContainer.contains(e.target)) {
+        if (this.dom.fabMenu && !this.dom.fabMenu.classList.contains('hidden')) {
+          this.dom.fabMenu.classList.add('hidden');
+          if (this.dom.fabIcon) this.dom.fabIcon.classList.remove('rotate-45');
+        }
+      }
+    });
+
+    if (this.dom.fabActionTx) {
+      this.dom.fabActionTx.addEventListener('click', () => {
+        sounds.playPop();
+        this.dom.fabMenu.classList.add('hidden');
+        if (this.dom.fabIcon) this.dom.fabIcon.classList.remove('rotate-45');
+        this.openTxModal(false);
+      });
+    }
+
+    if (this.dom.fabActionGoal) {
+      this.dom.fabActionGoal.addEventListener('click', () => {
+        sounds.playPop();
+        this.dom.fabMenu.classList.add('hidden');
+        if (this.dom.fabIcon) this.dom.fabIcon.classList.remove('rotate-45');
+        if (this.dom.modalCreateGoal) {
+          this.dom.modalCreateGoal.classList.remove('hidden');
+          this.dom.modalCreateGoal.classList.add('flex');
+        }
+      });
+    }
+
+    if (this.dom.fabActionWrapped) {
+      this.dom.fabActionWrapped.addEventListener('click', () => {
+        sounds.playPop();
+        this.dom.fabMenu.classList.add('hidden');
+        if (this.dom.fabIcon) this.dom.fabIcon.classList.remove('rotate-45');
+        this.openRiedWrappedModal();
+      });
+    }
+  }
+
+  initWrappedModal() {
+    if (this.dom.btnOpenWrapped) {
+      this.dom.btnOpenWrapped.addEventListener('click', () => {
+        sounds.playPop();
+        this.openRiedWrappedModal();
+      });
+    }
+
+    if (this.dom.btnCloseWrapped) {
+      this.dom.btnCloseWrapped.addEventListener('click', () => {
+        sounds.playPop();
+        if (this.dom.modalRiedWrapped) {
+          this.dom.modalRiedWrapped.classList.add('hidden');
+          this.dom.modalRiedWrapped.classList.remove('flex');
+        }
+      });
+    }
+
+    if (this.dom.btnDownloadWrappedPng) {
+      this.dom.btnDownloadWrappedPng.addEventListener('click', () => {
+        this.downloadWrappedPNG();
+      });
+    }
+  }
+
+  openRiedWrappedModal() {
+    if (!this.dom.modalRiedWrapped) return;
+
+    const income = this.summary ? this.summary.total_income : 16596500;
+    const expense = this.summary ? this.summary.total_expense : 7161000;
+    const score = this.financialHealth ? Math.round(this.financialHealth.score ?? this.financialHealth.overall_score ?? 98) : 98;
+
+    let topCat = 'Makanan (35%)';
+    if (this.summary && this.summary.category_breakdown && this.summary.category_breakdown.length > 0) {
+      const sorted = [...this.summary.category_breakdown].sort((a, b) => b.spent - a.spent);
+      const totalSpent = sorted.reduce((acc, c) => acc + c.spent, 0);
+      const pct = totalSpent > 0 ? Math.round((sorted[0].spent / totalSpent) * 100) : 0;
+      topCat = `${sorted[0].category} (${pct}%)`;
+    }
+
+    let persona = 'Sang Ahli Alokasi (The Strategic Saver)';
+    if (score >= 90) {
+      persona = 'The Wealth Architect 👑';
+    } else if (score >= 80) {
+      persona = 'Sang Ahli Alokasi (The Strategic Saver) ⚖️';
+    } else if (score >= 70) {
+      persona = 'The Steady Builder 📈';
+    } else {
+      persona = 'The Dynamic Explorer 🚀';
+    }
+
+    if (this.dom.wrappedPersonaTitle) this.dom.wrappedPersonaTitle.textContent = persona;
+    if (this.dom.wrappedStatIncome) this.dom.wrappedStatIncome.textContent = formatRupiah(income);
+    if (this.dom.wrappedStatExpense) this.dom.wrappedStatExpense.textContent = formatRupiah(expense);
+    if (this.dom.wrappedStatTopcat) this.dom.wrappedStatTopcat.textContent = topCat;
+    if (this.dom.wrappedStatScore) this.dom.wrappedStatScore.textContent = `${score} / 100 ★★★`;
+
+    this.dom.modalRiedWrapped.classList.remove('hidden');
+    this.dom.modalRiedWrapped.classList.add('flex');
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  downloadWrappedPNG() {
+    sounds.playChime();
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 1000;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // 1. Dark Matcha & Forest Obsidian Background Gradient
+    const bgGrad = ctx.createLinearGradient(0, 0, 800, 1000);
+    bgGrad.addColorStop(0, '#0c1510');
+    bgGrad.addColorStop(0.5, '#122318');
+    bgGrad.addColorStop(1, '#070c09');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 800, 1000);
+
+    // 2. Radial Glow Effects
+    const glow1 = ctx.createRadialGradient(100, 100, 10, 100, 100, 300);
+    glow1.addColorStop(0, 'rgba(56, 168, 82, 0.25)');
+    glow1.addColorStop(1, 'rgba(56, 168, 82, 0)');
+    ctx.fillStyle = glow1;
+    ctx.fillRect(0, 0, 800, 1000);
+
+    const glow2 = ctx.createRadialGradient(700, 900, 10, 700, 900, 350);
+    glow2.addColorStop(0, 'rgba(16, 185, 129, 0.2)');
+    glow2.addColorStop(1, 'rgba(16, 185, 129, 0)');
+    ctx.fillStyle = glow2;
+    ctx.fillRect(0, 0, 800, 1000);
+
+    // 3. Card Outer Border (Glassmorphic)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(30, 30, 740, 940);
+
+    // 4. Header & Badge
+    ctx.fillStyle = '#38a852';
+    ctx.font = 'bold 16px monospace';
+    ctx.fillText('RIED FINANCIAL STUDIO', 60, 80);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 13px monospace';
+    ctx.fillText('SEPTEMBER 2026 RECAP', 560, 80);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(60, 105);
+    ctx.lineTo(740, 105);
+    ctx.stroke();
+
+    // 5. Persona Headline
+    ctx.fillStyle = '#34d399';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('PERSONA FINANSIAL ANDA:', 60, 150);
+
+    const persona = (this.dom.wrappedPersonaTitle && this.dom.wrappedPersonaTitle.textContent) || 'Sang Ahli Alokasi';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 32px sans-serif';
+    ctx.fillText(persona, 60, 195);
+
+    ctx.fillStyle = '#a7f3d0';
+    ctx.font = '500 16px sans-serif';
+    ctx.fillText('Pengeluaran disiplin, surplus melimpah, dan alokasi portofolio modern.', 60, 230);
+
+    // 6. Draw 4 Glassmorphic Stat Boxes
+    const drawStatBox = (x, y, w, h, label, val, color) => {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText(label.toUpperCase(), x + 20, y + 35);
+
+      ctx.fillStyle = color;
+      ctx.font = '900 24px monospace';
+      ctx.fillText(val, x + 20, y + 80);
+    };
+
+    const incomeStr = this.dom.wrappedStatIncome ? this.dom.wrappedStatIncome.textContent : 'Rp 16.596.500';
+    const expenseStr = this.dom.wrappedStatExpense ? this.dom.wrappedStatExpense.textContent : 'Rp 7.161.000';
+    const topcatStr = this.dom.wrappedStatTopcat ? this.dom.wrappedStatTopcat.textContent : 'Makanan';
+    const scoreStr = this.dom.wrappedStatScore ? this.dom.wrappedStatScore.textContent : '98 / 100';
+
+    drawStatBox(60, 270, 320, 120, 'Total Pemasukan', incomeStr, '#34d399');
+    drawStatBox(420, 270, 320, 120, 'Total Pengeluaran', expenseStr, '#fca5a5');
+    drawStatBox(60, 420, 320, 120, 'Pos Juara 1 (Terbesar)', topcatStr, '#ffffff');
+    drawStatBox(420, 420, 320, 120, 'Skor Disiplin & Radar', scoreStr, '#6ee7b7');
+
+    // 7. 50/30/20 Rule Section
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText('Distribusi Anggaran (Aturan 50 / 30 / 20)', 60, 600);
+
+    const needsPct = this.financialHealth && this.financialHealth.rule_50_30_20 ? this.financialHealth.rule_50_30_20.needs_pct : 43.1;
+    const wantsPct = this.financialHealth && this.financialHealth.rule_50_30_20 ? this.financialHealth.rule_50_30_20.wants_pct : 30.8;
+    const savingsPct = this.financialHealth && this.financialHealth.rule_50_30_20 ? this.financialHealth.rule_50_30_20.savings_pct : 26.1;
+
+    const barX = 60;
+    const barY = 630;
+    const barW = 680;
+    const barH = 26;
+
+    const wNeeds = (needsPct / 100) * barW;
+    const wWants = (wantsPct / 100) * barW;
+    const wSavings = Math.max(0, barW - wNeeds - wWants);
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(barX, barY, wNeeds, barH);
+
+    ctx.fillStyle = '#c084fc';
+    ctx.fillRect(barX + wNeeds, barY, wWants, barH);
+
+    ctx.fillStyle = '#34d399';
+    ctx.fillRect(barX + wNeeds + wWants, barY, wSavings, barH);
+
+    // Labels under bar
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 13px monospace';
+    ctx.fillText(`Needs: ${needsPct.toFixed(1)}%`, barX, barY + 50);
+
+    ctx.fillStyle = '#c084fc';
+    ctx.fillText(`Wants: ${wantsPct.toFixed(1)}%`, barX + 240, barY + 50);
+
+    ctx.fillStyle = '#34d399';
+    ctx.fillText(`Savings: ${savingsPct.toFixed(1)}%`, barX + 480, barY + 50);
+
+    // 8. Motivation quote
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'italic 15px sans-serif';
+    ctx.fillText('"Kekayaan sejati dibangun bukan dari besarnya penghasilan, melainkan', 60, 760);
+    ctx.fillText('dari disiplin alokasi dan waktu yang bekerja bersama bunga majemuk."', 60, 785);
+
+    // 9. Watermark Footer
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.beginPath();
+    ctx.moveTo(60, 880);
+    ctx.lineTo(740, 880);
+    ctx.stroke();
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = '12px monospace';
+    ctx.fillText('ried.studio • @RiedutBot • Autonomous Wealth Architecture', 60, 915);
+
+    ctx.fillStyle = '#34d399';
+    ctx.font = 'bold 12px monospace';
+    ctx.fillText('#FinansialCerdas', 610, 915);
+
+    // 10. Trigger Download
+    const dataUrl = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = 'RIED-Wrapped-September-2026.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   applyFilters() {

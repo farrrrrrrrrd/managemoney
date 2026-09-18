@@ -497,3 +497,340 @@ export function renderStackedBudgetChart(canvas, categories, isDark = false) {
   canvas._renderedBars = null;
   canvas._redrawFn = () => renderStackedBudgetChart(canvas, categories, isDark);
 }
+
+/**
+ * Renders the Markowitz Efficient Frontier curve with Capital Allocation Line
+ */
+export function renderEfficientFrontierChart(canvas, frontierPoints, currentPoint = null, isDark = false) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width || 600;
+  const h = rect.height || 320;
+
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.scale(dpr, dpr);
+
+  ctx.clearRect(0, 0, w, h);
+
+  if (!frontierPoints || frontierPoints.length < 2) {
+    ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
+    ctx.font = '12px Plus Jakarta Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Memuat kurva Efficient Frontier...', w / 2, h / 2);
+    return;
+  }
+
+  const padding = { top: 30, right: 35, bottom: 40, left: 55 };
+  const chartW = w - padding.left - padding.right;
+  const chartH = h - padding.top - padding.bottom;
+
+  // Find min/max volatility and returns
+  const vols = frontierPoints.map(p => p.volatility);
+  const rets = frontierPoints.map(p => p.return);
+  if (currentPoint) {
+    vols.push(currentPoint.volatility);
+    rets.push(currentPoint.expected_return || currentPoint.return);
+  }
+
+  const minVol = Math.max(0, Math.min(...vols) * 0.85);
+  const maxVol = Math.max(...vols) * 1.15;
+  const minRet = Math.max(0, Math.min(...rets) * 0.85);
+  const maxRet = Math.max(...rets) * 1.15;
+
+  const mapX = (vol) => padding.left + ((vol - minVol) / (maxVol - minVol)) * chartW;
+  const mapY = (ret) => (h - padding.bottom) - ((ret - minRet) / (maxRet - minRet)) * chartH;
+
+  // Background grid
+  ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
+  ctx.lineWidth = 1;
+  const gridSteps = 5;
+  for (let i = 0; i <= gridSteps; i++) {
+    const yVal = minRet + (i / gridSteps) * (maxRet - minRet);
+    const y = mapY(yVal);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(w - padding.right, y);
+    ctx.stroke();
+
+    ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
+    ctx.font = '10px Plus Jakarta Sans, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${yVal.toFixed(1)}%`, padding.left - 8, y + 3);
+  }
+
+  for (let i = 0; i <= gridSteps; i++) {
+    const xVal = minVol + (i / gridSteps) * (maxVol - minVol);
+    const x = mapX(xVal);
+    ctx.beginPath();
+    ctx.moveTo(x, padding.top);
+    ctx.lineTo(x, h - padding.bottom);
+    ctx.stroke();
+
+    ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
+    ctx.font = '10px Plus Jakarta Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${xVal.toFixed(1)}%`, x, h - padding.bottom + 18);
+  }
+
+  // Axis Titles
+  ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+  ctx.font = 'bold 10px Plus Jakarta Sans, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Risiko Portofolio (Volatilitas \u03c3_p)', padding.left + chartW / 2, h - 8);
+
+  ctx.save();
+  ctx.translate(14, padding.top + chartH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Imbal Hasil Tahunan E[R_p]', 0, 0);
+  ctx.restore();
+
+  // Sort frontier points by volatility ascending
+  const sortedPoints = [...frontierPoints].sort((a, b) => a.volatility - b.volatility);
+
+  // Shaded area under frontier
+  const gradArea = ctx.createLinearGradient(0, padding.top, 0, h - padding.bottom);
+  gradArea.addColorStop(0, isDark ? 'rgba(78, 250, 139, 0.20)' : 'rgba(56, 168, 82, 0.15)');
+  gradArea.addColorStop(1, 'rgba(56, 168, 82, 0.0)');
+
+  ctx.beginPath();
+  sortedPoints.forEach((pt, i) => {
+    const px = mapX(pt.volatility);
+    const py = mapY(pt.return);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.lineTo(mapX(sortedPoints[sortedPoints.length - 1].volatility), h - padding.bottom);
+  ctx.lineTo(mapX(sortedPoints[0].volatility), h - padding.bottom);
+  ctx.closePath();
+  ctx.fillStyle = gradArea;
+  ctx.fill();
+
+  // Draw frontier line
+  ctx.beginPath();
+  sortedPoints.forEach((pt, i) => {
+    const px = mapX(pt.volatility);
+    const py = mapY(pt.return);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.strokeStyle = isDark ? '#4efa8b' : '#16a34a';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Find Tangency Portfolio (Max Sharpe)
+  let maxSharpePt = sortedPoints[0];
+  sortedPoints.forEach(pt => {
+    if (pt.sharpe > (maxSharpePt.sharpe || 0)) maxSharpePt = pt;
+  });
+
+  // Capital Allocation Line (CAL) from (0, Rf) to Tangency Portfolio
+  const rfVal = 4.5; // 4.5% BI-Rate
+  const calStartX = mapX(0);
+  const calStartY = mapY(rfVal);
+  const tangX = mapX(maxSharpePt.volatility);
+  const tangY = mapY(maxSharpePt.return);
+
+  ctx.beginPath();
+  ctx.setLineDash([4, 4]);
+  ctx.moveTo(calStartX, calStartY);
+  ctx.lineTo(tangX, tangY);
+  ctx.strokeStyle = isDark ? '#fbbf24' : '#d97706';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Plot Tangency Point
+  ctx.beginPath();
+  ctx.arc(tangX, tangY, 6, 0, Math.PI * 2);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fill();
+  ctx.strokeStyle = isDark ? '#0c1510' : '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Tangency label
+  ctx.fillStyle = isDark ? '#fbbf24' : '#b45309';
+  ctx.font = 'bold 10px Plus Jakarta Sans, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('★ Optimal (Max Sharpe)', tangX + 10, tangY - 4);
+
+  // Plot Current User Portfolio if available
+  if (currentPoint) {
+    const curVol = currentPoint.volatility;
+    const curRet = currentPoint.expected_return || currentPoint.return;
+    const cx = mapX(curVol);
+    const cy = mapY(curRet);
+
+    // Glowing outer ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+    ctx.fillStyle = isDark ? 'rgba(56, 189, 248, 0.3)' : 'rgba(14, 165, 233, 0.2)';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#0284c7';
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = isDark ? '#38bdf8' : '#0369a1';
+    ctx.font = 'bold 10px Plus Jakarta Sans, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('● Alokasi Saat Ini', cx + 12, cy + 4);
+  }
+}
+
+/**
+ * Renders 1,000-scenario Monte Carlo Wealth Projection Fan Chart
+ */
+export function renderMonteCarloChart(canvas, mcData, isDark = false) {
+  if (!canvas || !mcData) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width || 600;
+  const h = rect.height || 320;
+
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.scale(dpr, dpr);
+
+  ctx.clearRect(0, 0, w, h);
+
+  const { time_steps, p10_trajectory, p50_trajectory, p90_trajectory } = mcData;
+  if (!time_steps || time_steps.length === 0) return;
+
+  const padding = { top: 25, right: 35, bottom: 40, left: 65 };
+  const chartW = w - padding.left - padding.right;
+  const chartH = h - padding.top - padding.bottom;
+
+  const maxVal = Math.max(...p90_trajectory) * 1.05;
+  const minVal = Math.min(...p10_trajectory) * 0.95;
+  const maxTime = Math.max(...time_steps);
+
+  const mapX = (t) => padding.left + (t / maxTime) * chartW;
+  const mapY = (val) => (h - padding.bottom) - ((val - minVal) / (maxVal - minVal)) * chartH;
+
+  // Grid
+  ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
+  ctx.lineWidth = 1;
+  const ySteps = 4;
+  for (let i = 0; i <= ySteps; i++) {
+    const val = minVal + (i / ySteps) * (maxVal - minVal);
+    const y = mapY(val);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(w - padding.right, y);
+    ctx.stroke();
+
+    ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
+    ctx.font = '10px Plus Jakarta Sans, sans-serif';
+    ctx.textAlign = 'right';
+    const label = val >= 1e9 ? `${(val / 1e9).toFixed(1)} M` : `${(val / 1e6).toFixed(0)} Jt`;
+    ctx.fillText(`Rp ${label}`, padding.left - 8, y + 3);
+  }
+
+  // X-axis steps (Years)
+  const yearsCount = Math.round(maxTime);
+  for (let yr = 0; yr <= yearsCount; yr++) {
+    const x = mapX(yr);
+    ctx.beginPath();
+    ctx.moveTo(x, padding.top);
+    ctx.lineTo(x, h - padding.bottom);
+    ctx.stroke();
+
+    ctx.fillStyle = isDark ? '#64748b' : '#94a3b8';
+    ctx.font = '10px Plus Jakarta Sans, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Thn ${yr}`, x, h - padding.bottom + 18);
+  }
+
+  // Fan Area: P10 to P90
+  const fanGrad = ctx.createLinearGradient(0, padding.top, 0, h - padding.bottom);
+  fanGrad.addColorStop(0, isDark ? 'rgba(78, 250, 139, 0.25)' : 'rgba(34, 197, 94, 0.20)');
+  fanGrad.addColorStop(1, isDark ? 'rgba(78, 250, 139, 0.05)' : 'rgba(34, 197, 94, 0.02)');
+
+  ctx.beginPath();
+  // Forward along P90
+  for (let i = 0; i < time_steps.length; i++) {
+    const px = mapX(time_steps[i]);
+    const py = mapY(p90_trajectory[i]);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  // Backward along P10
+  for (let i = time_steps.length - 1; i >= 0; i--) {
+    const px = mapX(time_steps[i]);
+    const py = mapY(p10_trajectory[i]);
+    ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = fanGrad;
+  ctx.fill();
+
+  // Draw P90 Trajectory (Bullish Top)
+  ctx.beginPath();
+  time_steps.forEach((t, i) => {
+    const px = mapX(t);
+    const py = mapY(p90_trajectory[i]);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.strokeStyle = isDark ? '#4ade80' : '#16a34a';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3, 3]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Draw P10 Trajectory (Bearish Bottom)
+  ctx.beginPath();
+  time_steps.forEach((t, i) => {
+    const px = mapX(t);
+    const py = mapY(p10_trajectory[i]);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.strokeStyle = isDark ? '#f87171' : '#dc2626';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3, 3]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Draw P50 Trajectory (Median / Expected Path)
+  ctx.beginPath();
+  time_steps.forEach((t, i) => {
+    const px = mapX(t);
+    const py = mapY(p50_trajectory[i]);
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  });
+  ctx.strokeStyle = isDark ? '#ffffff' : '#0f172a';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Labels on the right
+  const lastIdx = time_steps.length - 1;
+  const lastX = mapX(time_steps[lastIdx]);
+
+  ctx.font = 'bold 9px Plus Jakarta Sans, sans-serif';
+  ctx.textAlign = 'right';
+
+  ctx.fillStyle = isDark ? '#4ade80' : '#16a34a';
+  ctx.fillText('P90 (Bull)', lastX, mapY(p90_trajectory[lastIdx]) - 5);
+
+  ctx.fillStyle = isDark ? '#ffffff' : '#0f172a';
+  ctx.fillText('P50 (Median)', lastX, mapY(p50_trajectory[lastIdx]) - 5);
+
+  ctx.fillStyle = isDark ? '#f87171' : '#dc2626';
+  ctx.fillText('P10 (Bear)', lastX, mapY(p10_trajectory[lastIdx]) + 12);
+}
+

@@ -4,7 +4,7 @@ Provides endpoints for financial dashboard summaries, multi-view transaction CRU
 category budget analytics, and CSV data export.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Dict
 from fastapi import APIRouter, HTTPException, status, Query, Response
 from pydantic import BaseModel, Field
 
@@ -13,7 +13,15 @@ from backend.app.domain.models import (
     TransactionCreate,
     TransactionUpdate,
     FinancialSummary,
-    CategoryBudget
+    CategoryBudget,
+    Asset,
+    Allocation,
+    PortfolioAnalysisRequest,
+    FullPortfolioAnalysisResponse,
+    SavingsGoal,
+    SavingsGoalCreate,
+    SavingsGoalDeposit,
+    FinancialHealthResult
 )
 from backend.app.repository.db import (
     create_transaction,
@@ -25,8 +33,23 @@ from backend.app.repository.db import (
     update_category_budget,
     get_category_budgets,
     export_transactions_csv,
+    DEFAULT_ASSETS,
+    save_portfolio,
+    list_saved_portfolios,
+    get_savings_goals,
+    create_savings_goal,
+    deposit_savings_goal,
+    delete_savings_goal,
+    get_financial_health,
     init_db
 )
+from backend.app.engine.markowitz import (
+    calculate_portfolio_metrics,
+    generate_efficient_frontier
+)
+from backend.app.engine.monte_carlo import run_monte_carlo_simulation
+from backend.app.engine.stress_test import run_stress_tests
+from backend.app.engine.rebalancer import calculate_rebalance_orders
 
 router = APIRouter(prefix="/api", tags=["Ried Finance"])
 
@@ -152,4 +175,159 @@ async def stop_telegram_bot():
     from backend.app.telegram_service import telegram_service
     await telegram_service.stop()
     return {"status": "stopped", "diagnostics": telegram_service.get_status()}
+
+
+# ============================================================================
+# 1. QUANTITATIVE PORTFOLIO & INVESTASI ENDPOINTS
+# ============================================================================
+
+@router.get("/portfolio/assets", summary="List Investable Asset Universe")
+async def list_portfolio_assets():
+    """Returns canonical investable assets with expected return, volatility, and historical baseline."""
+    return list(DEFAULT_ASSETS.values())
+
+
+@router.post("/portfolio/analyze", response_model=FullPortfolioAnalysisResponse, summary="Analyze Portfolio Allocations")
+async def analyze_portfolio(request: PortfolioAnalysisRequest):
+    """
+    Executes Markowitz MPT, Monte Carlo GBM simulation, historical stress-testing,
+    rebalancing delta calculation, and Efficient Frontier curve generation.
+    """
+    try:
+        # 1. Markowitz Metrics
+        metrics = calculate_portfolio_metrics(
+            allocations=request.allocations,
+            risk_free_rate=request.risk_free_rate,
+            total_capital=request.initial_capital
+        )
+
+        # 2. Monte Carlo GBM
+        monte_carlo = run_monte_carlo_simulation(
+            initial_capital=request.initial_capital,
+            expected_return=metrics.expected_annual_return,
+            volatility=metrics.annualized_volatility,
+            horizon_years=request.horizon_years,
+            num_simulations=1000
+        )
+
+        # 3. Historical Stress Tests
+        stress_tests = run_stress_tests(
+            allocations=request.allocations,
+            total_capital=request.initial_capital
+        )
+
+        # 4. Rebalancing Orders
+        rebalance_orders = calculate_rebalance_orders(
+            current_allocations=request.allocations,
+            total_capital=request.initial_capital
+        )
+
+        # 5. Efficient Frontier
+        efficient_frontier = generate_efficient_frontier(
+            risk_free_rate=request.risk_free_rate,
+            num_points=25
+        )
+
+        return FullPortfolioAnalysisResponse(
+            metrics=metrics,
+            monte_carlo=monte_carlo,
+            stress_tests=stress_tests,
+            rebalance_orders=rebalance_orders,
+            efficient_frontier=efficient_frontier
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Analysis computation failed: {str(e)}"
+        )
+
+
+class SavePortfolioRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    initial_capital: float = Field(..., gt=0.0)
+    risk_free_rate: float = Field(..., ge=0.0, le=0.20)
+    horizon_years: int = Field(..., ge=1, le=30)
+    allocations: List[Dict] = Field(..., min_length=1)
+
+
+@router.post("/portfolios/save", summary="Save Portfolio Configuration")
+async def save_user_portfolio(req: SavePortfolioRequest):
+    """Persists portfolio allocations to SQLite database."""
+    try:
+        record_id = save_portfolio(
+            name=req.name,
+            capital=req.initial_capital,
+            rf_rate=req.risk_free_rate,
+            horizon=req.horizon_years,
+            allocations=req.allocations
+        )
+        return {"status": "saved", "id": record_id, "name": req.name}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to persist portfolio: {str(e)}"
+        )
+
+
+@router.get("/portfolios/saved", summary="List Saved Portfolios")
+async def get_saved_portfolios():
+    """Retrieves all saved portfolio records."""
+    return list_saved_portfolios()
+
+
+# ============================================================================
+# 2. SAVINGS GOALS (CELENGAN IMPIAN) ENDPOINTS
+# ============================================================================
+
+@router.get("/savings-goals", response_model=List[SavingsGoal], summary="List Savings Goals")
+async def list_savings_goals():
+    """Retrieves all active savings goals with progress percentages."""
+    return get_savings_goals()
+
+
+@router.post("/savings-goals", response_model=SavingsGoal, status_code=status.HTTP_201_CREATED, summary="Create Savings Goal")
+async def add_savings_goal(payload: SavingsGoalCreate):
+    """Creates a new financial savings target."""
+    try:
+        return create_savings_goal(payload)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to create savings goal: {str(e)}"
+        )
+
+
+@router.post("/savings-goals/{goal_id}/deposit", response_model=SavingsGoal, summary="Deposit/Withdraw from Goal")
+async def update_goal_deposit(goal_id: int, payload: SavingsGoalDeposit):
+    """Adds or withdraws savings funds from a specific goal."""
+    updated = deposit_savings_goal(goal_id, payload.amount)
+    if not updated:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target tabungan tidak ditemukan")
+    return updated
+
+
+@router.delete("/savings-goals/{goal_id}", summary="Delete Savings Goal")
+async def remove_savings_goal(goal_id: int):
+    """Deletes a savings goal."""
+    deleted = delete_savings_goal(goal_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target tabungan tidak ditemukan")
+    return {"status": "success", "message": f"Target tabungan #{goal_id} berhasil dihapus"}
+
+
+# ============================================================================
+# 3. SMART FINANCIAL HEALTH RADAR (50/30/20 & SCORING)
+# ============================================================================
+
+@router.get("/financial-health", response_model=FinancialHealthResult, summary="Get Financial Health Radar")
+async def get_health_radar():
+    """Calculates 50/30/20 budget ratio, health discipline score (0-100), and cash runway."""
+    try:
+        return get_financial_health()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to calculate financial health radar: {str(e)}"
+        )
+
 

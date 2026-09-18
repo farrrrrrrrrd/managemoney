@@ -76,6 +76,11 @@
             <span>Transaksi</span>
           </button>
 
+          <button data-view="investasi" class="sidebar-link w-full text-left">
+            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i>
+            <span>Investasi & Frontier</span>
+          </button>
+
           <button data-view="pengaturan" class="sidebar-link w-full text-left">
             <i data-lucide="settings" class="w-4 h-4"></i>
             <span>Pengaturan</span>
@@ -142,6 +147,19 @@
         <!-- Right: Month Picker, Audio, Theme, Avatar -->
         <div class="flex items-center space-x-2.5">
           
+          <!-- Command Palette Launcher -->
+          <button id="btn-open-command-palette" class="hidden md:flex items-center space-x-2 bg-white dark:bg-[#152219] border border-[#dde7da] dark:border-[#233628] rounded-xl px-3 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm" title="Buka Command Palette (Ctrl+K)">
+            <i data-lucide="command" class="w-3.5 h-3.5 text-emerald-500"></i>
+            <span>Aksi Cepat</span>
+            <kbd class="text-[9px] bg-slate-100 dark:bg-black/40 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800 font-mono text-slate-500">Ctrl+K</kbd>
+          </button>
+
+          <!-- RIED Wrapped Button -->
+          <button id="btn-open-wrapped" class="flex items-center space-x-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl px-3 py-1.5 text-xs font-bold shadow-md shadow-emerald-500/20 transition-all cursor-pointer" title="Lihat Rekap Finansial Estetik">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>RIED Wrapped</span>
+          </button>
+
           <!-- Month Filter Dropdown -->
           <div class="flex items-center space-x-1.5 bg-white dark:bg-[#152219] border border-[#dde7da] dark:border-[#233628] rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-sm">
             <i data-lucide="calendar" class="w-3.5 h-3.5 text-emerald-500"></i>
@@ -575,6 +593,123 @@
 
           </div>
 
+          <!-- 6. ROW 5: SMART FINANCIAL HEALTH RADAR (50/30/20 & SCORING) -->
+          <div class="ried-card p-6 space-y-5 bg-gradient-to-br from-white via-[#fbfdfa] to-[#edf4e8]/60 dark:from-[#111c14] dark:via-[#132017] dark:to-[#17291e] border border-[#dde7da] dark:border-[#233628]">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#dde7da] dark:border-[#1c2b20] pb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 dark:bg-emerald-400/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-base shadow-inner">
+                  <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <h3 class="text-sm font-black tracking-tight text-slate-900 dark:text-white uppercase">Smart Financial Health Radar</h3>
+                    <span id="health-radar-grade" class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">A - Prima</span>
+                  </div>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Analisis rasio emas 50/30/20, burn-rate bulanan, dan proyeksi ketahanan kas.</p>
+                </div>
+              </div>
+
+              <!-- Health Score Big Meter -->
+              <div class="flex items-center space-x-3 bg-white dark:bg-[#152219] px-4 py-2 rounded-2xl border border-[#dde7da] dark:border-[#233628] shadow-sm">
+                <div class="text-right">
+                  <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider block">Skor Finansial</span>
+                  <span class="text-xs text-slate-500 dark:text-slate-400 font-semibold" id="health-radar-status">Sangat Sehat</span>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-[#38a852] dark:bg-[#4efa8b] text-white dark:text-[#0c1510] font-black font-mono text-xl flex items-center justify-center shadow-md shadow-emerald-600/20" id="health-radar-score">
+                  88
+                </div>
+              </div>
+            </div>
+
+            <!-- Health Radar Grid: 50/30/20 Segmented Bar + Metrics -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              
+              <!-- 50/30/20 Breakdown (8 cols) -->
+              <div class="lg:col-span-8 space-y-3">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-slate-700 dark:text-slate-200">Alokasi Anggaran 50 / 30 / 20</span>
+                  <span class="text-[11px] text-slate-400 font-mono">Kebutuhan • Keinginan • Tabungan</span>
+                </div>
+
+                <!-- Multi-segment progress bar -->
+                <div class="w-full h-3.5 bg-slate-100 dark:bg-[#1c2b20] rounded-full overflow-hidden flex p-0.5 gap-0.5 border border-[#dde7da] dark:border-[#233628]">
+                  <div id="health-bar-needs" class="h-full bg-blue-500 rounded-l-full transition-all duration-500" style="width: 48%" title="Needs (Kebutuhan Primer): 48%"></div>
+                  <div id="health-bar-wants" class="h-full bg-amber-500 transition-all duration-500" style="width: 26%" title="Wants (Keinginan): 26%"></div>
+                  <div id="health-bar-savings" class="h-full bg-emerald-500 rounded-r-full transition-all duration-500" style="width: 26%" title="Savings (Tabungan & Investasi): 26%"></div>
+                </div>
+
+                <!-- Legend & Value Chips -->
+                <div class="grid grid-cols-3 gap-3 pt-1 text-xs">
+                  <div class="p-2.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/30">
+                    <div class="flex items-center space-x-1.5 mb-1">
+                      <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                      <span class="text-[10px] uppercase font-bold text-blue-800 dark:text-blue-300">Needs (Ideal ≤ 50%)</span>
+                    </div>
+                    <span id="health-needs-val" class="text-sm font-black font-mono text-slate-900 dark:text-white block">48.2%</span>
+                    <span id="health-needs-rp" class="text-[10px] text-slate-500 dark:text-slate-400 block font-mono truncate">Rp 4.700.000</span>
+                  </div>
+
+                  <div class="p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/30">
+                    <div class="flex items-center space-x-1.5 mb-1">
+                      <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                      <span class="text-[10px] uppercase font-bold text-amber-800 dark:text-amber-300">Wants (Ideal ≤ 30%)</span>
+                    </div>
+                    <span id="health-wants-val" class="text-sm font-black font-mono text-slate-900 dark:text-white block">24.5%</span>
+                    <span id="health-wants-rp" class="text-[10px] text-slate-500 dark:text-slate-400 block font-mono truncate">Rp 2.400.000</span>
+                  </div>
+
+                  <div class="p-2.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/30">
+                    <div class="flex items-center space-x-1.5 mb-1">
+                      <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      <span class="text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-300">Savings (Ideal ≥ 20%)</span>
+                    </div>
+                    <span id="health-savings-val" class="text-sm font-black font-mono text-emerald-600 dark:text-emerald-400 block">27.3%</span>
+                    <span id="health-savings-rp" class="text-[10px] text-slate-500 dark:text-slate-400 block font-mono truncate">Rp 9.435.500</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Runway & Recommendations (4 cols) -->
+              <div class="lg:col-span-4 p-4 rounded-2xl bg-white dark:bg-[#152219] border border-[#dde7da] dark:border-[#233628] flex flex-col justify-between space-y-3">
+                <div class="space-y-2">
+                  <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Ketahanan Kas (Runway)</span>
+                  <div class="flex items-baseline space-x-2">
+                    <span id="health-runway-months" class="text-2xl font-black font-mono text-slate-900 dark:text-white">4.2</span>
+                    <span class="text-xs text-slate-500 font-semibold">Bulan Hidup Mandiri</span>
+                  </div>
+                  <p id="health-radar-summary" class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                    Surplus positif terjaga. Arus kas likuid Anda dapat menopang pengeluaran bulanan rata-rata hingga 4 bulan ke depan tanpa penghasilan baru.
+                  </p>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] font-mono text-emerald-600 dark:text-emerald-400 flex items-center space-x-1">
+                  <i data-lucide="check-circle-2" class="w-3.5 h-3.5 shrink-0"></i>
+                  <span id="health-burn-label">Burn rate: Rp 6.702.000 / bln</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- 7. ROW 6: TARGET TABUNGAN (CELENGAN IMPIAN) -->
+          <div class="ried-card p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-[#dde7da] dark:border-[#1c2b20] pb-3">
+              <div>
+                <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">Celengan Impian</span>
+                <h3 class="text-sm font-black text-slate-900 dark:text-white">Target Tabungan & Rencana Finansial</h3>
+              </div>
+              <button id="btn-create-savings-goal" class="px-3.5 py-1.5 rounded-xl bg-[#38a852] hover:bg-emerald-600 text-white font-bold text-xs shadow-sm flex items-center space-x-1.5 transition-all">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                <span>Tambah Impian</span>
+              </button>
+            </div>
+
+            <!-- Dynamic Savings Goals Grid -->
+            <div id="savings-goals-container" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Dynamically populated via app.js -->
+            </div>
+          </div>
+
         </div>
 
         <!-- ========================================================================= -->
@@ -957,6 +1092,244 @@ Gunakan /budget untuk melihat seluruh ringkasan.</textarea>
           </div>
         </div>
 
+        <!-- ========================================================================= -->
+        <!-- VIEW 7: INVESTASI & PORTOFOLIO KUANTITATIF (Markowitz & Monte Carlo) -->
+        <!-- ========================================================================= -->
+        <div id="view-investasi" class="spa-view hidden space-y-6 animate-fade-in">
+          
+          <!-- View Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold mb-1">
+                <i data-lucide="line-chart" class="w-3 h-3"></i>
+                <span>WALL STREET QUANT ENGINE</span>
+              </div>
+              <h2 class="text-xl font-bold text-slate-900 dark:text-white">Investasi & Portofolio Kuantitatif</h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Model Markowitz Modern Portfolio Theory (MPT), Simulasi Stokastik Monte Carlo, dan Rebalancing.</p>
+            </div>
+
+            <!-- Capital Control Pill -->
+            <div class="flex items-center space-x-2 bg-white dark:bg-[#152219] border border-[#dde7da] dark:border-[#233628] rounded-2xl px-4 py-2 shadow-sm">
+              <span class="text-[10px] font-bold uppercase text-slate-400">Modal Investasi:</span>
+              <input id="quant-initial-capital" type="number" step="5000000" min="1000000" value="100000000" class="font-mono font-bold text-xs bg-transparent text-emerald-600 dark:text-emerald-400 w-28 text-right focus:outline-none border-b border-emerald-500/30">
+            </div>
+          </div>
+
+          <!-- Top Metrics Strip (4 KPIs) -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            
+            <div class="metric-card space-y-1">
+              <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Imbal Hasil Tahunan E[R]</span>
+              <div class="text-lg font-black text-emerald-600 dark:text-emerald-400 font-mono" id="quant-metric-return">
+                10.93%
+              </div>
+              <span class="text-[10px] text-slate-400 block truncate">Rata-rata tertimbang w^T * μ</span>
+            </div>
+
+            <div class="metric-card space-y-1">
+              <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Volatilitas Risiko (σ)</span>
+              <div class="text-lg font-black text-amber-600 dark:text-amber-400 font-mono" id="quant-metric-volatility">
+                12.79%
+              </div>
+              <span class="text-[10px] text-slate-400 block truncate">Diversifikasi matrix Σ</span>
+            </div>
+
+            <div class="metric-card space-y-1">
+              <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Sharpe Ratio (Rf 4.5%)</span>
+              <div class="text-lg font-black text-blue-600 dark:text-blue-400 font-mono" id="quant-metric-sharpe">
+                0.503
+              </div>
+              <span class="text-[10px] text-slate-400 block truncate">Imbal hasil per unit risiko</span>
+            </div>
+
+            <div class="metric-card space-y-1">
+              <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Value at Risk (VaR 95%)</span>
+              <div class="text-lg font-black text-rose-600 dark:text-rose-400 font-mono" id="quant-metric-var">
+                -18.42%
+              </div>
+              <span class="text-[10px] text-slate-400 block truncate">Toleransi kerugian 95% tail</span>
+            </div>
+
+          </div>
+
+          <!-- Dual Interactive Canvas: Markowitz Efficient Frontier + Monte Carlo -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            
+            <!-- Left: Markowitz Efficient Frontier (6 cols) -->
+            <div class="lg:col-span-6 ried-card p-5 space-y-3 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">Markowitz Efficient Frontier</span>
+                  <span class="text-xs font-bold text-slate-900 dark:text-white">Kurva Optimasi Risiko vs Return</span>
+                </div>
+                <div class="flex items-center space-x-1.5 text-[10px] text-amber-600 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-full">
+                  <span>Rf: 4.5% BI-Rate</span>
+                </div>
+              </div>
+
+              <div class="relative w-full h-72 bg-slate-50/50 dark:bg-black/20 rounded-xl border border-[#dde7da]/60 dark:border-[#233628]/60 p-2">
+                <canvas id="chart-efficient-frontier" class="w-full h-full"></canvas>
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-[#dde7da] dark:border-[#1c2b20]">
+                <div class="flex items-center space-x-2">
+                  <span class="flex items-center space-x-1"><span class="w-2 h-0.5 bg-emerald-500 inline-block"></span><span>Frontier</span></span>
+                  <span class="flex items-center space-x-1"><span class="w-2 h-0.5 border-t border-dashed border-amber-500 inline-block"></span><span>CAL</span></span>
+                  <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span><span>Tangency</span></span>
+                  <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 rounded-full bg-sky-500 inline-block"></span><span>Portofolio Anda</span></span>
+                </div>
+                <span class="font-mono">Dirichlet 1,200 points</span>
+              </div>
+            </div>
+
+            <!-- Right: Monte Carlo 1,000-Scenario Simulation (6 cols) -->
+            <div class="lg:col-span-6 ried-card p-5 space-y-3 flex flex-col justify-between">
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">Simulasi Monte Carlo (GBM)</span>
+                  <span class="text-xs font-bold text-slate-900 dark:text-white">Proyeksi 1.000 Skenario Stokastik</span>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                  <span class="text-[10px] text-slate-400 font-bold">Horizon:</span>
+                  <select id="quant-select-horizon" class="ried-input text-[11px] py-1 px-2 font-bold font-mono">
+                    <option value="3">3 Tahun</option>
+                    <option value="5" selected>5 Tahun</option>
+                    <option value="10">10 Tahun</option>
+                    <option value="15">15 Tahun</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="relative w-full h-72 bg-slate-50/50 dark:bg-black/20 rounded-xl border border-[#dde7da]/60 dark:border-[#233628]/60 p-2">
+                <canvas id="chart-monte-carlo" class="w-full h-full"></canvas>
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-[#dde7da] dark:border-[#1c2b20]">
+                <div class="flex items-center space-x-2">
+                  <span class="flex items-center space-x-1"><span class="w-2 h-0.5 bg-emerald-400 inline-block"></span><span>P90 (Optimis)</span></span>
+                  <span class="flex items-center space-x-1"><span class="w-2 h-0.5 bg-slate-800 dark:bg-white inline-block"></span><span>P50 (Median)</span></span>
+                  <span class="flex items-center space-x-1"><span class="w-2 h-0.5 bg-rose-400 inline-block"></span><span>P10 (Pesimis)</span></span>
+                </div>
+                <span class="font-mono" id="mc-final-median-label">Median: Rp 168.200.000</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Bottom: Asset Allocator Sliders & Rebalance Orders Table -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            
+            <!-- Left: Asset Weights Sliders (5 cols) -->
+            <div class="lg:col-span-5 ried-card p-5 space-y-4">
+              <div class="flex items-center justify-between border-b border-[#dde7da] dark:border-[#1c2b20] pb-2.5">
+                <div>
+                  <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">Alokasi Universe Aset</span>
+                  <span class="text-xs font-bold text-slate-900 dark:text-white">Sesuaikan Porsi Investasi</span>
+                </div>
+                <div class="flex items-center space-x-1">
+                  <span class="text-[10px] text-slate-400">Total:</span>
+                  <span id="alloc-total-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black font-mono bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">100%</span>
+                </div>
+              </div>
+
+              <!-- Sliders Container -->
+              <div class="space-y-3.5 text-xs">
+                
+                <!-- SP500 -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-800 dark:text-slate-200">S&P 500 / Saham Bluechip</span>
+                    <span id="label-weight-SP500" class="font-mono font-bold text-sky-500">35%</span>
+                  </div>
+                  <input type="range" min="0" max="100" value="35" data-asset="SP500" class="w-full accent-sky-500 slider-alloc">
+                </div>
+
+                <!-- TECH -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-800 dark:text-slate-200">Nasdaq-100 Tech High Growth</span>
+                    <span id="label-weight-TECH" class="font-mono font-bold text-purple-500">20%</span>
+                  </div>
+                  <input type="range" min="0" max="100" value="20" data-asset="TECH" class="w-full accent-purple-500 slider-alloc">
+                </div>
+
+                <!-- BONDS -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-800 dark:text-slate-200">Obligasi Negara SBN / Bonds</span>
+                    <span id="label-weight-BONDS" class="font-mono font-bold text-emerald-500">25%</span>
+                  </div>
+                  <input type="range" min="0" max="100" value="25" data-asset="BONDS" class="w-full accent-emerald-500 slider-alloc">
+                </div>
+
+                <!-- GOLD -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-800 dark:text-slate-200">Emas Logam Mulia Antam</span>
+                    <span id="label-weight-GOLD" class="font-mono font-bold text-amber-500">10%</span>
+                  </div>
+                  <input type="range" min="0" max="100" value="10" data-asset="GOLD" class="w-full accent-amber-500 slider-alloc">
+                </div>
+
+                <!-- CRYPTO -->
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-800 dark:text-slate-200">Bitcoin / Crypto Asset</span>
+                    <span id="label-weight-CRYPTO" class="font-mono font-bold text-pink-500">10%</span>
+                  </div>
+                  <input type="range" min="0" max="100" value="10" data-asset="CRYPTO" class="w-full accent-pink-500 slider-alloc">
+                </div>
+
+              </div>
+
+              <!-- Rebalance Calculation Trigger -->
+              <button id="btn-calc-rebalance" class="w-full py-2.5 rounded-xl bg-[#38a852] hover:bg-emerald-600 text-white font-bold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center space-x-1.5">
+                <i data-lucide="scale" class="w-4 h-4"></i>
+                <span>Hitung Optimasi Rebalance</span>
+              </button>
+            </div>
+
+            <!-- Right: Rebalance Orders Table (7 cols) -->
+            <div class="lg:col-span-7 ried-card p-5 space-y-3 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between border-b border-[#dde7da] dark:border-[#1c2b20] pb-2.5">
+                  <div>
+                    <span class="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">Rekomendasi Rebalancing</span>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white">Eksekusi Penyesuaian Portofolio</span>
+                  </div>
+                  <span class="text-[10px] text-slate-400 font-mono">Prinsip Konservasi Modal</span>
+                </div>
+
+                <div class="overflow-x-auto pt-2">
+                  <table class="w-full text-left text-xs">
+                    <thead>
+                      <tr class="text-slate-400 border-b border-[#dde7da] dark:border-[#1c2b20] text-[10px] uppercase font-bold">
+                        <th class="pb-2">Aset</th>
+                        <th class="pb-2 text-right">Saat Ini</th>
+                        <th class="pb-2 text-right">Target</th>
+                        <th class="pb-2 text-right">Delta</th>
+                        <th class="pb-2 text-center">Tindakan</th>
+                        <th class="pb-2 text-right">Nominal (Rp)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="rebalance-orders-tbody" class="divide-y divide-[#dde7da] dark:divide-[#1c2b20] font-mono text-[11px]">
+                      <!-- Dynamically populated via app.js -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-[#edf4e8] dark:bg-[#16241b] text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed flex items-center space-x-2">
+                <i data-lucide="info" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                <span>Rebalancing secara disiplin menjaga risiko tidak melebihi profil toleransi Anda dan mengunci keuntungan dari aset yang melesat.</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
       </main>
 
     </div>
@@ -1104,6 +1477,306 @@ Gunakan /budget untuk melihat seluruh ringkasan.</textarea>
         </div>
       </form>
     </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 4: COMMAND PALETTE (Ctrl+K / ⌘K) -->
+  <!-- ========================================================================= -->
+  <div id="command-palette" class="modal-overlay hidden">
+    <div class="ried-card max-w-xl w-full p-0 overflow-hidden shadow-2xl bg-white dark:bg-[#121d15] border border-[#dde7da] dark:border-[#233628] animate-fade-in">
+      
+      <!-- Palette Search Bar -->
+      <div class="flex items-center px-4 py-3.5 border-b border-[#dde7da] dark:border-[#1c2b20]">
+        <i data-lucide="search" class="w-4 h-4 text-emerald-500 shrink-0 mr-3"></i>
+        <input id="palette-search-input" type="text" placeholder="Ketik perintah atau cari navigasi... (Esc untuk keluar)" class="w-full bg-transparent text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none">
+        <kbd class="text-[9px] bg-slate-100 dark:bg-black/40 text-slate-400 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 font-mono shrink-0">ESC</kbd>
+      </div>
+
+      <!-- Action Items List -->
+      <div id="palette-results-list" class="max-h-80 overflow-y-auto p-2 space-y-1 text-xs">
+        
+        <div class="palette-item" data-action="new-tx">
+          <div class="flex items-center space-x-3">
+            <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="font-bold text-slate-800 dark:text-slate-100 block">Tambah Transaksi Baru</span>
+              <span class="text-[10px] text-slate-400 block">Catat pengeluaran atau pemasukan baru</span>
+            </div>
+          </div>
+          <kbd class="text-[9px] bg-slate-100 dark:bg-black/30 px-1.5 py-0.5 rounded text-slate-400 font-mono">T</kbd>
+        </div>
+
+        <div class="palette-item" data-action="nav-investasi">
+          <div class="flex items-center space-x-3">
+            <div class="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+              <i data-lucide="trending-up" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="font-bold text-slate-800 dark:text-slate-100 block">Buka Investasi & Frontier</span>
+              <span class="text-[10px] text-slate-400 block">Markowitz MPT & Monte Carlo 1.000 Skenario</span>
+            </div>
+          </div>
+          <kbd class="text-[9px] bg-slate-100 dark:bg-black/30 px-1.5 py-0.5 rounded text-slate-400 font-mono">I</kbd>
+        </div>
+
+        <div class="palette-item" data-action="new-goal">
+          <div class="flex items-center space-x-3">
+            <div class="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+              <i data-lucide="target" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="font-bold text-slate-800 dark:text-slate-100 block">Tambah Celengan Impian</span>
+              <span class="text-[10px] text-slate-400 block">Tetapkan target tabungan baru</span>
+            </div>
+          </div>
+          <kbd class="text-[9px] bg-slate-100 dark:bg-black/30 px-1.5 py-0.5 rounded text-slate-400 font-mono">C</kbd>
+        </div>
+
+        <div class="palette-item" data-action="open-wrapped">
+          <div class="flex items-center space-x-3">
+            <div class="w-7 h-7 rounded-lg bg-pink-50 dark:bg-pink-950 text-pink-600 dark:text-pink-400 flex items-center justify-center">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="font-bold text-slate-800 dark:text-slate-100 block">RIED Wrapped 2026</span>
+              <span class="text-[10px] text-slate-400 block">Kartu infografis bulanan & unduh PNG</span>
+            </div>
+          </div>
+          <kbd class="text-[9px] bg-slate-100 dark:bg-black/30 px-1.5 py-0.5 rounded text-slate-400 font-mono">W</kbd>
+        </div>
+
+        <div class="palette-item" data-action="toggle-theme">
+          <div class="flex items-center space-x-3">
+            <div class="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <i data-lucide="moon" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="font-bold text-slate-800 dark:text-slate-100 block">Ganti Tema Gelap / Terang</span>
+              <span class="text-[10px] text-slate-400 block">Matcha Cream vs Forest Obsidian</span>
+            </div>
+          </div>
+          <kbd class="text-[9px] bg-slate-100 dark:bg-black/30 px-1.5 py-0.5 rounded text-slate-400 font-mono">M</kbd>
+        </div>
+
+      </div>
+
+      <!-- Palette Footer Guide -->
+      <div class="px-4 py-2 bg-slate-50 dark:bg-[#0c1510] border-t border-[#dde7da] dark:border-[#1c2b20] flex items-center justify-between text-[10px] text-slate-400">
+        <div class="flex items-center space-x-3">
+          <span><kbd class="bg-white dark:bg-black/40 px-1 rounded border border-slate-200 dark:border-slate-800">↑↓</kbd> Navigasi</span>
+          <span><kbd class="bg-white dark:bg-black/40 px-1 rounded border border-slate-200 dark:border-slate-800">Enter</kbd> Pilih</span>
+        </div>
+        <span>RIED Studio v2.2</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 5: SETOR / TARIK SALDO TABUNGAN (CELENGAN IMPIAN) -->
+  <!-- ========================================================================= -->
+  <div id="modal-savings-deposit" class="modal-overlay hidden">
+    <div class="ried-card max-w-sm w-full p-6 space-y-4 animate-fade-in shadow-2xl bg-white dark:bg-[#131e16]">
+      <div class="flex items-center justify-between border-b border-[#dde7da] dark:border-[#1c2b20] pb-3">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white" id="deposit-goal-title">Setor ke Tabungan</h3>
+          <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold" id="deposit-goal-subtitle">Target: Rp 30.000.000</span>
+        </div>
+        <button id="btn-close-deposit-modal" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="form-savings-deposit" class="space-y-4 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Nominal Setor (Rp)</label>
+          <input id="input-deposit-amount" type="number" step="10000" min="1000" required placeholder="500000" class="w-full ried-input font-mono text-sm font-bold">
+        </div>
+
+        <!-- Quick chips -->
+        <div class="grid grid-cols-4 gap-1.5 pt-1">
+          <button type="button" class="btn-deposit-chip px-2 py-1 rounded-lg bg-slate-100 dark:bg-[#1c2b20] hover:bg-emerald-100 text-[10px] font-mono font-bold" data-val="100000">+100rb</button>
+          <button type="button" class="btn-deposit-chip px-2 py-1 rounded-lg bg-slate-100 dark:bg-[#1c2b20] hover:bg-emerald-100 text-[10px] font-mono font-bold" data-val="250000">+250rb</button>
+          <button type="button" class="btn-deposit-chip px-2 py-1 rounded-lg bg-slate-100 dark:bg-[#1c2b20] hover:bg-emerald-100 text-[10px] font-mono font-bold" data-val="500000">+500rb</button>
+          <button type="button" class="btn-deposit-chip px-2 py-1 rounded-lg bg-slate-100 dark:bg-[#1c2b20] hover:bg-emerald-100 text-[10px] font-mono font-bold" data-val="1000000">+1 Jt</button>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-2 border-t border-[#dde7da] dark:border-[#1c2b20]">
+          <button type="button" id="btn-cancel-deposit" class="px-3 py-1.5 rounded-lg text-slate-500 font-semibold">Batal</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-[#38a852] hover:bg-emerald-600 text-white font-bold shadow-sm">Simpan Setoran</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 6: BUAT TARGET IMPIAN BARU -->
+  <!-- ========================================================================= -->
+  <div id="modal-create-goal" class="modal-overlay hidden">
+    <div class="ried-card max-w-md w-full p-6 space-y-4 animate-fade-in shadow-2xl bg-white dark:bg-[#131e16]">
+      <div class="flex items-center justify-between border-b border-[#dde7da] dark:border-[#1c2b20] pb-3">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Buat Target Celengan Impian</h3>
+        <button id="btn-close-create-goal-modal" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="form-create-goal" class="space-y-3.5 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Nama Impian</label>
+          <input id="input-goal-title" type="text" required placeholder="Contoh: DP Rumah Pertama, Beli MacBook..." class="w-full ried-input text-xs">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Target Nominal (Rp)</label>
+            <input id="input-goal-target" type="number" step="50000" min="10000" required placeholder="25000000" class="w-full ried-input font-mono text-xs font-bold">
+          </div>
+          <div>
+            <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Setoran Awal (Rp)</label>
+            <input id="input-goal-initial" type="number" step="10000" min="0" value="0" class="w-full ried-input font-mono text-xs">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Kategori Impian</label>
+            <select id="input-goal-category" class="w-full ried-input text-xs">
+              <option value="Darurat">Dana Darurat</option>
+              <option value="Gadget">Gadget & Elektronik</option>
+              <option value="Liburan">Liburan / Travel</option>
+              <option value="Kendaraan">Kendaraan</option>
+              <option value="Investasi">Investasi Modal</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-semibold text-slate-700 dark:text-slate-300 block mb-1">Target Tanggal Selesai</label>
+            <input id="input-goal-date" type="date" required class="w-full ried-input font-mono text-xs">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-3 border-t border-[#dde7da] dark:border-[#1c2b20]">
+          <button type="button" id="btn-cancel-create-goal" class="px-4 py-2 rounded-xl text-slate-500 font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-[#38a852] hover:bg-emerald-600 text-white font-bold shadow-sm">Buat Target Impian</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 7: RIED WRAPPED 2026 (Aesthetic Monthly Recap Card) -->
+  <!-- ========================================================================= -->
+  <div id="modal-ried-wrapped" class="modal-overlay hidden">
+    <div class="max-w-sm w-full space-y-4 animate-fade-in">
+      
+      <!-- High-DPI Shareable Wrapped Card Canvas -->
+      <div class="relative w-full rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-gradient-to-br from-[#0c1510] via-[#122318] to-[#1a3824] p-6 text-white text-center space-y-5" id="wrapped-card-preview">
+        
+        <!-- Vector Halo Glow -->
+        <div class="absolute -top-16 -left-16 w-44 h-44 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-16 -right-16 w-44 h-44 rounded-full bg-teal-500/20 blur-3xl pointer-events-none"></div>
+
+        <!-- Brand Ribbon -->
+        <div class="flex items-center justify-between z-10 relative">
+          <div class="flex items-center space-x-2">
+            <div class="w-7 h-7 rounded-xl bg-emerald-400 text-[#0c1510] flex items-center justify-center font-bold">
+              <i data-lucide="sprout" class="w-4 h-4"></i>
+            </div>
+            <span class="text-xs font-black tracking-widest text-emerald-400 uppercase">RIED WRAPPED</span>
+          </div>
+          <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400">SEPTEMBER 2026</span>
+        </div>
+
+        <!-- Headline & User Persona -->
+        <div class="space-y-1 z-10 relative">
+          <span class="text-[10px] uppercase font-bold tracking-widest text-emerald-400/90 block">Persona Finansial Anda:</span>
+          <h2 class="text-xl font-black text-white tracking-tight" id="wrapped-persona-title">Sang Ahli Alokasi (The Strategic Saver)</h2>
+          <p class="text-[11px] text-emerald-200/80 font-medium">Pengeluaran disiplin, surplus melimpah, dan rasio tabungan di atas rata-rata.</p>
+        </div>
+
+        <!-- Big Highlight Stats Grid -->
+        <div class="grid grid-cols-2 gap-3 z-10 relative text-left">
+          
+          <div class="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md space-y-1">
+            <span class="text-[9px] uppercase font-bold text-slate-400 block">Total Masuk</span>
+            <span class="text-sm font-black font-mono text-emerald-400 block" id="wrapped-stat-income">Rp 16.596.500</span>
+          </div>
+
+          <div class="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md space-y-1">
+            <span class="text-[9px] uppercase font-bold text-slate-400 block">Total Keluar</span>
+            <span class="text-sm font-black font-mono text-rose-300 block" id="wrapped-stat-expense">Rp 7.161.000</span>
+          </div>
+
+          <div class="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md space-y-1">
+            <span class="text-[9px] uppercase font-bold text-slate-400 block">Pos Juara 1 (Terbanyak)</span>
+            <span class="text-xs font-black text-white block truncate" id="wrapped-stat-topcat">Makanan (35%)</span>
+          </div>
+
+          <div class="p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md space-y-1">
+            <span class="text-[9px] uppercase font-bold text-slate-400 block">Skor Kesehatan</span>
+            <span class="text-xs font-black text-emerald-300 block font-mono" id="wrapped-stat-score">98 / 100 ★★★</span>
+          </div>
+
+        </div>
+
+        <!-- Footer watermark -->
+        <div class="pt-2 border-t border-white/10 text-[9px] text-slate-400 flex items-center justify-between z-10 relative font-mono">
+          <span>ried.studio • @RiedutBot</span>
+          <span class="text-emerald-400">#FinansialCerdas</span>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-2.5">
+        <button id="btn-close-wrapped" class="flex-1 py-2.5 rounded-xl bg-slate-200 dark:bg-[#1c2b20] text-slate-800 dark:text-white font-bold text-xs hover:opacity-90 transition-all">
+          Tutup
+        </button>
+        <button id="btn-download-wrapped-png" class="flex-1 py-2.5 rounded-xl bg-[#38a852] hover:bg-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-1.5 transition-all">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          <span>Unduh Kartu (PNG)</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- FLOATING ACTION BUTTON (FAB) -->
+  <!-- ========================================================================= -->
+  <div id="fab-container" class="fixed bottom-6 right-6 z-40 flex flex-col items-end space-y-3">
+    
+    <!-- Quick Pop-out Menu (Initially hidden) -->
+    <div id="fab-menu" class="flex flex-col items-end space-y-2.5 hidden animate-fade-in">
+      <button id="fab-action-tx" class="fab-menu-btn" title="Tambah Transaksi">
+        <span class="fab-label">Catat Transaksi</span>
+        <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+          <i data-lucide="plus" class="w-5 h-5"></i>
+        </div>
+      </button>
+
+      <button id="fab-action-goal" class="fab-menu-btn" title="Celengan Impian">
+        <span class="fab-label">Celengan Impian</span>
+        <div class="w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+          <i data-lucide="piggy-bank" class="w-5 h-5"></i>
+        </div>
+      </button>
+
+      <button id="fab-action-wrapped" class="fab-menu-btn" title="RIED Wrapped">
+        <span class="fab-label">RIED Wrapped</span>
+        <div class="w-10 h-10 rounded-full bg-pink-600 text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+          <i data-lucide="sparkles" class="w-5 h-5"></i>
+        </div>
+      </button>
+    </div>
+
+    <!-- Main FAB Trigger Button -->
+    <button id="fab-main-btn" class="w-13 h-13 rounded-full bg-[#38a852] hover:bg-emerald-600 text-white flex items-center justify-center shadow-xl shadow-emerald-600/30 transition-all hover:scale-110 active:scale-95" title="Aksi Cepat RIED">
+      <i data-lucide="plus" id="fab-icon" class="w-6 h-6 transition-transform"></i>
+    </button>
   </div>
 
   <!-- ES Module Bootstrap -->

@@ -419,3 +419,91 @@ body {
   transform: translateX(2px);
 }
 
+/* ========================================================================= */
+/* COMMAND PALETTE STYLING */
+/* ========================================================================= */
+.palette-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.palette-item:hover,
+.palette-item.active-item {
+  background-color: rgba(56, 168, 82, 0.10);
+  transform: translateX(3px);
+}
+
+.dark .palette-item:hover,
+.dark .palette-item.active-item {
+  background-color: rgba(78, 250, 139, 0.12);
+}
+
+/* ========================================================================= */
+/* FLOATING ACTION BUTTON (FAB) */
+/* ========================================================================= */
+.fab-menu-btn {
+  display: flex;
+  align-items: center;
+  space-x: 8px;
+  cursor: pointer;
+  outline: none;
+  background: transparent;
+  border: none;
+}
+
+.fab-label {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: white;
+  color: #1e2920;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.dark .fab-label {
+  background: #152219;
+  color: #f1f5f9;
+  border: 1px solid #233628;
+}
+
+/* ========================================================================= */
+/* CELENGAN IMPIAN (SAVINGS GOAL CARDS) */
+/* ========================================================================= */
+.goal-card {
+  padding: 16px;
+  border-radius: 18px;
+  background: white;
+  border: 1px solid #dde7da;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-col;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.dark .goal-card {
+  background: #132017;
+  border-color: #233628;
+}
+
+.goal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(56, 168, 82, 0.12);
+}
+
+/* Slider Allocator Custom Styles */
+.slider-alloc {
+  height: 6px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+

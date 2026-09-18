@@ -69,3 +69,70 @@ export async function updateCategoryBudgetLimit(category, newBudget) {
   if (!res.ok) throw new Error('Gagal memperbarui budget kategori');
   return await res.json();
 }
+
+// Portfolio & Investasi
+export async function fetchPortfolioAssets() {
+  const res = await fetch(`${API_BASE}/api/portfolio/assets`);
+  if (!res.ok) throw new Error('Gagal memuat daftar aset portofolio');
+  return await res.json();
+}
+
+export async function analyzePortfolio(payload) {
+  const res = await fetch(`${API_BASE}/api/portfolio/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Gagal menganalisis portofolio' }));
+    const msg = typeof err.detail === 'string' ? err.detail : JSON.stringify(err.detail || err);
+    throw new Error(msg);
+  }
+  return await res.json();
+}
+
+// Target Tabungan (Celengan Impian)
+export async function fetchSavingsGoals() {
+  const res = await fetch(`${API_BASE}/api/savings-goals`);
+  if (!res.ok) throw new Error('Gagal memuat target tabungan');
+  return await res.json();
+}
+
+export async function createSavingsGoal(payload) {
+  const res = await fetch(`${API_BASE}/api/savings-goals`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: 'Gagal membuat target tabungan' }));
+    throw new Error(err.detail || 'Gagal membuat target tabungan');
+  }
+  return await res.json();
+}
+
+export async function depositSavingsGoal(goalId, amount) {
+  const res = await fetch(`${API_BASE}/api/savings-goals/${goalId}/deposit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount: parseFloat(amount) })
+  });
+  if (!res.ok) throw new Error('Gagal memperbarui saldo tabungan');
+  return await res.json();
+}
+
+export async function deleteSavingsGoal(goalId) {
+  const res = await fetch(`${API_BASE}/api/savings-goals/${goalId}`, {
+    method: 'DELETE'
+  });
+  if (!res.ok) throw new Error('Gagal menghapus target tabungan');
+  return await res.json();
+}
+
+// Smart Financial Health Radar
+export async function fetchFinancialHealth() {
+  const res = await fetch(`${API_BASE}/api/financial-health`);
+  if (!res.ok) throw new Error('Gagal memuat analisis kesehatan finansial');
+  return await res.json();
+}
+
