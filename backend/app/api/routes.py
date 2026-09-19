@@ -41,6 +41,7 @@ from backend.app.repository.db import (
     deposit_savings_goal,
     delete_savings_goal,
     get_financial_health,
+    get_distinct_months,
     init_db
 )
 from backend.app.engine.markowitz import (
@@ -67,11 +68,21 @@ async def health_check():
     }
 
 
+@router.get("/months", summary="List Available Transaction Months")
+async def list_available_months():
+    """Returns distinct months available in transaction history with transaction counts and totals."""
+    return get_distinct_months()
+
+
 @router.get("/summary", response_model=FinancialSummary, summary="Dashboard Financial Summary")
-async def get_dashboard_summary():
+async def get_dashboard_summary(
+    month: Optional[str] = Query(None, description="Format YYYY-MM e.g. 2026-08"),
+    start_date: Optional[str] = Query(None, description="Format YYYY-MM-DD e.g. 2026-08-01"),
+    end_date: Optional[str] = Query(None, description="Format YYYY-MM-DD e.g. 2026-08-31"),
+):
     """Returns aggregated KPIs, category breakdown, and daily expenses for the dashboard."""
     try:
-        return get_financial_summary()
+        return get_financial_summary(month=month, start_date=start_date, end_date=end_date)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -84,10 +95,21 @@ async def list_transactions(
     limit: int = Query(100, ge=1, le=500),
     type: Optional[str] = Query(None, pattern="^(expense|income)$"),
     category: Optional[str] = None,
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    month: Optional[str] = Query(None, description="Format YYYY-MM e.g. 2026-08"),
+    start_date: Optional[str] = Query(None, description="Format YYYY-MM-DD e.g. 2026-08-01"),
+    end_date: Optional[str] = Query(None, description="Format YYYY-MM-DD e.g. 2026-08-31"),
 ):
     """Retrieves transaction history with optional filters and keyword search."""
-    return get_transactions(limit=limit, tx_type=type, category=category, search=search)
+    return get_transactions(
+        limit=limit,
+        tx_type=type,
+        category=category,
+        search=search,
+        month=month,
+        start_date=start_date,
+        end_date=end_date
+    )
 
 
 @router.post("/transactions", response_model=Transaction, status_code=status.HTTP_201_CREATED, summary="Create Transaction")
@@ -144,13 +166,18 @@ async def set_category_budget(category: str, payload: UpdateBudgetRequest):
 
 
 @router.get("/export/csv", summary="Export Transactions to CSV")
-async def export_csv():
-    """Exports all transaction history to a CSV file."""
-    csv_data = export_transactions_csv()
+async def export_csv(
+    month: Optional[str] = Query(None, description="Format YYYY-MM e.g. 2026-08"),
+    start_date: Optional[str] = Query(None, description="Format YYYY-MM-DD e.g. 2026-08-01"),
+    end_date: Optional[str] = Query(None, description="Format YYYY-MM-DD e.g. 2026-08-31"),
+):
+    """Exports transaction history to a CSV file with optional month/date filters."""
+    csv_data = export_transactions_csv(month=month, start_date=start_date, end_date=end_date)
+    filename = f"ried_transaksi_{month or 'all'}.csv"
     return Response(
         content=csv_data,
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=ried_transaksi.csv"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
 
@@ -320,10 +347,12 @@ async def remove_savings_goal(goal_id: int):
 # ============================================================================
 
 @router.get("/financial-health", response_model=FinancialHealthResult, summary="Get Financial Health Radar")
-async def get_health_radar():
+async def get_health_radar(
+    month: Optional[str] = Query(None, description="Format YYYY-MM e.g. 2026-08")
+):
     """Calculates 50/30/20 budget ratio, health discipline score (0-100), and cash runway."""
     try:
-        return get_financial_health()
+        return get_financial_health(month=month)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

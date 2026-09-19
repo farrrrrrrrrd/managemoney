@@ -202,6 +202,13 @@ def init_db():
         seed_sample_data(cursor)
         conn.commit()
 
+    # Pre-seed historical months (August & July 2026) for month navigation
+    cursor.execute("SELECT COUNT(*) FROM transactions WHERE substr(date, 1, 7) = '2026-08'")
+    aug_count = cursor.fetchone()[0]
+    if aug_count == 0:
+        seed_historical_months(cursor)
+        conn.commit()
+
     conn.close()
 
 
@@ -236,6 +243,45 @@ def seed_sample_data(cursor):
         """, (title, amount, category, tx_type, date_str, notes))
 
 
+def seed_historical_months(cursor):
+    """Seeds realistic financial history for previous months (Agustus & Juli 2026)."""
+    historical_txs = [
+        # Agustus 2026 (Income: Rp 16.300.000, Expense: ~Rp 7.156.000)
+        ("Gaji Bulanan Agustus", 12500000.0, "Gaji", "income", "2026-08-25", "Transfer payroll Agustus"),
+        ("Project Freelance Web Dashboard", 3800000.0, "Freelance", "income", "2026-08-10", "Klien Tech Bandung"),
+        ("Sewa Apartemen Studio", 2200000.0, "Rumah", "expense", "2026-08-01", "Sewa bulanan Agustus"),
+        ("Belanja Bulanan Supermarket", 1280000.0, "Belanja", "expense", "2026-08-04", "Bahan makanan & toiletry"),
+        ("Tagihan Listrik PLN & Air", 790000.0, "Tagihan", "expense", "2026-08-08", "PLN pascabayar & PAM"),
+        ("Internet Wifi Fiber Optic", 450000.0, "Tagihan", "expense", "2026-08-10", "IndiHome 50 Mbps"),
+        ("Bensin Mobil Pertamax", 350000.0, "Transportasi", "expense", "2026-08-13", "SPBU Kuningan"),
+        ("Makan Malam Bersama Keluarga", 520000.0, "Makanan", "expense", "2026-08-16", "Restoran Sunda"),
+        ("Kopi & Brunch Cafe", 85000.0, "Makanan", "expense", "2026-08-19", "Work from cafe"),
+        ("Langganan Spotify & Netflix", 186000.0, "Hiburan", "expense", "2026-08-22", "Tagihan streaming"),
+        ("Servis Rutin Berkala Mobil", 680000.0, "Transportasi", "expense", "2026-08-25", "Ganti oli & filter"),
+        ("Buku & Kursus Cloud Architecture", 320000.0, "Pendidikan", "expense", "2026-08-28", "Buku O'Reilly"),
+        ("Makan Siang & Kopi", 65000.0, "Makanan", "expense", "2026-08-30", "Nasi campur & es teh"),
+
+        # Juli 2026 (Income: Rp 17.000.000, Expense: ~Rp 9.680.000)
+        ("Gaji Bulanan Juli", 12500000.0, "Gaji", "income", "2026-07-25", "Transfer payroll Juli"),
+        ("Bonus Kinerja Q2", 4500000.0, "Gaji", "income", "2026-07-15", "Bonus performa kerja semester 1"),
+        ("Sewa Apartemen Studio", 2200000.0, "Rumah", "expense", "2026-07-01", "Sewa bulanan Juli"),
+        ("Belanja Mingguan Hypermart", 980000.0, "Belanja", "expense", "2026-07-05", "Kebutuhan bulanan"),
+        ("Tagihan Listrik PLN", 815000.0, "Tagihan", "expense", "2026-07-08", "Token listrik 2200VA"),
+        ("Internet Wifi Fiber Optic", 450000.0, "Tagihan", "expense", "2026-07-10", "IndiHome 50 Mbps"),
+        ("Tiket Wisata Keluarga & Hotel", 1850000.0, "Hiburan", "expense", "2026-07-12", "Liburan weekend Bandung"),
+        ("Bensin Tol Cipularang", 400000.0, "Transportasi", "expense", "2026-07-17", "Perjalanan Bandung"),
+        ("Kuliner Khas & Makan Bersama", 420000.0, "Makanan", "expense", "2026-07-20", "Kuliner akhir pekan"),
+        ("Sepatu Olahraga Running", 899000.0, "Belanja", "expense", "2026-07-24", "Sepatu lari marathon"),
+        ("Langganan Spotify & Netflix", 186000.0, "Hiburan", "expense", "2026-07-29", "Tagihan streaming")
+    ]
+
+    for title, amount, category, tx_type, date_str, notes in historical_txs:
+        cursor.execute("""
+            INSERT INTO transactions (title, amount, category, type, date, notes)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (title, amount, category, tx_type, date_str, notes))
+
+
 def create_transaction(data: TransactionCreate) -> Transaction:
     conn = get_connection()
     cursor = conn.cursor()
@@ -252,7 +298,15 @@ def create_transaction(data: TransactionCreate) -> Transaction:
     return Transaction(**dict(row))
 
 
-def get_transactions(limit: int = 100, tx_type: Optional[str] = None, category: Optional[str] = None, search: Optional[str] = None) -> List[Transaction]:
+def get_transactions(
+    limit: int = 100,
+    tx_type: Optional[str] = None,
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+    month: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None
+) -> List[Transaction]:
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -268,6 +322,15 @@ def get_transactions(limit: int = 100, tx_type: Optional[str] = None, category: 
         query += " AND (title LIKE ? OR notes LIKE ?)"
         params.append(f"%{search}%")
         params.append(f"%{search}%")
+    if month:
+        query += " AND substr(date, 1, 7) = ?"
+        params.append(month)
+    if start_date:
+        query += " AND date >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND date <= ?"
+        params.append(end_date)
 
     query += " ORDER BY date DESC, id DESC LIMIT ?"
     params.append(limit)
@@ -349,10 +412,28 @@ def get_category_budgets() -> List[Dict]:
     return [dict(r) for r in rows]
 
 
-def export_transactions_csv() -> str:
+def export_transactions_csv(
+    month: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None
+) -> str:
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, date, title, category, type, amount, notes FROM transactions ORDER BY date DESC, id DESC")
+
+    query = "SELECT id, date, title, category, type, amount, notes FROM transactions WHERE 1=1"
+    params = []
+    if month:
+        query += " AND substr(date, 1, 7) = ?"
+        params.append(month)
+    if start_date:
+        query += " AND date >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND date <= ?"
+        params.append(end_date)
+
+    query += " ORDER BY date DESC, id DESC"
+    cursor.execute(query, params)
     rows = cursor.fetchall()
     conn.close()
 
@@ -364,30 +445,68 @@ def export_transactions_csv() -> str:
     return output.getvalue()
 
 
-def get_financial_summary() -> FinancialSummary:
+def get_financial_summary(
+    month: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None
+) -> FinancialSummary:
+    import calendar
     conn = get_connection()
     cursor = conn.cursor()
 
+    where_clauses = []
+    params = []
+
+    if month:
+        where_clauses.append("substr(date, 1, 7) = ?")
+        params.append(month)
+    elif start_date and end_date:
+        where_clauses.append("date BETWEEN ? AND ?")
+        params.extend([start_date, end_date])
+    elif start_date:
+        where_clauses.append("date >= ?")
+        params.append(start_date)
+    elif end_date:
+        where_clauses.append("date <= ?")
+        params.append(end_date)
+
+    date_filter = f" AND {' AND '.join(where_clauses)}" if where_clauses else ""
+    date_where = f" WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+
     # 1. Totals
-    cursor.execute("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income'")
+    cursor.execute(f"SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income'{date_filter}", params)
     total_income = float(cursor.fetchone()[0])
 
-    cursor.execute("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense'")
+    cursor.execute(f"SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense'{date_filter}", params)
     total_expense = float(cursor.fetchone()[0])
 
     total_balance = total_income - total_expense
 
-    cursor.execute("SELECT COUNT(*) FROM transactions")
+    cursor.execute(f"SELECT COUNT(*) FROM transactions{date_where}", params)
     tx_count = cursor.fetchone()[0]
 
+    # Distinct days recorded
+    cursor.execute(f"SELECT COUNT(DISTINCT date) FROM transactions{date_where}", params)
+    distinct_days = cursor.fetchone()[0]
+
+    # Target total days in period
+    if month:
+        try:
+            y, m = map(int, month.split("-"))
+            _, total_days = calendar.monthrange(y, m)
+        except Exception:
+            total_days = 30
+    else:
+        total_days = 30
+
     # 2. Category Breakdown
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT category, SUM(amount) as spent
         FROM transactions
-        WHERE type = 'expense'
+        WHERE type = 'expense'{date_filter}
         GROUP BY category
         ORDER BY spent DESC
-    """)
+    """, params)
     category_rows = cursor.fetchall()
     spent_by_category = {r["category"]: float(r["spent"]) for r in category_rows}
 
@@ -410,24 +529,58 @@ def get_financial_summary() -> FinancialSummary:
             icon=b["icon"]
         ))
 
-    # 3. Daily Expenses (Last 10 days)
-    today = datetime.now()
+    # 3. Daily Expenses
     daily_expenses = []
-    for i in range(9, -1, -1):
-        d = today - timedelta(days=i)
-        d_str = d.strftime("%Y-%m-%d")
-        d_label = d.strftime("%d %b")
+    month_names_id = ["", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
 
-        cursor.execute("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense' AND date = ?", (d_str,))
-        amt = float(cursor.fetchone()[0])
-        daily_expenses.append(DailyExpenseDataPoint(
-            date=d_str,
-            day_label=d_label,
-            amount=amt
-        ))
+    if month:
+        y, m = map(int, month.split("-"))
+        _, days_in_month = calendar.monthrange(y, m)
+        m_label = month_names_id[m] if 1 <= m <= 12 else str(m)
+
+        for d in range(1, days_in_month + 1):
+            d_str = f"{y:04d}-{m:02d}-{d:02d}"
+            d_label = f"{d} {m_label}"
+            cursor.execute("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense' AND date = ?", (d_str,))
+            amt = float(cursor.fetchone()[0])
+            daily_expenses.append(DailyExpenseDataPoint(
+                date=d_str,
+                day_label=d_label,
+                amount=amt
+            ))
+    elif start_date and end_date:
+        s_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        e_dt = datetime.strptime(end_date, "%Y-%m-%d")
+        days_diff = (e_dt - s_dt).days
+        for i in range(min(days_diff + 1, 90)):
+            cur_dt = s_dt + timedelta(days=i)
+            d_str = cur_dt.strftime("%Y-%m-%d")
+            d_label = f"{cur_dt.day} {month_names_id[cur_dt.month]}"
+            cursor.execute("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense' AND date = ?", (d_str,))
+            amt = float(cursor.fetchone()[0])
+            daily_expenses.append(DailyExpenseDataPoint(
+                date=d_str,
+                day_label=d_label,
+                amount=amt
+            ))
+    else:
+        # Default: Last 10 days for backwards compatibility
+        today = datetime.now()
+        for i in range(9, -1, -1):
+            d = today - timedelta(days=i)
+            d_str = d.strftime("%Y-%m-%d")
+            d_label = d.strftime("%d %b")
+
+            cursor.execute("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense' AND date = ?", (d_str,))
+            amt = float(cursor.fetchone()[0])
+            daily_expenses.append(DailyExpenseDataPoint(
+                date=d_str,
+                day_label=d_label,
+                amount=amt
+            ))
 
     # 4. Recent Transactions (limit 10)
-    cursor.execute("SELECT * FROM transactions ORDER BY date DESC, id DESC LIMIT 10")
+    cursor.execute(f"SELECT * FROM transactions{date_where} ORDER BY date DESC, id DESC LIMIT 10", params)
     recent_rows = cursor.fetchall()
     recent = [Transaction(**dict(r)) for r in recent_rows]
 
@@ -438,12 +591,48 @@ def get_financial_summary() -> FinancialSummary:
         total_income=total_income,
         total_expense=total_expense,
         transactions_count=tx_count,
-        target_days_current=13,
-        target_days_total=31,
+        target_days_current=distinct_days,
+        target_days_total=total_days,
         category_breakdown=breakdown,
         daily_expenses=daily_expenses,
         recent_transactions=recent
     )
+
+
+def get_distinct_months() -> List[Dict]:
+    """Returns available distinct months in the database with Indonesian labels."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT substr(date, 1, 7) as ym,
+               COUNT(*) as tx_count,
+               COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expense
+        FROM transactions
+        WHERE date IS NOT NULL AND length(date) >= 7
+        GROUP BY ym
+        ORDER BY ym DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    months_map_id = {
+        "01": "Januari", "02": "Februari", "03": "Maret", "04": "April",
+        "05": "Mei", "06": "Juni", "07": "Juli", "08": "Agustus",
+        "09": "September", "10": "Oktober", "11": "November", "12": "Desember"
+    }
+
+    result = []
+    for r in rows:
+        ym = r["ym"]
+        parts = ym.split("-")
+        label = f"{months_map_id.get(parts[1], parts[1])} {parts[0]}" if len(parts) == 2 else ym
+        result.append({
+            "month": ym,
+            "label": label,
+            "tx_count": r["tx_count"],
+            "total_expense": float(r["total_expense"])
+        })
+    return result
 
 
 # ============================================================================
@@ -599,28 +788,31 @@ def delete_savings_goal(goal_id: int) -> bool:
 # 7. SMART FINANCIAL HEALTH RADAR (50/30/20 & SCORING)
 # ============================================================================
 
-def get_financial_health() -> FinancialHealthResult:
+def get_financial_health(month: Optional[str] = None) -> FinancialHealthResult:
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income'")
+    month_filter = " AND substr(date, 1, 7) = ?" if month else ""
+    params = [month] if month else []
+
+    cursor.execute(f"SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'income'{month_filter}", params)
     income = float(cursor.fetchone()[0])
 
-    cursor.execute("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense'")
+    cursor.execute(f"SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense'{month_filter}", params)
     expense = float(cursor.fetchone()[0])
 
     # Needs categories (Kebutuhan Primer)
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT COALESCE(SUM(amount), 0) FROM transactions
-        WHERE type = 'expense' AND category IN ('Makanan', 'Tagihan', 'Transportasi', 'Rumah', 'Pendidikan')
-    """)
+        WHERE type = 'expense' AND category IN ('Makanan', 'Tagihan', 'Transportasi', 'Rumah', 'Pendidikan'){month_filter}
+    """, params)
     needs = float(cursor.fetchone()[0])
 
     # Wants categories (Keinginan Sekunder)
-    cursor.execute("""
+    cursor.execute(f"""
         SELECT COALESCE(SUM(amount), 0) FROM transactions
-        WHERE type = 'expense' AND category IN ('Belanja', 'Hiburan')
-    """)
+        WHERE type = 'expense' AND category IN ('Belanja', 'Hiburan'){month_filter}
+    """, params)
     wants = float(cursor.fetchone()[0])
 
     # Savings & Investments

@@ -24,7 +24,8 @@ import {
   createSavingsGoal,
   depositSavingsGoal,
   deleteSavingsGoal,
-  fetchFinancialHealth
+  fetchFinancialHealth,
+  fetchAvailableMonths
 } from './api.js';
 
 import {
@@ -100,6 +101,12 @@ class RiedApp {
     // Theme state
     this.isDarkMode = false;
 
+    // Date & Historical Month Navigation State
+    this.selectedYear = 2026;
+    this.selectedMonth = 9; // 1 to 12 (September 2026)
+    this.selectedDay = null; // 'YYYY-MM-DD' or null
+    this.availableMonths = [];
+
     this.cacheDom();
     this.init();
   }
@@ -112,6 +119,9 @@ class RiedApp {
       navButtons: document.querySelectorAll('.sidebar-link'),
       breadcrumbTitle: document.getElementById('breadcrumb-title'),
       currentMonthDisplay: document.getElementById('current-month-display'),
+      btnHeaderPrevMonth: document.getElementById('btn-header-prev-month'),
+      btnHeaderNextMonth: document.getElementById('btn-header-next-month'),
+      btnHeaderMonthPicker: document.getElementById('btn-header-month-picker'),
       soundToggle: document.getElementById('sound-toggle'),
       soundIcon: document.getElementById('sound-icon'),
       themeToggle: document.getElementById('theme-toggle'),
@@ -216,8 +226,17 @@ class RiedApp {
       // Dashboard Elements
       btnExportExcel: document.getElementById('btn-export-excel'),
       btnExportPdf: document.getElementById('btn-export-pdf'),
+      bannerDateRange: document.getElementById('banner-date-range'),
+      dayFilterBanner: document.getElementById('day-filter-banner'),
+      filterDayBadgeText: document.getElementById('filter-day-badge-text'),
+      btnDismissDayFilter: document.getElementById('btn-dismiss-day-filter'),
       calendarDayStrip: document.getElementById('calendar-day-strip'),
       btnOpenMonthlyCal: document.getElementById('btn-open-monthly-cal'),
+      btnStripPrevMonth: document.getElementById('btn-strip-prev-month'),
+      btnStripNextMonth: document.getElementById('btn-strip-next-month'),
+      stripMonthLabel: document.getElementById('strip-month-label'),
+      stripMonthBadge: document.getElementById('strip-month-badge'),
+      btnClearDayFilter: document.getElementById('btn-clear-day-filter'),
       statStreakCurrent: document.getElementById('stat-streak-current'),
       statStreakMax: document.getElementById('stat-streak-max'),
       statStreakDays: document.getElementById('stat-streak-days'),
@@ -264,6 +283,9 @@ class RiedApp {
       // Modal Monthly Calendar
       modalMonthlyCalendar: document.getElementById('modal-monthly-calendar'),
       btnCloseMonthlyCal: document.getElementById('btn-close-monthly-cal'),
+      btnMonthlyCalPrev: document.getElementById('btn-monthly-cal-prev'),
+      btnMonthlyCalNext: document.getElementById('btn-monthly-cal-next'),
+      monthlyCalTitle: document.getElementById('monthly-cal-title'),
       monthlyCalendarGrid: document.getElementById('monthly-calendar-grid'),
       monthlyCalSummary: document.getElementById('monthly-cal-summary'),
 
@@ -399,7 +421,59 @@ class RiedApp {
       });
     }
 
-    // Monthly Calendar Modal triggers
+    // Header Month Navigation
+    if (this.dom.btnHeaderPrevMonth) {
+      this.dom.btnHeaderPrevMonth.addEventListener('click', () => {
+        sounds.playPop();
+        this.prevMonth();
+      });
+    }
+    if (this.dom.btnHeaderNextMonth) {
+      this.dom.btnHeaderNextMonth.addEventListener('click', () => {
+        sounds.playPop();
+        this.nextMonth();
+      });
+    }
+    if (this.dom.btnHeaderMonthPicker) {
+      this.dom.btnHeaderMonthPicker.addEventListener('click', () => {
+        sounds.playPop();
+        this.openMonthlyCalendar();
+      });
+    }
+
+    // Row 1 Calendar Strip Navigation
+    if (this.dom.btnStripPrevMonth) {
+      this.dom.btnStripPrevMonth.addEventListener('click', () => {
+        sounds.playPop();
+        this.prevMonth();
+      });
+    }
+    if (this.dom.btnStripNextMonth) {
+      this.dom.btnStripNextMonth.addEventListener('click', () => {
+        sounds.playPop();
+        this.nextMonth();
+      });
+    }
+    if (this.dom.stripMonthLabel) {
+      this.dom.stripMonthLabel.addEventListener('click', () => {
+        sounds.playPop();
+        this.openMonthlyCalendar();
+      });
+    }
+    if (this.dom.btnClearDayFilter) {
+      this.dom.btnClearDayFilter.addEventListener('click', () => {
+        sounds.playPop();
+        this.selectDay(null);
+      });
+    }
+    if (this.dom.btnDismissDayFilter) {
+      this.dom.btnDismissDayFilter.addEventListener('click', () => {
+        sounds.playPop();
+        this.selectDay(null);
+      });
+    }
+
+    // Monthly Calendar Modal triggers & navigation
     if (this.dom.btnOpenMonthlyCal) {
       this.dom.btnOpenMonthlyCal.addEventListener('click', () => {
         sounds.playPop();
@@ -410,6 +484,30 @@ class RiedApp {
       this.dom.btnCloseMonthlyCal.addEventListener('click', () => {
         sounds.playPop();
         this.closeMonthlyCalendar();
+      });
+    }
+    if (this.dom.btnMonthlyCalPrev) {
+      this.dom.btnMonthlyCalPrev.addEventListener('click', () => {
+        sounds.playPop();
+        this.prevMonth(true);
+      });
+    }
+    if (this.dom.btnMonthlyCalNext) {
+      this.dom.btnMonthlyCalNext.addEventListener('click', () => {
+        sounds.playPop();
+        this.nextMonth(true);
+      });
+    }
+
+    // Filter Month Dropdown Sync
+    if (this.dom.filterMonth) {
+      this.dom.filterMonth.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val && val.includes('-')) {
+          const [y, m] = val.split('-').map(Number);
+          sounds.playPop();
+          this.setMonth(y, m);
+        }
       });
     }
 
@@ -717,24 +815,231 @@ class RiedApp {
     this.setWalletIndex(nextIdx);
   }
 
+  getSelectedMonthString() {
+    return `${this.selectedYear}-${String(this.selectedMonth).padStart(2, '0')}`;
+  }
+
+  getMonthNameIndo(m) {
+    const names = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    return names[m] || '';
+  }
+
+  getSelectedMonthLabel() {
+    return `${this.getMonthNameIndo(this.selectedMonth)} ${this.selectedYear}`;
+  }
+
+  async prevMonth(keepModalOpen = false) {
+    if (this.selectedMonth === 1) {
+      this.selectedYear--;
+      this.selectedMonth = 12;
+    } else {
+      this.selectedMonth--;
+    }
+    this.selectedDay = null;
+    this.updateMonthDisplays();
+    await this.refreshAllData();
+    if (keepModalOpen) {
+      this.populateMonthlyCalendar();
+    }
+  }
+
+  async nextMonth(keepModalOpen = false) {
+    if (this.selectedMonth === 12) {
+      this.selectedYear++;
+      this.selectedMonth = 1;
+    } else {
+      this.selectedMonth++;
+    }
+    this.selectedDay = null;
+    this.updateMonthDisplays();
+    await this.refreshAllData();
+    if (keepModalOpen) {
+      this.populateMonthlyCalendar();
+    }
+  }
+
+  async setMonth(year, month) {
+    this.selectedYear = year;
+    this.selectedMonth = month;
+    this.selectedDay = null;
+    this.updateMonthDisplays();
+    await this.refreshAllData();
+  }
+
+  selectDay(dateStr) {
+    if (this.selectedDay === dateStr) {
+      this.selectedDay = null;
+    } else {
+      this.selectedDay = dateStr;
+    }
+    this.renderCalendarDayStrip();
+    this.updateDayFilterUI();
+    this.renderDashboardForSelectedDay();
+  }
+
+  updateMonthDisplays() {
+    const label = this.getSelectedMonthLabel();
+    const ym = this.getSelectedMonthString();
+    if (this.dom.currentMonthDisplay) this.dom.currentMonthDisplay.textContent = label;
+    if (this.dom.stripMonthLabel) this.dom.stripMonthLabel.textContent = label;
+    if (this.dom.monthlyCalTitle) this.dom.monthlyCalTitle.textContent = label;
+    if (this.dom.filterMonth) this.dom.filterMonth.value = ym;
+
+    const daysInMonth = new Date(this.selectedYear, this.selectedMonth, 0).getDate();
+    if (this.dom.bannerDateRange) {
+      this.dom.bannerDateRange.textContent = `1 ${label} - ${daysInMonth} ${label}`;
+    }
+    if (this.dom.filterDateStart) {
+      this.dom.filterDateStart.value = `${ym}-01`;
+    }
+    if (this.dom.filterDateEnd) {
+      this.dom.filterDateEnd.value = `${ym}-${String(daysInMonth).padStart(2, '0')}`;
+    }
+
+    const now = new Date();
+    const isCurrent = (this.selectedYear === now.getFullYear() && this.selectedMonth === (now.getMonth() + 1));
+    if (this.dom.stripMonthBadge) {
+      if (isCurrent) {
+        this.dom.stripMonthBadge.textContent = 'Bulan Ini';
+        this.dom.stripMonthBadge.className = 'text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full';
+      } else {
+        this.dom.stripMonthBadge.textContent = 'Riwayat';
+        this.dom.stripMonthBadge.className = 'text-[9px] font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950 px-2 py-0.5 rounded-full';
+      }
+    }
+  }
+
+  updateDayFilterUI() {
+    if (this.selectedDay) {
+      const parts = this.selectedDay.split('-');
+      const d = parseInt(parts[2], 10);
+      const m = parseInt(parts[1], 10);
+      const y = parseInt(parts[0], 10);
+      const formattedDate = `${d} ${this.getMonthNameIndo(m)} ${y}`;
+
+      if (this.dom.dayFilterBanner) {
+        this.dom.dayFilterBanner.classList.remove('hidden');
+        this.dom.dayFilterBanner.classList.add('flex');
+      }
+      if (this.dom.filterDayBadgeText) {
+        this.dom.filterDayBadgeText.textContent = formattedDate;
+      }
+      if (this.dom.btnClearDayFilter) {
+        this.dom.btnClearDayFilter.classList.remove('hidden');
+      }
+    } else {
+      if (this.dom.dayFilterBanner) {
+        this.dom.dayFilterBanner.classList.add('hidden');
+        this.dom.dayFilterBanner.classList.remove('flex');
+      }
+      if (this.dom.btnClearDayFilter) {
+        this.dom.btnClearDayFilter.classList.add('hidden');
+      }
+    }
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  renderDashboardForSelectedDay() {
+    if (!this.selectedDay) {
+      this.renderDashboardMetrics();
+      this.renderCurrentCharts();
+      if (this.currentView === 'transaksi') {
+        this.loadTransaksiViewData();
+      }
+      return;
+    }
+
+    const dayTxs = this.transactions.filter(t => t.date === this.selectedDay);
+    const dayExpense = dayTxs.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    const dayIncome = dayTxs.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+
+    if (this.dom.statTotalIncome) {
+      this.dom.statTotalIncome.textContent = formatRupiah(dayIncome);
+    }
+    if (this.dom.statTotalExpense) {
+      this.dom.statTotalExpense.textContent = formatRupiah(dayExpense);
+    }
+    if (this.dom.statTxCount) {
+      this.dom.statTxCount.textContent = `${dayTxs.length} Transaksi`;
+    }
+    if (this.dom.statTotalSavings) {
+      this.dom.statTotalSavings.textContent = formatRupiah(dayIncome - dayExpense);
+    }
+
+    this.renderCurrentCharts();
+
+    if (this.currentView === 'transaksi') {
+      this.loadTransaksiViewData();
+    }
+  }
+
+  populateMonthDropdown(months) {
+    if (!this.dom.filterMonth || !months || months.length === 0) return;
+    const currentVal = this.getSelectedMonthString();
+    let optionsHtml = '';
+    months.forEach(m => {
+      const isSelected = m.month === currentVal ? 'selected' : '';
+      optionsHtml += `<option value="${m.month}" ${isSelected}>${m.label} (${m.tx_count} tx)</option>`;
+    });
+    this.dom.filterMonth.innerHTML = optionsHtml;
+  }
+
   renderCalendarDayStrip() {
     if (!this.dom.calendarDayStrip) return;
-    const days = [
-      { day: 'SEL', date: '15' },
-      { day: 'RAB', date: '16' },
-      { day: 'KAM', date: '17' },
-      { day: 'JUM', date: '18', active: true },
-      { day: 'SAB', date: '19' },
-      { day: 'MIN', date: '20' },
-      { day: 'SEN', date: '21' }
-    ];
+    const daysInMonth = new Date(this.selectedYear, this.selectedMonth, 0).getDate();
+    const dayNames = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
 
-    this.dom.calendarDayStrip.innerHTML = days.map(d => `
-      <div class="day-pill ${d.active ? 'active' : ''}">
-        <span class="text-[9px] font-bold ${d.active ? 'text-white' : 'text-slate-400'}">${d.day}</span>
-        <span class="text-xs font-black ${d.active ? 'text-white' : 'text-slate-800 dark:text-slate-200'}">${d.date}</span>
-      </div>
-    `).join('');
+    let centerDay = 18;
+    if (this.selectedDay) {
+      centerDay = parseInt(this.selectedDay.split('-')[2], 10);
+    } else {
+      const now = new Date();
+      if (this.selectedYear === now.getFullYear() && this.selectedMonth === (now.getMonth() + 1)) {
+        centerDay = Math.min(now.getDate(), daysInMonth);
+      } else {
+        centerDay = Math.min(15, daysInMonth);
+      }
+    }
+
+    let startDay = Math.max(1, centerDay - 3);
+    let endDay = Math.min(daysInMonth, startDay + 6);
+    if (endDay - startDay < 6) {
+      startDay = Math.max(1, endDay - 6);
+    }
+
+    const expenseMap = {};
+    if (this.summary && this.summary.daily_expenses) {
+      this.summary.daily_expenses.forEach(dp => {
+        expenseMap[dp.date] = dp.amount;
+      });
+    }
+
+    let html = '';
+    for (let d = startDay; d <= endDay; d++) {
+      const dateObj = new Date(this.selectedYear, this.selectedMonth - 1, d);
+      const dayName = dayNames[dateObj.getDay()];
+      const dateStr = `${this.selectedYear}-${String(this.selectedMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const isSelected = this.selectedDay === dateStr;
+      const hasExpense = (expenseMap[dateStr] || 0) > 0;
+
+      html += `
+        <div class="day-pill cursor-pointer transition-all ${isSelected ? 'active ring-2 ring-emerald-500' : ''}" data-date="${dateStr}" title="${d} ${this.getSelectedMonthLabel()}${hasExpense ? ' • ' + formatRupiah(expenseMap[dateStr]) : ''}">
+          <span class="text-[9px] font-bold ${isSelected ? 'text-white' : 'text-slate-400'}">${dayName}</span>
+          <span class="text-xs font-black ${isSelected ? 'text-white' : 'text-slate-800 dark:text-slate-200'}">${d}</span>
+          ${hasExpense && !isSelected ? '<span class="w-1 h-1 rounded-full bg-emerald-500 mt-0.5"></span>' : ''}
+        </div>
+      `;
+    }
+
+    this.dom.calendarDayStrip.innerHTML = html;
+
+    this.dom.calendarDayStrip.querySelectorAll('.day-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        sounds.playPop();
+        const dStr = pill.getAttribute('data-date');
+        this.selectDay(dStr);
+      });
+    });
   }
 
   openMonthlyCalendar() {
@@ -742,6 +1047,7 @@ class RiedApp {
     this.populateMonthlyCalendar();
     this.dom.modalMonthlyCalendar.classList.remove('hidden');
     this.dom.modalMonthlyCalendar.classList.add('flex');
+    if (window.lucide) window.lucide.createIcons();
   }
 
   closeMonthlyCalendar() {
@@ -752,48 +1058,82 @@ class RiedApp {
 
   populateMonthlyCalendar() {
     if (!this.dom.monthlyCalendarGrid) return;
-    // 30 days of September 2026. September 1st, 2026 is a Tuesday (index 2: Sun=0, Mon=1, Tue=2)
-    const offset = 2;
+    const daysInMonth = new Date(this.selectedYear, this.selectedMonth, 0).getDate();
+    const firstDayOfWeek = new Date(this.selectedYear, this.selectedMonth - 1, 1).getDay();
+
+    const expenseMap = {};
+    if (this.summary && this.summary.daily_expenses) {
+      this.summary.daily_expenses.forEach(dp => {
+        expenseMap[dp.date] = dp.amount;
+      });
+    }
+
     let html = '';
 
-    // Empty offset days
-    for (let i = 0; i < offset; i++) {
+    for (let i = 0; i < firstDayOfWeek; i++) {
       html += `<div class="p-2 text-slate-300 dark:text-slate-700"></div>`;
     }
 
-    // Days 1 to 30
-    const activeDays = [2, 5, 8, 10, 12, 14, 16, 18];
-    for (let d = 1; d <= 30; d++) {
-      const isActive = activeDays.includes(d);
-      const isToday = d === 18;
-      let classes = 'p-2 rounded-xl transition-all cursor-pointer flex flex-col items-center justify-center ';
-      if (isToday) {
+    const now = new Date();
+    const isCurrentMonth = (this.selectedYear === now.getFullYear() && this.selectedMonth === (now.getMonth() + 1));
+    const todayNum = now.getDate();
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${this.selectedYear}-${String(this.selectedMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const spent = expenseMap[dateStr] || 0;
+      const isToday = isCurrentMonth && d === todayNum;
+      const isSelected = this.selectedDay === dateStr;
+
+      let classes = 'p-2 rounded-xl transition-all cursor-pointer flex flex-col items-center justify-center relative ';
+      if (isSelected) {
+        classes += 'bg-emerald-600 text-white font-black shadow-lg scale-105 ring-2 ring-white';
+      } else if (isToday) {
         classes += 'bg-[#38a852] text-white font-bold shadow-md';
-      } else if (isActive) {
-        classes += 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold';
+      } else if (spent > 0) {
+        classes += 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold hover:bg-emerald-200 dark:hover:bg-emerald-900';
       } else {
         classes += 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800';
       }
 
+      const tooltip = spent > 0 ? `${formatRupiah(spent)} keluar` : 'Tidak ada pengeluaran';
+
       html += `
-        <div class="${classes}">
+        <div class="${classes}" data-cal-date="${dateStr}" title="${d} ${this.getSelectedMonthLabel()}: ${tooltip}">
           <span class="text-xs">${d}</span>
-          ${isActive ? '<span class="w-1 h-1 rounded-full bg-emerald-500 mt-0.5"></span>' : ''}
+          ${spent > 0 && !isSelected && !isToday ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-0.5"></span>' : ''}
         </div>
       `;
     }
 
     this.dom.monthlyCalendarGrid.innerHTML = html;
+
+    this.dom.monthlyCalendarGrid.querySelectorAll('[data-cal-date]').forEach(cell => {
+      cell.addEventListener('click', () => {
+        sounds.playPop();
+        const dStr = cell.getAttribute('data-cal-date');
+        this.closeMonthlyCalendar();
+        this.selectDay(dStr);
+      });
+    });
+
+    if (this.dom.monthlyCalTitle) {
+      this.dom.monthlyCalTitle.textContent = this.getSelectedMonthLabel();
+    }
+    if (this.dom.monthlyCalSummary && this.summary) {
+      this.dom.monthlyCalSummary.textContent = `${this.summary.transactions_count} transaksi • ${formatRupiah(this.summary.total_expense)} keluar di ${this.getSelectedMonthLabel()}`;
+    }
   }
 
   async refreshAllData() {
     try {
-      const [summary, txList, categories, health, savings] = await Promise.all([
-        fetchFinancialSummary(),
-        fetchTransactionsList(),
+      const ym = this.getSelectedMonthString();
+      const [summary, txList, categories, health, savings, months] = await Promise.all([
+        fetchFinancialSummary({ month: ym }),
+        fetchTransactionsList(this.txFilterType, this.txFilterCategory, this.txSearchQuery, null, null, ym),
         fetchCategoriesMeta(),
-        fetchFinancialHealth(),
-        fetchSavingsGoals()
+        fetchFinancialHealth(ym),
+        fetchSavingsGoals(),
+        fetchAvailableMonths().catch(() => [])
       ]);
 
       this.summary = summary;
@@ -801,11 +1141,19 @@ class RiedApp {
       this.categories = categories;
       this.financialHealth = health;
       this.savingsGoals = savings;
+      this.availableMonths = months;
 
+      this.updateMonthDisplays();
+      this.renderCalendarDayStrip();
       this.renderDashboardMetrics();
       this.renderCurrentCharts();
       this.renderHealthRadarUI(health);
       this.renderSavingsGoalsUI(savings);
+      this.populateMonthDropdown(months);
+
+      if (this.dom.statStreakDays && summary) {
+        this.dom.statStreakDays.textContent = `${summary.target_days_current} / ${summary.target_days_total}`;
+      }
 
       if (this.currentView === 'transaksi') {
         this.loadTransaksiViewData();
@@ -841,16 +1189,27 @@ class RiedApp {
     if (!this.dom.txviewFullList) return;
 
     try {
+      const ym = this.getSelectedMonthString();
+      const startDate = this.selectedDay || null;
+      const endDate = this.selectedDay || null;
+      const monthParam = this.selectedDay ? null : ym;
+
       const txs = await fetchTransactionsList(
         this.txFilterType,
         this.txFilterCategory,
-        this.txSearchQuery
+        this.txSearchQuery,
+        startDate,
+        endDate,
+        monthParam
       );
 
       if (txs.length === 0) {
+        const filterMsg = this.selectedDay
+          ? `Tidak ada transaksi tercatat pada tanggal ${this.selectedDay}.`
+          : `Tidak ada transaksi di ${this.getSelectedMonthLabel()}.`;
         this.dom.txviewFullList.innerHTML = `
           <div class="p-8 text-center ried-card text-slate-400 text-xs">
-            Tidak ada transaksi yang cocok dengan kriteria pencarian.
+            ${filterMsg}
           </div>
         `;
         return;
@@ -2044,20 +2403,44 @@ class RiedApp {
     const dataUrl = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = dataUrl;
-    a.download = 'RIED-Wrapped-September-2026.png';
+    const safeMonthName = this.getSelectedMonthLabel().replace(/\s+/g, '-');
+    a.download = `RIED-Wrapped-${safeMonthName}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   }
 
-  applyFilters() {
-    this.renderCurrentCharts();
+  async applyFilters() {
+    const start = this.dom.filterDateStart ? this.dom.filterDateStart.value : null;
+    const end = this.dom.filterDateEnd ? this.dom.filterDateEnd.value : null;
+    const month = this.dom.filterMonth ? this.dom.filterMonth.value : null;
+
+    if (start && end) {
+      try {
+        const summary = await fetchFinancialSummary({ start_date: start, end_date: end });
+        this.summary = summary;
+        this.renderDashboardMetrics();
+        this.renderCurrentCharts();
+
+        if (this.dom.bannerDateRange) {
+          this.dom.bannerDateRange.textContent = `${start} s/d ${end}`;
+        }
+      } catch (err) {
+        console.error('Failed applying date range filter:', err);
+      }
+    } else if (month && month.includes('-')) {
+      const [y, m] = month.split('-').map(Number);
+      await this.setMonth(y, m);
+    }
   }
 
-  resetFilters() {
+  async resetFilters() {
+    this.selectedYear = 2026;
+    this.selectedMonth = 9;
+    this.selectedDay = null;
     if (this.dom.filterCategory) this.dom.filterCategory.value = 'all';
     if (this.dom.filterWallet) this.dom.filterWallet.value = 'all';
-    this.renderCurrentCharts();
+    await this.refreshAllData();
   }
 
   setTheme(isDark) {

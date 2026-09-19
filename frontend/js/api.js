@@ -4,18 +4,32 @@
 
 const API_BASE = '';
 
-export async function fetchFinancialSummary() {
-  const res = await fetch(`${API_BASE}/api/summary`);
+export async function fetchFinancialSummary(params = {}) {
+  const qs = new URLSearchParams();
+  if (params.month) qs.append('month', params.month);
+  if (params.start_date) qs.append('start_date', params.start_date);
+  if (params.end_date) qs.append('end_date', params.end_date);
+  const url = qs.toString() ? `${API_BASE}/api/summary?${qs.toString()}` : `${API_BASE}/api/summary`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error('Gagal memuat ringkasan keuangan');
   return await res.json();
 }
 
-export async function fetchTransactionsList(type = null, category = null, search = null) {
-  let url = `${API_BASE}/api/transactions?limit=150`;
-  if (type) url += `&type=${encodeURIComponent(type)}`;
-  if (category) url += `&category=${encodeURIComponent(category)}`;
-  if (search) url += `&search=${encodeURIComponent(search)}`;
-  const res = await fetch(url);
+export async function fetchAvailableMonths() {
+  const res = await fetch(`${API_BASE}/api/months`);
+  if (!res.ok) throw new Error('Gagal memuat daftar bulan transaksi');
+  return await res.json();
+}
+
+export async function fetchTransactionsList(type = null, category = null, search = null, startDate = null, endDate = null, month = null) {
+  const qs = new URLSearchParams({ limit: '150' });
+  if (type) qs.append('type', type);
+  if (category) qs.append('category', category);
+  if (search) qs.append('search', search);
+  if (startDate) qs.append('start_date', startDate);
+  if (endDate) qs.append('end_date', endDate);
+  if (month) qs.append('month', month);
+  const res = await fetch(`${API_BASE}/api/transactions?${qs.toString()}`);
   if (!res.ok) throw new Error('Gagal memuat daftar transaksi');
   return await res.json();
 }
@@ -130,8 +144,9 @@ export async function deleteSavingsGoal(goalId) {
 }
 
 // Smart Financial Health Radar
-export async function fetchFinancialHealth() {
-  const res = await fetch(`${API_BASE}/api/financial-health`);
+export async function fetchFinancialHealth(month = null) {
+  const url = month ? `${API_BASE}/api/financial-health?month=${encodeURIComponent(month)}` : `${API_BASE}/api/financial-health`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error('Gagal memuat analisis kesehatan finansial');
   return await res.json();
 }
