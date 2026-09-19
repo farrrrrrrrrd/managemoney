@@ -57,6 +57,166 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+/**
+ * 60fps Smooth Rolling Number Counter (Odometer)
+ * Uses cubic ease-out curve for fluid fintech transitions without layout thrashing.
+ */
+export function animateNumber(element, start, end, duration = 500, formatter = formatRupiah) {
+  if (!element) return;
+  const s = typeof start === 'number' && !isNaN(start) ? start : 0;
+  const e = typeof end === 'number' && !isNaN(end) ? end : 0;
+  const diff = e - s;
+  if (diff === 0) {
+    element.textContent = formatter(e);
+    return;
+  }
+  const startTime = performance.now();
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const val = Math.round(s + diff * ease);
+    element.textContent = formatter(val);
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      element.textContent = formatter(e);
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+/**
+ * Fun & Wise Financial Tips for Riedu Mascot
+ */
+const RIEDU_TIPS = [
+  "Mulai hari dengan mencatat pengeluaran sekecil apapun! 🌱",
+  "Alokasikan minimal 20% penghasilan ke tabungan & investasi ya! 🎯",
+  "Kebutuhan pokok (Needs) usahakan tetap di bawah 50% cashflow! 🛡️",
+  "Kopi Rp 25.000 sehari = Rp 750.000 sebulan lho, nikmati dengan bijak! ☕",
+  "Disiplin finansial bukan berarti pelit, tapi memprioritaskan masa depan! ✨",
+  "Cek celengan impianmu hari ini, konsistensi kunci sukses finansial! 🏆",
+  "Emergency fund minimal 3-6 bulan pengeluaran rutin harus aman! 💼",
+  "Portofolio terdiversifikasi melindungi aset dari volatilitas pasar! 📈",
+  "Hebat! Streak pencatatan keuanganmu terus bertambah, pertahankan! 🔥",
+  "Setiap rupiah yang kamu hemat adalah prajurit modal yang bekerja untukmu! 👑",
+  "Catat pengeluaran segera setelah bayar agar tidak kelupaan! ⚡",
+  "Kesehatan finansial prima membawa ketenangan pikiran dan tidur nyenyak! 🌿"
+];
+
+/**
+ * Ultra-Light Canvas Celebration Particle Engine (0 KB External Dependencies)
+ * Generates falling gold coins, matcha green leaves, and colorful confetti with physics.
+ */
+class ConfettiEngine {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas ? canvas.getContext('2d') : null;
+    this.particles = [];
+    this.animId = null;
+    this.colors = ['#38a852', '#4efa8b', '#fbbf24', '#f59e0b', '#38bdf8', '#a855f7', '#ec4899'];
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  resize() {
+    if (!this.canvas) return;
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+  }
+
+  burst(originX = window.innerWidth / 2, originY = window.innerHeight / 2, count = 65) {
+    if (!this.canvas || !this.ctx) return;
+    this.resize();
+    this.canvas.style.display = 'block';
+
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 12 + 4;
+      this.particles.push({
+        x: originX,
+        y: originY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 5,
+        size: Math.random() * 8 + 4,
+        color: this.colors[Math.floor(Math.random() * this.colors.length)],
+        tilt: Math.random() * 10 - 10,
+        tiltSpeed: Math.random() * 0.12 + 0.04,
+        rotation: Math.random() * 360,
+        rotSpeed: Math.random() * 4 - 2,
+        isCoin: Math.random() > 0.65,
+        alpha: 1,
+        life: 1
+      });
+    }
+
+    if (!this.animId) {
+      this.loop();
+    }
+
+    // Safety timeout to ensure animation loop terminates and frees rendering threads
+    setTimeout(() => {
+      this.particles = [];
+      if (this.animId) {
+        cancelAnimationFrame(this.animId);
+        this.animId = null;
+      }
+      if (this.ctx && this.canvas) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.canvas.style.display = 'none';
+      }
+    }, 1200);
+  }
+
+  loop() {
+    if (!this.ctx) return;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.35;
+      p.vx *= 0.98;
+      p.tilt += p.tiltSpeed;
+      p.rotation += p.rotSpeed;
+      p.life -= 0.014;
+      p.alpha = Math.max(p.life, 0);
+
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      this.ctx.rotate((p.rotation * Math.PI) / 180);
+      this.ctx.globalAlpha = p.alpha;
+
+      if (p.isCoin) {
+        this.ctx.beginPath();
+        this.ctx.ellipse(0, 0, p.size, p.size * Math.abs(Math.sin(p.tilt)), 0, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#fbbf24';
+        this.ctx.fill();
+        this.ctx.strokeStyle = '#d97706';
+        this.ctx.lineWidth = 1;
+        this.ctx.stroke();
+      } else {
+        this.ctx.fillStyle = p.color;
+        this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+      }
+
+      this.ctx.restore();
+
+      if (p.life <= 0 || p.y > this.canvas.height + 50) {
+        this.particles.splice(i, 1);
+      }
+    }
+
+    if (this.particles.length > 0) {
+      this.animId = requestAnimationFrame(() => this.loop());
+    } else {
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.canvas.style.display = 'none';
+      this.animId = null;
+    }
+  }
+}
+
 class RiedApp {
   constructor() {
     this.currentView = 'dashboard';
@@ -107,6 +267,11 @@ class RiedApp {
     this.selectedDay = null; // 'YYYY-MM-DD' or null
     this.availableMonths = [];
 
+    // Interactive Animation & Particle State
+    this.prevValues = { balance: 0, income: 0, expense: 0, savings: 0, txCount: 0 };
+    this.confetti = null;
+    this.mascotBubbleTimer = null;
+
     this.cacheDom();
     this.init();
   }
@@ -127,6 +292,15 @@ class RiedApp {
       themeToggle: document.getElementById('theme-toggle'),
       themeIcon: document.getElementById('theme-icon'),
       settingsThemeBtn: document.getElementById('settings-theme-btn'),
+
+      // Interactive Mascot & Gamification
+      mascotRiedu: document.getElementById('mascot-riedu'),
+      mascotAvatarInner: document.getElementById('mascot-avatar-inner'),
+      mascotSpeechBubble: document.getElementById('mascot-speech-bubble'),
+      mascotSpeechText: document.getElementById('mascot-speech-text'),
+      btnStreakCheckin: document.getElementById('btn-streak-checkin'),
+      streakCheckinText: document.getElementById('streak-checkin-text'),
+      canvasConfetti: document.getElementById('canvas-confetti'),
 
       // Views
       views: {
@@ -335,6 +509,12 @@ class RiedApp {
     this.initCommandPalette();
     this.initFloatingActionButton();
     this.initWrappedModal();
+    this.initConfetti();
+    this.init3DTilt();
+    this.initMascot();
+    this.initStreakCheckIn();
+    this.initQuickExpenseChips();
+    this.initRippleEffect();
 
     // 4. Attach Canvas Interactivity
     this.initCanvasInteractivity();
@@ -698,17 +878,18 @@ class RiedApp {
   switchView(viewName) {
     if (!this.dom.views[viewName]) return;
     this.currentView = viewName;
+    sounds.playWhoosh();
 
-    // Toggle views visibility
+    // Toggle views visibility with staggered animation
     Object.keys(this.dom.views).forEach((key) => {
       const el = this.dom.views[key];
       if (!el) return;
       if (key === viewName) {
         el.classList.remove('hidden');
-        el.classList.add('animate-fade-in');
+        el.classList.add('animate-fade-in', 'view-stagger-container');
       } else {
         el.classList.add('hidden');
-        el.classList.remove('animate-fade-in');
+        el.classList.remove('animate-fade-in', 'view-stagger-container');
       }
     });
 
@@ -791,7 +972,9 @@ class RiedApp {
     const w = this.wallets[this.activeWalletIndex];
 
     if (this.dom.atmCardBalance) {
-      this.dom.atmCardBalance.textContent = formatRupiah(w.balance);
+      const prevBal = this.prevValues ? this.prevValues.balance : 0;
+      animateNumber(this.dom.atmCardBalance, prevBal, w.balance, 450, formatRupiah);
+      if (this.prevValues) this.prevValues.balance = w.balance;
     }
     if (this.dom.atmWalletName) {
       this.dom.atmWalletName.textContent = w.name;
@@ -1168,21 +1351,34 @@ class RiedApp {
   renderDashboardMetrics() {
     if (!this.summary) return;
 
+    const prev = this.prevValues || { income: 0, expense: 0, savings: 0, balance: 0, txCount: 0 };
+    const inc = this.summary.total_income || 0;
+    const exp = this.summary.total_expense || 0;
+    const bal = this.summary.total_balance || 0;
+    const cnt = this.summary.transactions_count || 0;
+
     if (this.dom.statTotalIncome) {
-      this.dom.statTotalIncome.textContent = formatRupiah(this.summary.total_income);
+      animateNumber(this.dom.statTotalIncome, prev.income, inc, 450, formatRupiah);
+      prev.income = inc;
     }
     if (this.dom.statTotalExpense) {
-      this.dom.statTotalExpense.textContent = formatRupiah(this.summary.total_expense);
+      animateNumber(this.dom.statTotalExpense, prev.expense, exp, 450, formatRupiah);
+      prev.expense = exp;
     }
     if (this.dom.statTxCount) {
-      this.dom.statTxCount.textContent = `${this.summary.transactions_count} Transaksi`;
+      animateNumber(this.dom.statTxCount, prev.txCount, cnt, 350, n => `${n} Transaksi`);
+      prev.txCount = cnt;
     }
     if (this.dom.statTotalSavings) {
-      this.dom.statTotalSavings.textContent = formatRupiah(this.summary.total_balance);
+      animateNumber(this.dom.statTotalSavings, prev.savings, bal, 450, formatRupiah);
+      prev.savings = bal;
     }
     if (this.dom.atmCardBalance && this.activeWalletIndex === 0) {
-      this.dom.atmCardBalance.textContent = formatRupiah(this.summary.total_balance);
+      animateNumber(this.dom.atmCardBalance, prev.balance, bal, 500, formatRupiah);
+      prev.balance = bal;
     }
+
+    this.updateMascotMood();
   }
 
   async loadTransaksiViewData() {
@@ -1269,12 +1465,12 @@ class RiedApp {
     this.editingTxId = isEdit && txData ? txData.id : null;
     this.dom.modalTitle.textContent = isEdit ? 'Edit Transaksi' : 'Tambah Transaksi Baru';
 
-    if (isEdit && txData) {
-      this.dom.inputTitle.value = txData.title;
-      this.dom.inputAmount.value = txData.amount;
-      this.dom.inputCategory.value = txData.category;
-      this.dom.inputType.value = txData.type;
-      this.dom.inputDate.value = txData.date;
+    if (txData) {
+      this.dom.inputTitle.value = txData.title || '';
+      this.dom.inputAmount.value = txData.amount || '';
+      this.dom.inputCategory.value = txData.category || 'Makan & Minum';
+      this.dom.inputType.value = txData.type || 'expense';
+      this.dom.inputDate.value = txData.date || new Date().toISOString().split('T')[0];
       this.dom.inputNotes.value = txData.notes || '';
     } else {
       this.dom.modalForm.reset();
@@ -1307,10 +1503,14 @@ class RiedApp {
     try {
       if (this.editingTxId) {
         await updateExistingTransaction(this.editingTxId, payload);
+        sounds.playChime();
       } else {
         await createNewTransaction(payload);
+        sounds.playCoinDrop();
+        if (this.confetti) {
+          this.confetti.burst(window.innerWidth / 2, window.innerHeight / 3, 60);
+        }
       }
-      sounds.playChime();
       this.closeTxModal();
       await this.refreshAllData();
     } catch (err) {
@@ -1729,7 +1929,10 @@ class RiedApp {
         try {
           sounds.playPop();
           await depositSavingsGoal(this.activeGoalDepositId, amount);
-          sounds.playChime();
+          sounds.playCoinDrop();
+          if (this.confetti) {
+            this.confetti.burst(window.innerWidth / 2, window.innerHeight / 2, 75);
+          }
           closeDepositModal();
           this.dom.formSavingsDeposit.reset();
           await this.refreshAllData();
@@ -1758,18 +1961,20 @@ class RiedApp {
     if (!goals || goals.length === 0) {
       this.dom.savingsGoalsContainer.innerHTML = `
         <div class="col-span-full p-8 text-center ried-card text-slate-400 text-xs">
-          Belum ada target tabungan aktif. Klik "+ Target Baru" untuk mulai mewujudkan impian.
+          Belum ada celengan impian. Buat target tabungan pertamamu!
         </div>
       `;
       return;
     }
 
     const catIcons = {
-      Darurat: 'shield-alert',
-      Gadget: 'smartphone',
-      Liburan: 'plane',
       Kendaraan: 'car',
+      Pendidikan: 'graduation-cap',
+      Elektronik: 'laptop',
+      Liburan: 'plane',
       Investasi: 'trending-up',
+      Darurat: 'shield-alert',
+      Rumah: 'home',
       Lainnya: 'piggy-bank'
     };
 
@@ -1780,7 +1985,8 @@ class RiedApp {
       const isCompleted = g.current_amount >= g.target_amount;
 
       return `
-        <div class="ried-card p-4 space-y-3 flex flex-col justify-between hover:border-emerald-500/50 transition-all goal-card">
+        <div class="ried-card p-4 space-y-3 flex flex-col justify-between hover:border-emerald-500/50 transition-all goal-card tilt-card-3d">
+          <div class="tilt-sheen"></div>
           <div class="space-y-2">
             <div class="flex items-start justify-between">
               <div class="flex items-center space-x-2.5">
@@ -1859,6 +2065,7 @@ class RiedApp {
       });
     });
 
+    if (this.attachTiltCards) this.attachTiltCards();
     if (window.lucide) window.lucide.createIcons();
   }
 
@@ -2457,6 +2664,212 @@ class RiedApp {
       window.lucide.createIcons();
     }
     this.renderCurrentCharts();
+  }
+
+  // =========================================================================
+  // INTERACTIVE MODULES (Mascot, 3D Tilt, Confetti, Streak & Quick Chips)
+  // =========================================================================
+  initConfetti() {
+    if (!this.dom.canvasConfetti) return;
+    this.confetti = new ConfettiEngine(this.dom.canvasConfetti);
+  }
+
+  init3DTilt() {
+    const attachTilt = () => {
+      const cards = document.querySelectorAll('.tilt-card-3d');
+      cards.forEach((card) => {
+        if (card.dataset.tiltAttached) return;
+        card.dataset.tiltAttached = 'true';
+        let sheen = card.querySelector('.tilt-sheen');
+        if (!sheen) {
+          sheen = document.createElement('div');
+          sheen.className = 'tilt-sheen';
+          card.prepend(sheen);
+        }
+
+        card.addEventListener('mousemove', (e) => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          const rotateX = ((y - centerY) / centerY) * -8;
+          const rotateY = ((x - centerX) / centerX) * 8;
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+          sheen.style.opacity = '1';
+          sheen.style.background = `radial-gradient(circle at ${(x / rect.width) * 100}% ${(y / rect.height) * 100}%, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 65%)`;
+        });
+
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+          sheen.style.opacity = '0';
+        });
+      });
+    };
+
+    attachTilt();
+    this.attachTiltCards = attachTilt;
+  }
+
+  initMascot() {
+    if (!this.dom.mascotRiedu) return;
+
+    this.dom.mascotRiedu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.triggerMascotInteraction(e);
+    });
+
+    this.updateMascotMood();
+  }
+
+  triggerMascotInteraction(e) {
+    sounds.playPurr();
+
+    if (this.dom.mascotAvatarInner) {
+      this.dom.mascotAvatarInner.classList.remove('mascot-wiggle');
+      void this.dom.mascotAvatarInner.offsetWidth;
+      this.dom.mascotAvatarInner.classList.add('mascot-wiggle');
+    }
+
+    for (let i = 0; i < 3; i++) {
+      const heart = document.createElement('span');
+      heart.className = 'heart-particle';
+      heart.textContent = ['💚', '✨', '🌱'][i % 3];
+      const offsetX = (i - 1) * 16 + (Math.random() * 8 - 4);
+      heart.style.setProperty('--tx', `${offsetX}px`);
+      heart.style.left = `calc(50% + ${offsetX}px)`;
+      heart.style.top = '10px';
+      this.dom.mascotRiedu.appendChild(heart);
+      setTimeout(() => heart.remove(), 750);
+    }
+
+    const randomTip = RIEDU_TIPS[Math.floor(Math.random() * RIEDU_TIPS.length)];
+    if (this.dom.mascotSpeechText) {
+      this.dom.mascotSpeechText.textContent = randomTip;
+    }
+    if (this.dom.mascotSpeechBubble) {
+      this.dom.mascotSpeechBubble.classList.add('show');
+      if (this.mascotBubbleTimer) clearTimeout(this.mascotBubbleTimer);
+      this.mascotBubbleTimer = setTimeout(() => {
+        if (this.dom.mascotSpeechBubble) {
+          this.dom.mascotSpeechBubble.classList.remove('show');
+        }
+      }, 3600);
+    }
+  }
+
+  updateMascotMood() {
+    if (!this.summary || !this.dom.mascotRiedu) return;
+    const eyeLeft = document.getElementById('mascot-eye-left');
+    const eyeRight = document.getElementById('mascot-eye-right');
+    const mouth = document.getElementById('mascot-mouth');
+    if (!eyeLeft || !eyeRight || !mouth) return;
+
+    const expense = this.summary.total_expense || 0;
+    const income = this.summary.total_income || 1;
+    const expenseRatio = expense / income;
+
+    if (expenseRatio > 0.85) {
+      eyeLeft.setAttribute('r', '2.5');
+      eyeRight.setAttribute('r', '2.5');
+      mouth.setAttribute('d', 'M28 44H36');
+    } else {
+      eyeLeft.setAttribute('r', '2');
+      eyeRight.setAttribute('r', '2');
+      mouth.setAttribute('d', 'M28 43C30 45 34 45 36 43');
+    }
+  }
+
+  initStreakCheckIn() {
+    if (!this.dom.btnStreakCheckin) return;
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const lastCheckin = localStorage.getItem('ried-streak-last-checkin');
+
+    if (lastCheckin === todayStr) {
+      this.dom.btnStreakCheckin.classList.add('checked');
+      if (this.dom.streakCheckinText) {
+        this.dom.streakCheckinText.textContent = 'Sudah Check-in ✓';
+      }
+    } else {
+      this.dom.btnStreakCheckin.classList.remove('checked');
+      if (this.dom.streakCheckinText) {
+        this.dom.streakCheckinText.textContent = 'Check-in ⚡';
+      }
+    }
+
+    this.dom.btnStreakCheckin.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const currentCheckin = localStorage.getItem('ried-streak-last-checkin');
+      if (currentCheckin === todayStr) {
+        sounds.playPop();
+        return;
+      }
+
+      sounds.playLevelUp();
+      localStorage.setItem('ried-streak-last-checkin', todayStr);
+      this.dom.btnStreakCheckin.classList.add('checked');
+      if (this.dom.streakCheckinText) {
+        this.dom.streakCheckinText.textContent = 'Sudah Check-in ✓';
+      }
+
+      if (this.dom.statStreakCurrent) {
+        const curText = this.dom.statStreakCurrent.textContent || '0';
+        const curNum = parseInt(curText.replace(/\D/g, ''), 10) || 0;
+        animateNumber(this.dom.statStreakCurrent, curNum, curNum + 1, 400, n => `${n} hari`);
+      }
+
+      const rect = this.dom.btnStreakCheckin.getBoundingClientRect();
+      if (this.confetti) {
+        this.confetti.burst(rect.left + rect.width / 2, rect.top + rect.height / 2, 45);
+      }
+    });
+  }
+
+  initQuickExpenseChips() {
+    const chips = document.querySelectorAll('.quick-chip-btn');
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        sounds.playCoinDrop();
+        const title = chip.getAttribute('data-quick-title') || 'Pengeluaran Cepat';
+        const amount = chip.getAttribute('data-quick-amount') || '25000';
+        const category = chip.getAttribute('data-quick-cat') || 'Makan & Minum';
+
+        this.openTxModal(false, {
+          title,
+          amount: parseInt(amount, 10),
+          category,
+          type: 'expense',
+          date: new Date().toISOString().slice(0, 10),
+          notes: 'Dicatat via Catat Kilat 1-Tap ⚡'
+        });
+      });
+    });
+  }
+
+  initRippleEffect() {
+    document.addEventListener('click', (e) => {
+      const target = e.target.closest('.ripple-target, button, .sidebar-link, .range-pill, .goal-card');
+      if (!target) return;
+
+      const rect = target.getBoundingClientRect();
+      const circle = document.createElement('span');
+      const diameter = Math.max(rect.width, rect.height);
+      const radius = diameter / 2;
+
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${e.clientX - rect.left - radius}px`;
+      circle.style.top = `${e.clientY - rect.top - radius}px`;
+      circle.classList.add('click-ripple');
+
+      const existingRipple = target.querySelector('.click-ripple');
+      if (existingRipple) {
+        existingRipple.remove();
+      }
+
+      target.appendChild(circle);
+      setTimeout(() => circle.remove(), 500);
+    });
   }
 
   updateSoundButtonUI() {

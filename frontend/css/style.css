@@ -506,4 +506,299 @@ body {
   cursor: pointer;
 }
 
+/* ========================================================================= */
+/* 3D TILT & SPECULAR SHEEN PHYSICS */
+/* ========================================================================= */
+.tilt-card-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.12s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.15s ease;
+  will-change: transform;
+  position: relative;
+}
+
+.tilt-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 65%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  mix-blend-mode: overlay;
+  z-index: 10;
+}
+
+/* ========================================================================= */
+/* RIEDU MASCOT & EMOTIONAL AVATAR */
+/* ========================================================================= */
+.mascot-container {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mascot-container:hover {
+  transform: scale(1.08);
+}
+
+.mascot-avatar {
+  animation: floatMascot 3.2s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes floatMascot {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(1.5deg);
+  }
+}
+
+.mascot-wiggle {
+  animation: wiggleMascot 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
+}
+
+@keyframes wiggleMascot {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  20% { transform: scale(1.22) rotate(-12deg); }
+  40% { transform: scale(1.22) rotate(10deg); }
+  60% { transform: scale(1.15) rotate(-6deg); }
+  80% { transform: scale(1.08) rotate(3deg); }
+}
+
+.mascot-bubble {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: #ffffff;
+  color: #1a2b1f;
+  border: 1px solid #cce3cb;
+  padding: 8px 14px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 10px 25px -5px rgba(25, 45, 25, 0.18);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 50;
+}
+
+.dark .mascot-bubble {
+  background: #15241a;
+  color: #e5f5e8;
+  border-color: #2b4632;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+}
+
+.mascot-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #ffffff transparent transparent transparent;
+}
+
+.dark .mascot-bubble::after {
+  border-color: #15241a transparent transparent transparent;
+}
+
+.mascot-bubble.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0px);
+}
+
+.heart-particle {
+  position: absolute;
+  pointer-events: none;
+  font-size: 14px;
+  animation: floatParticle 0.75s ease-out forwards;
+  z-index: 60;
+}
+
+@keyframes floatParticle {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx, 0), -38px) scale(1.3);
+  }
+}
+
+/* ========================================================================= */
+/* CONCENTRIC CLICK RIPPLE */
+/* ========================================================================= */
+.ripple-target {
+  position: relative;
+  overflow: hidden;
+}
+
+.click-ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: rippleGrow 0.5s ease-out;
+  background-color: rgba(56, 168, 82, 0.22);
+  pointer-events: none;
+}
+
+.dark .click-ripple {
+  background-color: rgba(78, 250, 139, 0.24);
+}
+
+@keyframes rippleGrow {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ========================================================================= */
+/* CELEBRATION CONFETTI CANVAS */
+/* ========================================================================= */
+#canvas-confetti {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 99999;
+  display: none;
+}
+
+/* ========================================================================= */
+/* HABIT STREAK INTERACTIVE FLAME & CHECK-IN */
+/* ========================================================================= */
+.flame-pulse {
+  animation: flameGlow 2s infinite ease-in-out;
+}
+
+@keyframes flameGlow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 4px rgba(249, 115, 22, 0.3));
+  }
+  50% {
+    transform: scale(1.12);
+    filter: drop-shadow(0 0 10px rgba(249, 115, 22, 0.75));
+  }
+}
+
+.streak-checkin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  background: rgba(254, 243, 199, 0.6);
+  color: #b45309;
+}
+
+.dark .streak-checkin-btn {
+  background: rgba(120, 53, 15, 0.25);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fcd34d;
+}
+
+.streak-checkin-btn:hover {
+  transform: translateY(-1px) scale(1.04);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.streak-checkin-btn.checked {
+  background: #ecfdf5;
+  border-color: #34d399;
+  color: #047857;
+  cursor: default;
+}
+
+.dark .streak-checkin-btn.checked {
+  background: #064e3b;
+  border-color: #059669;
+  color: #6ee7b7;
+}
+
+/* ========================================================================= */
+/* QUICK EXPENSE PRESET CHIPS */
+/* ========================================================================= */
+.quick-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ffffff;
+  border: 1px solid #dde7da;
+  color: #27382b;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+}
+
+.dark .quick-chip-btn {
+  background: #142017;
+  border-color: #233628;
+  color: #d1fae5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.quick-chip-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  border-color: #38a852;
+  box-shadow: 0 6px 16px rgba(56, 168, 82, 0.16);
+  color: #15803d;
+}
+
+.dark .quick-chip-btn:hover {
+  border-color: #4efa8b;
+  color: #4efa8b;
+  box-shadow: 0 6px 16px rgba(78, 250, 139, 0.16);
+}
+
+/* ========================================================================= */
+/* FLUID STAGGERED VIEW TRANSITIONS */
+/* ========================================================================= */
+.view-stagger-container > * {
+  animation: staggerFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.view-stagger-container > *:nth-child(1) { animation-delay: 0.02s; }
+.view-stagger-container > *:nth-child(2) { animation-delay: 0.05s; }
+.view-stagger-container > *:nth-child(3) { animation-delay: 0.08s; }
+.view-stagger-container > *:nth-child(4) { animation-delay: 0.11s; }
+.view-stagger-container > *:nth-child(5) { animation-delay: 0.14s; }
+
+@keyframes staggerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
 

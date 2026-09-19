@@ -234,6 +234,32 @@
               </p>
             </div>
 
+            <!-- Interactive Mascot "Riedu" (The Matcha Financial Sprout) -->
+            <div id="mascot-riedu" class="mascot-container z-20 shrink-0" title="Klik aku untuk tips finansial & sapaan!">
+              <div class="mascot-avatar" id="mascot-avatar-inner">
+                <svg class="w-14 h-14 filter drop-shadow-md cursor-pointer" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Sprout Leaves -->
+                  <path id="mascot-leaf-left" d="M30 20C24 14 20 18 20 22C20 26 28 25 32 23" fill="#4ade80" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/>
+                  <path id="mascot-leaf-right" d="M34 21C40 13 46 16 45 21C44 26 36 25 32 23" fill="#22c55e" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/>
+                  <!-- Stem -->
+                  <path d="M32 23V28" stroke="#15803d" stroke-width="2" stroke-linecap="round"/>
+                  <!-- Sprout Head/Body -->
+                  <circle cx="32" cy="40" r="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+                  <!-- Cheeks -->
+                  <ellipse cx="23" cy="42" rx="2.5" ry="1.5" fill="#fca5a5" opacity="0.8"/>
+                  <ellipse cx="41" cy="42" rx="2.5" ry="1.5" fill="#fca5a5" opacity="0.8"/>
+                  <!-- Eyes -->
+                  <circle id="mascot-eye-left" cx="26" cy="38" r="2" fill="#14532d"/>
+                  <circle id="mascot-eye-right" cx="38" cy="38" r="2" fill="#14532d"/>
+                  <!-- Smile -->
+                  <path id="mascot-mouth" d="M28 43C30 45 34 45 36 43" stroke="#14532d" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div id="mascot-speech-bubble" class="mascot-bubble">
+                <span id="mascot-speech-text">Halo Ried! Keuanganmu aman! 🌱</span>
+              </div>
+            </div>
+
             <!-- Action Buttons: Excel & PDF -->
             <div class="flex items-center space-x-2.5 z-10 shrink-0">
               <button id="btn-export-excel" class="px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-slate-800 dark:bg-slate-900/80 dark:hover:bg-slate-900 dark:text-white font-bold text-xs shadow-sm flex items-center space-x-1.5 transition-all">
@@ -283,12 +309,16 @@
             <div class="md:col-span-4 ried-card p-4 flex flex-col justify-between space-y-2">
               <div class="flex items-center justify-between pb-1 border-b border-[#dde7da] dark:border-[#1c2b20]">
                 <div class="flex items-center space-x-2">
-                  <i data-lucide="flame" class="w-4 h-4 text-amber-500"></i>
+                  <i data-lucide="flame" class="w-4 h-4 text-amber-500 flame-pulse"></i>
                   <div>
                     <span class="text-[10px] uppercase font-bold text-slate-400 block">Streak Berjalan</span>
                     <span id="stat-streak-current" class="text-sm font-black text-slate-900 dark:text-white">0 hari</span>
                   </div>
                 </div>
+                <button id="btn-streak-checkin" class="streak-checkin-btn" title="Check-in keuangan hari ini">
+                  <i data-lucide="zap" class="w-3 h-3 text-amber-500"></i>
+                  <span id="streak-checkin-text">Check-in ⚡</span>
+                </button>
               </div>
 
               <div class="flex items-center justify-between pb-1 border-b border-[#dde7da] dark:border-[#1c2b20]">
@@ -313,7 +343,8 @@
             </div>
 
             <!-- ATM / Dompet Virtual Card (Col 4) -->
-            <div class="md:col-span-4 atm-card p-5 flex flex-col justify-between h-48 cursor-pointer relative transition-transform hover:scale-[1.01]" id="atm-card-widget" title="Klik untuk mengganti dompet aktif">
+            <div class="md:col-span-4 atm-card tilt-card-3d p-5 flex flex-col justify-between h-48 cursor-pointer relative" id="atm-card-widget" title="Klik untuk mengganti dompet aktif">
+              <div class="tilt-sheen"></div>
               <div class="flex items-start justify-between">
                 <div>
                   <span class="text-[10px] font-bold text-emerald-100 uppercase tracking-widest block" id="atm-card-subtitle">RIED DOMPET UTAMA</span>
@@ -392,6 +423,32 @@
               <span class="text-[10px] text-slate-400 block truncate">Kategori tabungan aktif</span>
             </div>
 
+          </div>
+
+          <!-- 2.5 QUICK EXPENSE PRESET CHIPS (1-Tap Fast Expense Logger) -->
+          <div class="flex items-center justify-between flex-wrap gap-2.5 p-3 rounded-2xl bg-white dark:bg-[#131e16] border border-[#dde7da] dark:border-[#1c2b20] shadow-sm">
+            <div class="flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+              <i data-lucide="zap" class="w-4 h-4 text-amber-500 flame-pulse"></i>
+              <span>Catat Kilat:</span>
+            </div>
+            <div class="flex items-center flex-wrap gap-2" id="quick-expense-chips">
+              <button class="quick-chip-btn ripple-target" data-quick-title="Kopi Santai" data-quick-amount="25000" data-quick-cat="Makan & Minum">
+                <span>☕ Kopi</span>
+                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">25k</span>
+              </button>
+              <button class="quick-chip-btn ripple-target" data-quick-title="Makan Siang" data-quick-amount="35000" data-quick-cat="Makan & Minum">
+                <span>🍱 Makan</span>
+                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">35k</span>
+              </button>
+              <button class="quick-chip-btn ripple-target" data-quick-title="Bensin Pertamax" data-quick-amount="50000" data-quick-cat="Transportasi">
+                <span>⛽ Bensin</span>
+                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">50k</span>
+              </button>
+              <button class="quick-chip-btn ripple-target" data-quick-title="Belanja Harian" data-quick-amount="100000" data-quick-cat="Kebutuhan">
+                <span>🛒 Minimarket</span>
+                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">100k</span>
+              </button>
+            </div>
           </div>
 
           <!-- 4. ROW 3: GRAFIK PENGELUARAN INTERAKTIF + FILTER ANALITIK -->
@@ -1802,6 +1859,9 @@ Gunakan /budget untuk melihat seluruh ringkasan.</textarea>
       <i data-lucide="plus" id="fab-icon" class="w-6 h-6 transition-transform"></i>
     </button>
   </div>
+
+  <!-- CELEBRATION CONFETTI CANVAS -->
+  <canvas id="canvas-confetti"></canvas>
 
   <!-- ES Module Bootstrap -->
   <script type="module" src="./js/app.js"></script>
