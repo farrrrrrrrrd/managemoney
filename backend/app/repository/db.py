@@ -43,7 +43,10 @@ if not ENV_PATH.exists():
 if ENV_PATH.exists():
     load_dotenv(ENV_PATH)
 
-DB_PATH = Path(__file__).resolve().parent.parent.parent / "ried_finance.db"
+if os.getenv("VERCEL") == "1" or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+    DB_PATH = Path("/tmp") / "ried_finance.db"
+else:
+    DB_PATH = Path(__file__).resolve().parent.parent.parent / "ried_finance.db"
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
@@ -1579,4 +1582,7 @@ def get_financial_health(month: Optional[str] = None) -> FinancialHealthResult:
 
 
 # Auto initialize local replica on startup
-init_db()
+try:
+    init_db()
+except Exception as _init_err:
+    logger.warning("Local SQLite init_db skipped/failed: %s", _init_err)

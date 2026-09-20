@@ -16,3 +16,6 @@ secrets/
 __pycache__/
 *.pyc
 *.db
+
+.vercel
+.env*
