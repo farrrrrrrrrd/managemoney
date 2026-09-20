@@ -481,6 +481,42 @@ class TelegramBotService:
                 pass
             self._poll_task = None
 
+    async def set_webhook(self, webhook_url: str) -> Dict[str, Any]:
+        """Registers the webhook URL with Telegram Bot API."""
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                res = await client.post(
+                    f"{self.api_url}/setWebhook",
+                    json={
+                        "url": webhook_url,
+                        "allowed_updates": ["message", "callback_query"]
+                    }
+                )
+                return res.json()
+            except Exception as e:
+                logger.error(f"Failed setting webhook: {e}")
+                return {"ok": False, "error": str(e)}
+
+    async def get_webhook_info(self) -> Dict[str, Any]:
+        """Gets current webhook status from Telegram Bot API."""
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                res = await client.get(f"{self.api_url}/getWebhookInfo")
+                return res.json()
+            except Exception as e:
+                logger.error(f"Failed getting webhook info: {e}")
+                return {"ok": False, "error": str(e)}
+
+    async def delete_webhook(self) -> Dict[str, Any]:
+        """Removes webhook configuration from Telegram Bot API."""
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                res = await client.post(f"{self.api_url}/deleteWebhook")
+                return res.json()
+            except Exception as e:
+                logger.error(f"Failed deleting webhook: {e}")
+                return {"ok": False, "error": str(e)}
+
     def get_status(self) -> Dict[str, Any]:
         """Returns runtime diagnostics for API & UI dashboard."""
         return {

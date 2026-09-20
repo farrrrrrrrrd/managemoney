@@ -4,6 +4,7 @@ Initializes FastAPI, mounts REST routes, enables CORS, manages Telegram bot life
 and serves the static frontend.
 """
 
+import os
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -16,11 +17,13 @@ from backend.app.telegram_service import telegram_service
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Launch Telegram Bot Long-Polling Service
-    telegram_service.start()
+    # Disable background long polling in serverless environments (e.g. Vercel)
+    is_serverless = os.getenv("VERCEL") == "1" or os.getenv("TELEGRAM_MODE", "").lower() == "webhook"
+    if not is_serverless:
+        telegram_service.start()
     yield
-    # Shutdown: Gracefully stop Telegram Bot Long-Polling
-    await telegram_service.stop()
+    if not is_serverless:
+        await telegram_service.stop()
 
 
 app = FastAPI(

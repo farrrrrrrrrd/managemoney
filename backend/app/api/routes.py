@@ -4,9 +4,12 @@ Provides endpoints for financial dashboard summaries, multi-view transaction CRU
 category budget analytics, and CSV data export.
 """
 
-from typing import List, Optional, Dict
+import logging
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, status, Query, Response
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger("ried.api")
 
 from backend.app.domain.models import (
     Transaction,
@@ -202,6 +205,43 @@ async def stop_telegram_bot():
     from backend.app.telegram_service import telegram_service
     await telegram_service.stop()
     return {"status": "stopped", "diagnostics": telegram_service.get_status()}
+
+
+class SetWebhookRequest(BaseModel):
+    webhook_url: str = Field(..., description="Full HTTPS webhook URL, e.g. https://your-app.vercel.app/api/telegram/webhook")
+
+
+@router.post("/telegram/webhook", summary="Telegram Webhook Receiver")
+async def telegram_webhook(update: Dict[str, Any]):
+    """Receives real-time update push from Telegram Bot API."""
+    from backend.app.telegram_service import telegram_service
+    try:
+        await telegram_service.process_update(update)
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error(f"Error processing Telegram webhook: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@router.post("/telegram/set-webhook", summary="Set Telegram Webhook URL")
+async def set_telegram_webhook(payload: SetWebhookRequest):
+    """Registers or updates the Telegram Bot webhook URL."""
+    from backend.app.telegram_service import telegram_service
+    return await telegram_service.set_webhook(payload.webhook_url)
+
+
+@router.get("/telegram/webhook-info", summary="Get Telegram Webhook Info")
+async def get_telegram_webhook_info():
+    """Retrieves current webhook configuration from Telegram API."""
+    from backend.app.telegram_service import telegram_service
+    return await telegram_service.get_webhook_info()
+
+
+@router.post("/telegram/delete-webhook", summary="Delete Telegram Webhook")
+async def delete_telegram_webhook():
+    """Removes webhook configuration to allow local long-polling."""
+    from backend.app.telegram_service import telegram_service
+    return await telegram_service.delete_webhook()
 
 
 # ============================================================================
